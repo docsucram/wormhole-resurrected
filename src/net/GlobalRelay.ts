@@ -215,35 +215,54 @@ export class GlobalRelay {
   }
 
   private handleMqttMessage(data: Uint8Array, ws: WebSocket): void {
-    if (data.length < 2) return;
-    const packetType = data[0] >> 4;
+    let index = 0;
+    while (index < data.length) {
+      if (index + 1 >= data.length) break;
+      const header = data[index];
+      const packetType = header >> 4;
+      const qos = (header >> 1) & 0x03;
+      const { length: remainingLength, bytesRead } = this.decodeLength(data, index + 1);
+      const packetEnd = index + 1 + bytesRead + remainingLength;
+      if (packetEnd > data.length) break;
 
-    if (packetType === 2) {
-      // CONNACK -> Subscribe to global wormhole topic
-      const subPacket = this.buildMqttSubscribe(this.topic, 1);
-      ws.send(subPacket);
-    } else if (packetType === 9) {
-      // SUBACK -> Ready to send and receive!
-      this.ws = ws;
-      this.isConnectedState = true;
-      this.startPing();
-      if (this.onConnectCallback) this.onConnectCallback();
-    } else if (packetType === 3) {
-      // PUBLISH -> Decode payload
-      const { bytesRead } = this.decodeLength(data, 1);
-      let offset = 1 + bytesRead;
-      if (offset + 2 > data.length) return;
-      const topicLen = (data[offset] << 8) | data[offset + 1];
-      offset += 2 + topicLen;
-      if (offset > data.length) return;
-      const payloadBytes = data.subarray(offset);
-      try {
-        const jsonStr = new TextDecoder().decode(payloadBytes);
-        const parsed = JSON.parse(jsonStr);
-        if (this.onMessageCallback) this.onMessageCallback(parsed);
-      } catch (e) {
-        console.error('Failed to parse MQTT JSON payload:', e);
+      if (packetType === 2) {
+        // CONNACK -> Subscribe to global wormhole topic
+        const subPacket = this.buildMqttSubscribe(this.topic, 1);
+        ws.send(subPacket);
+      } else if (packetType === 9) {
+        // SUBACK -> Ready to send and receive!
+        this.ws = ws;
+        this.isConnectedState = true;
+        this.startPing();
+        if (this.onConnectCallback) this.onConnectCallback();
+      } else if (packetType === 3) {
+        // PUBLISH
+        let offset = index + 1 + bytesRead;
+        if (offset + 2 <= packetEnd) {
+          const topicLen = (data[offset] << 8) | data[offset + 1];
+          offset += 2 + topicLen;
+          if (qos > 0 && offset + 2 <= packetEnd) {
+            // QoS 1/2 has 2 bytes Packet ID
+            const packetId = (data[offset] << 8) | data[offset + 1];
+            offset += 2;
+            // Send PUBACK for QoS 1
+            if (qos === 1) {
+              ws.send(new Uint8Array([0x40, 0x02, (packetId >> 8) & 0xff, packetId & 0xff]));
+            }
+          }
+          if (offset <= packetEnd) {
+            const payloadBytes = data.subarray(offset, packetEnd);
+            try {
+              const jsonStr = new TextDecoder().decode(payloadBytes);
+              const parsed = JSON.parse(jsonStr);
+              if (this.onMessageCallback) this.onMessageCallback(parsed);
+            } catch (e) {
+              console.error('Failed to parse MQTT JSON payload:', e);
+            }
+          }
+        }
       }
+      index = packetEnd;
     }
   }
 

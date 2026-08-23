@@ -370,6 +370,7 @@ class WormholeGame {
             type: 'MATCH_JOIN_ACCEPT',
             matchId: this.currentMatchConfig.id,
             joinedClientId: data.clientId,
+            joinedPlayerName: data.playerName,
             assignedSlot: slot,
             roster: this.tablePlayers,
             matchConfig: this.currentMatchConfig,
@@ -386,7 +387,11 @@ class WormholeGame {
         }
       }
     } else if (data.type === 'MATCH_JOIN_ACCEPT') {
-      if (data.joinedClientId === this.localClientId) {
+      const isTargetedToMe = data.joinedClientId === this.localClientId ||
+                             data.joinedPlayerName === this.playerName ||
+                             (data.assignedSlot !== undefined && data.roster && data.roster[data.assignedSlot]?.name === this.playerName);
+
+      if (isTargetedToMe) {
         // Local client was accepted into match!
         this.player.slot = data.assignedSlot;
         this.isLanMatchClient = true;
