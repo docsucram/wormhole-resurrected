@@ -1,0 +1,163 @@
+# props file for gui skeleton
+hostname=wormholeredux.com
+loginserviceport=6049
+
+#images
+NumImgs=3
+IN0=img_powerups
+IP0=images/powerups-ex.gif
+IX0=18
+IN1=img_smallpowerups
+IP1=images/small_powerups-ex.gif
+IX1=14
+IN2=img_r2title
+IP2=images/title_ng.gif
+
+#sounds
+NumSnds=5
+SN0=snd_silence
+SP0=sounds/silence.wav
+SN1=snd_explosion
+SP1=sounds/explosion.wav
+SN2=snd_fire
+SP2=sounds/fire.wav
+SN3=snd_powerup
+SP3=sounds/magic.wav
+SN4=snd_thrust
+SP4=sounds/thrust.wav
+
+# login (x,y,w,h)
+loginpanel_tf_username=300,300,100,20
+loginpanel_tf_password=300,325,100,20
+loginpanel_btn_login=430,325,60,30
+
+# lobby
+lobbypanel_playerpanel=10,130,300,580
+lobbypanel_tablepanel=320,40,810,390
+lobbypanel_chatpanel=320,450,810,260
+lobbypanel_btn_logout=175,80,110,20
+lobbypanel_btn_createtable=450,5,150,30
+lobbypanel_btn_createtableoptions=610,5,200,30
+
+# lobby URL buttons
+lobbypanel_btn0=50,30,235,20
+lobbypanel_btnurl0=
+lobbypanel_btnname0=Instructions & Tips
+lobbypanel_btn1=50,55,110,20
+lobbypanel_btnurl1=
+lobbypanel_btnname1=Missions
+lobbypanel_btn2=175,55,110,20
+lobbypanel_btnurl2=
+lobbypanel_btnname2=Clans
+lobbypanel_btn3=50,80,110,20
+lobbypanel_btnurl3=
+lobbypanel_btnname3=Sign Up!
+lobbypanel_btnsubmin3=-1
+lobbypanel_btnsubmax3=0
+
+# playing
+playingpanel_chatpanel=5,155,310,555
+playingpanel_btn_startgame=40,55,200,20
+playingpanel_btn_soundtoggle=40,80,200,20
+playingpanel_btn_leavetable=40,130,200,20
+playingpanel_gameboard=320,5,800,705
+playingpanel_credits=0,5,0,0
+
+# playing URL buttons
+playingpanel_btn0=40,105,200,20
+playingpanel_btnurl0=
+playingpanel_btnname0=Instructions & Tips
+
+# dialogs
+# create table dialog
+table_dialog=280,170,290,240
+table_dialog_tf_password=10,170,255,20
+table_dialog_cb_ranking=15,40,150,20
+table_dialog_cb_bigtable=140,40,120,20
+table_dialog_cb_teams=15,65,140,20
+table_dialog_cb_balancedteams=140,65,140,20
+table_dialog_cb_allships=140,90,140,20
+table_dialog_cb_allpups=140,115,140,20
+table_dialog_choice_boardsize=15,90,120,14
+table_dialog_btn_ok=30,200,100,20
+table_dialog_btn_cancel=150,200,100,20
+
+# join table dialog
+jointable_dialog=280,130,175,150
+jointable_dialog_tf_password=10,60,135,20
+jointable_dialog_btn_ok=10,90,65,30
+jointable_dialog_btn_cancel=80,90,65,30
+
+# player info dialog
+player_dialog=350,150,270,170
+player_dialog_btn_view=0,0,0,0
+player_dialog_tf_whisper=80,70,172,20
+player_dialog_btn_send=0,10,0,0
+player_dialog_btn_close=30,120,190,20
+player_dialog_cb_ignore=9,92,300,19
+player_dialog_icon_URL=
+player_dialog_clan_URL=
+
+# colors
+clr_bg=115,90,73
+clr_fg=192,151,96
+clr_who_me=252,211,156
+clr_who_other=192,151,96
+
+# shades (middle,top,underside)
+clr_shade_ext0=204,204,204
+clr_shade_ext1=255,255,255
+clr_shade_ext2=0,0,0
+
+clr_shade_int0=63,23,16
+clr_shade_int1=0,0,0
+clr_shade_int2=255,255,255
+
+clr_shade_player0=63,23,16
+clr_shade_player1=192,151,96
+clr_shade_player2=192,151,96
+
+clr_def_txt=192,151,96
+clr_panel_txt=0,0,0
+clr_player_guest=180,180,180
+clr_player_reg=252,211,133
+clr_error=0,0,0
+
+clr_instructions=255,255,0
+clr_btn_def=192,151,96
+clr_btn_down=252,211,156
+
+clr_table_open=70,70,70
+clr_table_open_txt=0,0,0
+clr_table_filled=255,255,0
+clr_table_filled_txt=0,0,0
+
+# instructions
+welcome0=Instructions:
+welcome1=Click on a table to jump into a game.
+welcome2=Green tables are collecting players.
+welcome3=Yellow tables are about to start.
+welcome4=Red tables are playing.
+welcome5=Type '/help' to list chat commands.
+welcome6=----------------------------------------------------------------------
+welcome7=Welcome to Wormhole Redux! Enjoy your stay :)
+welcome8=This is a version with no permanent accounts and no ranked games.
+instr0=Help: this message
+instr1=Whisper:  /whisper [username] 
+instr2=Reply:   /reply [message]
+instr3=Ignore:   /ignore [username]
+instr4=UnIgnore: /unignore [username]
+table_instr0=Key Commands:
+table_instr1=Left and Right Arrow - rotate ship
+table_instr2=Up Arrow - thrust
+table_instr3=Space Bar - fire guns
+table_instr4='f' - fire Powerups
+table_instr5=(aim at the portals!)
+table_instr6='d' - special weapon (on some ships)
+table_instr7=Tip: Shoot at the portals with your normal guns to get powerups. 
+#gutters for cf components
+cfchatpanel_gutter=8,8,8,4
+cftablepanel_gutter=8,8,8,8
+cfplayerpanel_gutter=5,5,25,50
+#assorted
+guest_string=guest-

@@ -1,0 +1,87 @@
+{% extends 'wormholeweb/base.html' %}
+{% load static %}
+
+
+{% block content %}
+
+<div class="container round-corner dark-grey-back greenText">
+  <h1 class="yellowText" align="center">Wormhole Redux</h1>
+  <p align="center">
+    Wormhole Redux is a fast paced multiplayer arcade game of survival. Pilot ships in a race to collect powerups and fire them into enemy wormholes. The last man (or team) standing wins. 
+  </p>
+
+  <div class="container-fluid text-center">
+    <div class="col-xs-12">
+      <img src="{% static 'wormholeweb/images/playButtonAnimated.gif' %}">
+    </div>
+    <div class="col-xs-12">
+      <a href="#download"><img src="{% static 'wormholeweb/images/beam-tank-small2.gif' %}"></a>
+    </div>
+    <div class="col-xs-12">
+      <p></p>
+      <p>Join the discussion!</p>
+      <a href="https://discord.gg/aYddHrV"><img src="{% static 'wormholeweb/images/discord.svg' %}" width=200></a>
+    </div>
+  </div>
+
+</div>
+
+<div class="container round-corner black-back greenText">
+  <h2 class="yellowText">About</h2>
+  <p>
+  <a href="https://gaming.fandom.com/wiki/Wormhole">Wormhole</a> was a game that was originally released in the early 2000s by Centerfleet (later Centerscore). The game also showed up on Newgrounds after becoming popular. Sadly, <a href="http://web.archive.org/web/20021209120222/http://centerfleet.com:80/index.html">on December 31 2002, the game and website were shutdown.</a>
+  </p>
+
+  <p>
+  <b class="yellowText">Wormhole Redux</b> is a project that seeks to revive classic Wormhole. Currently, there are no permanent accounts, no clans, no rankings, etc. However, the classic gameplay is there!
+  </p>
+  
+  <p>
+  If you are new to Wormhole, <a href="http://web.archive.org/web/20021216014011/http://www.centerfleet.com:80/wormholeNewGround/info/instructions/index.html">the original guide</a> has a good explanation of the interface and how to play.
+  </p>
+</div>
+
+<div class="container round-corner dark-grey-back greenText">
+  <a name=download><h2 class="yellowText">Download</h2></a>
+  <p>
+  Wormhole Redux is a java application. You will need Java 1.6 or higher (JRE), which is likely to be already installed.
+  </p>
+  
+  <p>
+  <a href="{% static 'wormholeweb/whclient.exe' %}"><i class="fa fa-download"> Wormhole Redux Client EXE file</i></a>
+  </p>
+
+  <p>
+  The EXE file will run on Windows PCs.
+  </p>
+  
+  <p>
+  <a href="{% static 'wormholeweb/whclient.jar' %}"><i class="fa fa-download"> Wormhole Redux Client JAR file</i></a>
+  </p>
+
+  <p>
+  The JAR file will run on Linux and Mac (and Windows) PCs. With Java installed, you can usually double click a JAR, just like an exe file, and it will open. Otherwise, you will need to run something like <tt>java&nbsp;-jar&nbsp;whclient.jar</tt> from the terminal (command line), after navigating to the directory where the JAR resides.
+  </p>
+</div>
+
+
+<div class="container round-corner black-back greenText">
+  <h2 class="yellowText">FAQ</h2>
+    <p><b class="yellowText">Is the game free?</b><br>
+    Yes, it is free. There is no cost and there will never be a cost. No donations are accepted.
+    </p>
+    <p><b class="yellowText">No one is online?</b><br>
+    There are not a ton of players at the moment, and people don't seem to idle/hangout in game. Best way to setup some games is to <a href="https://discord.gg/aYddHrV">get on discord</a>. Also, just to test it out yourself, you can boot up multiple clients.
+    </p>
+    <p><b class="yellowText">Why is the game window so small?</b><br>
+    It used to be even smaller; the game was java applet that ran in the browser at ~800x550px. This seems small now with modern monitor sizes and screen resolutions. We increased the game window size to a reasonable middle-ground (~1150x750px), but it cannot be resized.
+    </p>
+    <p><b class="yellowText">What are the future plans?</b><br>
+    Not sure yet. Minor updates or bug fixes will continue to be made for some time, but major changes will depend on the interest and community support.
+    </p>
+    <p><b class="yellowText">How were you able to recreate the original Wormhole?</b><br>
+    The client was released on the internet several years ago. There were some issues that had to be fixed, but we were able to piece together a server by analyzing the client.
+    </p>
+</div>
+
+{% endblock %}
