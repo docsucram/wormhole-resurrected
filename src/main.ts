@@ -294,7 +294,9 @@ class WormholeGame {
     } else if (data.type === 'MATCH_UPDATE') {
       if (Array.isArray(data.matches)) {
         this.lobbyMatches = data.matches;
-        this.renderLobbyMatches();
+        if (!this.inArena && !this.isLanMatchClient) {
+          this.renderLobbyMatches();
+        }
       }
     } else if (data.type === 'MATCH_JOIN_REQUEST') {
       // Host receives join request from another LAN / Web pilot
@@ -384,78 +386,76 @@ class WormholeGame {
         }
       }
     } else if (data.type === 'MATCH_JOIN_ACCEPT') {
-      if (this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
-        if (data.joinedClientId === this.localClientId) {
-          // Local client was accepted into match!
-          this.player.slot = data.assignedSlot;
-          this.isLanMatchClient = true;
-          this.isLanMatchHost = false;
-          this.isMatchWaitingForPilots = false;
-          this.currentMatchConfig = data.matchConfig;
+      if (data.joinedClientId === this.localClientId) {
+        // Local client was accepted into match!
+        this.player.slot = data.assignedSlot;
+        this.isLanMatchClient = true;
+        this.isLanMatchHost = false;
+        this.isMatchWaitingForPilots = false;
+        this.currentMatchConfig = data.matchConfig;
 
-          // Apply dimensions
-          this.currentArenaSize = data.matchConfig.size;
-          const sizeCfg = GAME_CONSTANTS.SIZES[data.matchConfig.size as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
-          this.arenaRing.setDimensions(sizeCfg.orbitDistance, sizeCfg.boardWidth, sizeCfg.boardHeight);
-          this.hazardManager.arenaBound = sizeCfg.boardWidth / 2;
-          this.simulatedRealm.arenaBound = sizeCfg.boardWidth / 2;
-          this.simulatedRealm.orbitDistance = sizeCfg.orbitDistance;
+        // Apply dimensions
+        this.currentArenaSize = data.matchConfig.size;
+        const sizeCfg = GAME_CONSTANTS.SIZES[data.matchConfig.size as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
+        this.arenaRing.setDimensions(sizeCfg.orbitDistance, sizeCfg.boardWidth, sizeCfg.boardHeight);
+        this.hazardManager.arenaBound = sizeCfg.boardWidth / 2;
+        this.simulatedRealm.arenaBound = sizeCfg.boardWidth / 2;
+        this.simulatedRealm.orbitDistance = sizeCfg.orbitDistance;
 
-          this.tablePlayers = data.roster.map((p: TablePlayer | null) => {
-            if (!p) return null;
-            return {
-              ...p,
-              isLocal: p.slot === data.assignedSlot,
-            };
-          });
+        this.tablePlayers = data.roster.map((p: TablePlayer | null) => {
+          if (!p) return null;
+          return {
+            ...p,
+            isLocal: p.slot === data.assignedSlot,
+          };
+        });
 
-          this.simulatedRealm.isRemotePlayer = true;
-          this.rebuildTableWormholes();
-          this.setDeckActive(false);
-          this.respawnPlayer();
-          this.simulatedRealm.resetForNewRound();
-          this.gameState.startMatch(data.targetWins, false);
-          this.gameState.currentRound = data.currentRound || 1;
-          this.updateTableRosterUI();
-          this.buildShipGrid();
-          this.addChatLog(`Connected to Match: ${data.matchConfig.name}!`, 'system');
-          this.sound.playPowerup();
+        this.simulatedRealm.isRemotePlayer = true;
+        this.rebuildTableWormholes();
+        this.setDeckActive(false);
+        this.respawnPlayer();
+        this.simulatedRealm.resetForNewRound();
+        this.gameState.startMatch(data.targetWins, false);
+        this.gameState.currentRound = data.currentRound || 1;
+        this.updateTableRosterUI();
+        this.buildShipGrid();
+        this.addChatLog(`Connected to Match: ${data.matchConfig.name}!`, 'system');
+        this.sound.playPowerup();
 
-          if (data.inProgress) {
-            // Mid-match drop-in: spectate active round, spawn on next round
-            this.showAlert('ROUND IN PROGRESS // DEPLOYING ON NEXT ROUND');
-            this.addChatLog('Round currently active. Spawning next round...', 'system');
-          } else {
-            // Staging room: choose ship class and ready up
-            const roundModal = document.getElementById('round-modal')!;
-            const titleEl = document.getElementById('round-modal-title')!;
-            const subEl = document.getElementById('round-modal-subtitle')!;
-            const scoreEl = document.getElementById('round-modal-score')!;
-            const btnNext = document.getElementById('btn-next-round')!;
-
-            titleEl.innerText = 'TACTICAL MATCH STAGING';
-            subEl.innerText = 'SELECT YOUR FIGHTER CLASS & READY UP';
-            scoreEl.innerText = data.targetWins >= 999999 ? 'ENDLESS DUEL // STANDBY' : `ROUND ${this.gameState.currentRound} // STANDBY`;
-            btnNext.innerText = 'READY TO DEPLOY';
-
-            roundModal.classList.add('active');
-            roundModal.style.display = 'block';
-            this.modalHangarView.setShip(this.selectedShipIndex);
-            this.modalHangarView.startPreview();
-          }
+        if (data.inProgress) {
+          // Mid-match drop-in: spectate active round, spawn on next round
+          this.showAlert('ROUND IN PROGRESS // DEPLOYING ON NEXT ROUND');
+          this.addChatLog('Round currently active. Spawning next round...', 'system');
         } else {
-          // Other client joined our match
-          this.tablePlayers = data.roster.map((p: TablePlayer | null) => {
-            if (!p) return null;
-            return {
-              ...p,
-              isLocal: p.slot === this.player.slot,
-            };
-          });
-          this.simulatedRealm.isRemotePlayer = true;
-          this.rebuildTableWormholes();
-          this.updateTableRosterUI();
+          // Staging room: choose ship class and ready up
+          const roundModal = document.getElementById('round-modal')!;
+          const titleEl = document.getElementById('round-modal-title')!;
+          const subEl = document.getElementById('round-modal-subtitle')!;
+          const scoreEl = document.getElementById('round-modal-score')!;
+          const btnNext = document.getElementById('btn-next-round')!;
+
+          titleEl.innerText = 'TACTICAL MATCH STAGING';
+          subEl.innerText = 'SELECT YOUR FIGHTER CLASS & READY UP';
+          scoreEl.innerText = data.targetWins >= 999999 ? 'ENDLESS DUEL // STANDBY' : `ROUND ${this.gameState.currentRound} // STANDBY`;
+          btnNext.innerText = 'READY TO DEPLOY';
+
+          roundModal.classList.add('active');
+          roundModal.style.display = 'block';
+          this.modalHangarView.setShip(this.selectedShipIndex);
+          this.modalHangarView.startPreview();
         }
+      } else if (this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
+        // Other client joined our match
+        this.tablePlayers = data.roster.map((p: TablePlayer | null) => {
+          if (!p) return null;
+          return {
+            ...p,
+            isLocal: p.slot === this.player.slot,
+          };
+        });
+        this.simulatedRealm.isRemotePlayer = true;
+        this.rebuildTableWormholes();
+        this.updateTableRosterUI();
       }
     } else if (data.type === 'MATCH_PACKET') {
       if (this.inArena && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
@@ -1104,6 +1104,7 @@ class WormholeGame {
     }
 
     this.modalHangarView.stopPreview();
+    this.inArena = !active;
 
     if (active) {
       deck.classList.remove('hidden');
