@@ -7,12 +7,7 @@ export class GlobalRelay {
   private isMqttMode = false;
   private clientId: string;
   private topic = 'wormhole_resurrected/v1/hub';
-  private brokerIndex = 0;
-  private publicBrokers = [
-    'wss://broker.emqx.io:8084/mqtt',
-    'wss://broker.hivemq.com:8884/mqtt',
-    'wss://public.mqtthq.com:8084/mqtt',
-  ];
+  private canonicalBroker = 'wss://broker.emqx.io:8084/mqtt';
   private pingInterval: any = null;
   private reconnectTimer: any = null;
   private onMessageCallback: ((data: any) => void) | null = null;
@@ -35,17 +30,16 @@ export class GlobalRelay {
     const host = window.location.hostname;
     const isLocalLan = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
 
-    if (isLocalLan && this.brokerIndex === 0) {
+    if (isLocalLan) {
       // 1. Try local Node.js WebSocket relay first
       this.isMqttMode = false;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const localUrl = `${protocol}//${window.location.host}/lan-relay`;
       this.initWebSocket(localUrl, false);
     } else {
-      // 2. Connect to global public MQTT over WebSocket broker
+      // 2. Connect to canonical global public MQTT over WebSocket broker
       this.isMqttMode = true;
-      const brokerUrl = this.publicBrokers[this.brokerIndex % this.publicBrokers.length];
-      this.initWebSocket(brokerUrl, true);
+      this.initWebSocket(this.canonicalBroker, true);
     }
   }
 
@@ -87,7 +81,6 @@ export class GlobalRelay {
         this.ws = null;
         this.isConnectedState = false;
         this.stopPing();
-        this.brokerIndex++;
         this.scheduleReconnect();
       };
 
@@ -99,7 +92,6 @@ export class GlobalRelay {
         }
       };
     } catch {
-      this.brokerIndex++;
       this.scheduleReconnect();
     }
   }

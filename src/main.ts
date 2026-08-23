@@ -365,19 +365,27 @@ class WormholeGame {
 
           const isCombatInProgress = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
 
-          // Send acceptance back to LAN
-          this.sendLanPacket({
-            type: 'MATCH_JOIN_ACCEPT',
-            matchId: this.currentMatchConfig.id,
-            joinedClientId: data.clientId,
-            joinedPlayerName: data.playerName,
-            assignedSlot: slot,
-            roster: this.tablePlayers,
-            matchConfig: this.currentMatchConfig,
-            targetWins: this.gameState.targetWins,
-            currentRound: this.gameState.currentRound,
-            inProgress: isCombatInProgress,
-          });
+          const sendAcceptance = () => {
+            if (this.currentMatchConfig) {
+              this.sendLanPacket({
+                type: 'MATCH_JOIN_ACCEPT',
+                matchId: this.currentMatchConfig.id,
+                joinedClientId: data.clientId,
+                joinedPlayerName: data.playerName,
+                assignedSlot: slot,
+                roster: this.tablePlayers,
+                matchConfig: this.currentMatchConfig,
+                targetWins: this.gameState.targetWins,
+                currentRound: this.gameState.currentRound,
+                inProgress: isCombatInProgress,
+              });
+            }
+          };
+
+          // Send acceptance burst back to ensure reliable web delivery
+          sendAcceptance();
+          setTimeout(sendAcceptance, 120);
+          setTimeout(sendAcceptance, 300);
 
           // If we were waiting in staging, notify host
           if (!isCombatInProgress) {
@@ -616,12 +624,19 @@ class WormholeGame {
     this.sendPresence();
     setInterval(() => this.sendPresence(), 2000);
 
-    // Clean up stale pilots & their hosted matches every 3s
+    // Broadcast hosted match list every 2s while hosting
+    setInterval(() => {
+      if (this.isLanMatchHost && this.currentMatchConfig) {
+        this.broadcastMatches();
+      }
+    }, 2000);
+
+    // Clean up stale pilots & their hosted matches every 4s
     setInterval(() => {
       const now = Date.now();
       let changed = false;
       for (const [id, pilot] of this.connectedPilots.entries()) {
-        if (id !== this.localClientId && now - pilot.lastSeen > 6000) {
+        if (id !== this.localClientId && now - pilot.lastSeen > 20000) {
           this.connectedPilots.delete(id);
           changed = true;
         }
@@ -636,7 +651,7 @@ class WormholeGame {
           this.renderLobbyMatches();
         }
       }
-    }, 3000);
+    }, 4000);
 
     // Clean up hosted match if window is closed
     window.addEventListener('beforeunload', () => {
@@ -787,13 +802,32 @@ class WormholeGame {
           this.currentMatchConfig = match;
           joinBtn.disabled = true;
           joinBtn.innerText = 'CONNECTING...';
-          this.sendLanPacket({
-            type: 'MATCH_JOIN_REQUEST',
-            matchId: match.id,
-            clientId: this.localClientId,
-            playerName: this.playerName,
-            shipId: this.selectedShipIndex,
-          });
+
+          const sendJoinReq = () => {
+            if (this.isLanMatchClient && !this.inArena) {
+              this.sendLanPacket({
+                type: 'MATCH_JOIN_REQUEST',
+                matchId: match.id,
+                clientId: this.localClientId,
+                playerName: this.playerName,
+                shipId: this.selectedShipIndex,
+              });
+            }
+          };
+
+          sendJoinReq();
+          setTimeout(sendJoinReq, 1000);
+          setTimeout(sendJoinReq, 2200);
+
+          setTimeout(() => {
+            if (!this.inArena && this.isLanMatchClient) {
+              this.isLanMatchClient = false;
+              joinBtn.disabled = false;
+              joinBtn.innerText = isFull ? 'SPECTATE' : 'JOIN MATCH';
+              this.showAlert('COULD NOT REACH HOST // RETRY JOIN');
+            }
+          }, 6000);
+
           this.addChatLog(`Requesting entry into ${match.hostName}'s Match...`, 'system');
         }
       };
