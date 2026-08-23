@@ -17,6 +17,7 @@ import { BotDifficulty } from './entities/ai/BotController';
 import { GameStateManager } from './core/GameState';
 import { HangarView } from './ui/HangarView';
 import { NetworkManager, WarpPayload } from './net/NetworkManager';
+import { GlobalRelay } from './net/GlobalRelay';
 import { PLAYER_COLORS, GAME_CONSTANTS, POWERUP_NAMES } from './core/Constants';
 import { Collision } from './math/Collision';
 
@@ -73,6 +74,8 @@ class WormholeGame {
   public hangarView: HangarView;
   private modalHangarView: HangarView;
 
+  public globalRelay: GlobalRelay;
+
   // Local Player
   private player: PlayerShip;
   public playerName = 'BrightNomad';
@@ -84,7 +87,7 @@ class WormholeGame {
   public currentArenaSize = 'MEDIUM'; // SMALL, MEDIUM, LARGE, HUGE
   public selectedOpponentSlot = 1;
 
-  // Real LAN Discovery & Match State
+  // Real LAN & Internet Discovery & Match State
   public lanWs: WebSocket | null = null;
   public lanChannel: BroadcastChannel | null = null;
   public connectedPilots: Map<string, ConnectedPilot> = new Map();
@@ -129,6 +132,13 @@ class WormholeGame {
   private lastTime = 0;
 
   constructor() {
+    const savedCallsign = localStorage.getItem('wh_callsign');
+    this.playerName = savedCallsign || WormholeGame.generateRandomCallsign();
+    if (!savedCallsign) {
+      localStorage.setItem('wh_callsign', this.playerName);
+    }
+    this.globalRelay = new GlobalRelay(this.localClientId);
+
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
     this.renderer = new VectorRenderer(canvas);
 
@@ -243,9 +253,12 @@ class WormholeGame {
   }
 
   private sendLanPacket(packet: any): void {
-    if (this.lanWs && this.lanWs.readyState === WebSocket.OPEN) {
+    if (this.globalRelay && this.globalRelay.send(packet)) {
+      // Successfully sent via global relay
+    } else if (this.lanWs && this.lanWs.readyState === WebSocket.OPEN) {
       this.lanWs.send(JSON.stringify(packet));
-    } else if (this.lanChannel) {
+    }
+    if (this.lanChannel) {
       try {
         this.lanChannel.postMessage(packet);
       } catch (e) {
@@ -523,51 +536,37 @@ class WormholeGame {
     }
   }
 
+  public sendPresence(): void {
+    this.connectedPilots.set(this.localClientId, {
+      id: this.localClientId,
+      callsign: this.playerName,
+      isHost: true,
+      lastSeen: Date.now(),
+    });
+    this.sendLanPacket({
+      type: 'PRESENCE',
+      id: this.localClientId,
+      callsign: this.playerName,
+      timestamp: Date.now(),
+    });
+  }
+
   private initLanComms(): void {
-    // 1. Setup real WebSocket LAN relay
-    const connectWebSocket = () => {
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/lan-relay`;
-        const ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          this.lanWs = ws;
-          this.sendLanPacket({
-            type: 'PRESENCE',
-            id: this.localClientId,
-            callsign: this.playerName,
-            timestamp: Date.now(),
-          });
-          if (this.lobbyMatches.length > 0) {
-            this.broadcastMatches();
-          }
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            this.handleLanMessage(data);
-          } catch (e) {
-            console.error('Failed to parse LAN relay message:', e);
-          }
-        };
-
-        ws.onclose = () => {
-          this.lanWs = null;
-          setTimeout(connectWebSocket, 2000);
-        };
-
-        ws.onerror = () => {
-          ws.close();
-        };
-      } catch (e) {
-        console.warn('LAN WebSocket relay not available, using BroadcastChannel fallback:', e);
+    // 1. Setup Global Web & LAN WebSocket Relay
+    this.globalRelay.setCallbacks(
+      (data) => {
+        this.handleLanMessage(data);
+      },
+      () => {
+        this.sendPresence();
+        if (this.lobbyMatches.length > 0) {
+          this.broadcastMatches();
+        }
       }
-    };
-    connectWebSocket();
+    );
+    this.globalRelay.connect();
 
-    // 2. Setup BroadcastChannel as local fallback
+    // 2. Setup BroadcastChannel as local multi-tab fallback
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       this.lanChannel = new BroadcastChannel('wormhole_lan_hub');
       this.lanChannel.onmessage = (event) => {
@@ -576,16 +575,8 @@ class WormholeGame {
     }
 
     // Broadcast presence immediately and every 2s
-    const sendPresence = () => {
-      this.sendLanPacket({
-        type: 'PRESENCE',
-        id: this.localClientId,
-        callsign: this.playerName,
-        timestamp: Date.now(),
-      });
-    };
-    sendPresence();
-    setInterval(sendPresence, 2000);
+    this.sendPresence();
+    setInterval(() => this.sendPresence(), 2000);
 
     // Clean up stale pilots & their hosted matches every 3s
     setInterval(() => {
@@ -617,13 +608,6 @@ class WormholeGame {
       }
     });
 
-    // Always register self in pilots
-    this.connectedPilots.set(this.localClientId, {
-      id: this.localClientId,
-      callsign: this.playerName,
-      isHost: true,
-      lastSeen: Date.now(),
-    });
     this.renderConnectedPilots();
   }
 
@@ -1597,33 +1581,40 @@ class WormholeGame {
   }
 
   private setupFrontEndUI(): void {
-    const callsignInput = document.getElementById('input-callsign') as HTMLInputElement;
-    this.playerName = WormholeGame.generateRandomCallsign();
-    callsignInput.value = this.playerName;
+    const callsignInput = document.getElementById('input-callsign') as HTMLInputElement | null;
+    if (callsignInput) {
+      callsignInput.value = this.playerName;
+      callsignInput.addEventListener('input', () => {
+        this.playerName = callsignInput.value.trim() || 'Pilot-1';
+        localStorage.setItem('wh_callsign', this.playerName);
+        if (this.tablePlayers[0]) {
+          this.tablePlayers[0]!.name = this.playerName;
+        }
+        const hudName = document.getElementById('hud-classic-callsign');
+        if (hudName) hudName.innerText = this.playerName;
+        this.sendPresence();
+        this.renderConnectedPilots();
+        this.updateTableRosterUI();
+      });
+    }
+
     if (this.tablePlayers[0]) {
       this.tablePlayers[0]!.name = this.playerName;
     }
-    document.getElementById('hud-classic-callsign')!.innerText = this.playerName;
-
-    callsignInput.addEventListener('input', () => {
-      this.playerName = callsignInput.value.trim() || 'Pilot-1';
-      if (this.tablePlayers[0]) {
-        this.tablePlayers[0]!.name = this.playerName;
-      }
-      document.getElementById('hud-classic-callsign')!.innerText = this.playerName;
-      this.renderConnectedPilots();
-      this.updateTableRosterUI();
-    });
+    const hudCallsign = document.getElementById('hud-classic-callsign');
+    if (hudCallsign) hudCallsign.innerText = this.playerName;
 
     const btnRefreshCallsign = document.getElementById('btn-refresh-callsign');
-    if (btnRefreshCallsign) {
+    if (btnRefreshCallsign && callsignInput) {
       btnRefreshCallsign.onclick = () => {
         this.playerName = WormholeGame.generateRandomCallsign();
+        localStorage.setItem('wh_callsign', this.playerName);
         callsignInput.value = this.playerName;
         if (this.tablePlayers[0]) {
           this.tablePlayers[0]!.name = this.playerName;
         }
-        document.getElementById('hud-classic-callsign')!.innerText = this.playerName;
+        if (hudCallsign) hudCallsign.innerText = this.playerName;
+        this.sendPresence();
         this.renderConnectedPilots();
         this.updateTableRosterUI();
         this.sound.playPowerup();
