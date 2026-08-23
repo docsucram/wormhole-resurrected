@@ -23,6 +23,7 @@ import { Collision } from './math/Collision';
 
 export interface TablePlayer {
   slot: number;
+  clientId?: string;
   name: string;
   isLocal: boolean;
   isBot: boolean;
@@ -296,16 +297,28 @@ class WormholeGame {
         this.renderLobbyMatches();
       }
     } else if (data.type === 'MATCH_JOIN_REQUEST') {
-      // Host receives join request from another LAN pilot
+      // Host receives join request from another LAN / Web pilot
       if (this.isLanMatchHost && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
-        // Find first empty slot, or replace first existing bot slot
+        // 1. Check if this client is already assigned a slot in the current match
         let slot = -1;
         for (let i = 1; i < 8; i++) {
-          if (!this.tablePlayers[i]) {
+          if (this.tablePlayers[i] && (this.tablePlayers[i]!.clientId === data.clientId || this.tablePlayers[i]!.name === data.playerName)) {
             slot = i;
             break;
           }
         }
+
+        // 2. If not already present, find the first empty slot
+        if (slot === -1) {
+          for (let i = 1; i < 8; i++) {
+            if (!this.tablePlayers[i]) {
+              slot = i;
+              break;
+            }
+          }
+        }
+
+        // 3. Or replace an existing AI bot slot
         if (slot === -1) {
           for (let i = 1; i < 8; i++) {
             if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
@@ -319,6 +332,7 @@ class WormholeGame {
         if (slot !== -1) {
           this.tablePlayers[slot] = {
             slot,
+            clientId: data.clientId,
             name: data.playerName,
             isLocal: false,
             isBot: false,
@@ -458,9 +472,17 @@ class WormholeGame {
             }
           }
         } else if (pkt.type === 'WARP_HAZARD') {
-          if (pkt.payload.toSlot === this.player.slot) {
+          const fromSlot = pkt.payload.fromSlot;
+          const toSlot = pkt.payload.toSlot;
+          const activePlayersCount = this.tablePlayers.filter((p) => p !== null).length;
+          const isTargetedToMe = toSlot === this.player.slot || 
+                                 (activePlayersCount <= 2 && fromSlot !== this.player.slot) ||
+                                 (this.isLanMatchClient && fromSlot === 0) ||
+                                 (this.isLanMatchHost && fromSlot !== 0 && activePlayersCount <= 2);
+
+          if (isTargetedToMe && fromSlot !== this.player.slot) {
             this.showAlert(`INCOMING // ${POWERUP_NAMES[pkt.payload.hazardType] || 'HAZARD'} FROM OPPONENT!`);
-            const targetWh = this.wormholes.find((w) => w.slot === pkt.payload.fromSlot) || this.wormholes[0] || new Wormhole('OPPONENT', 1, 0, 240);
+            const targetWh = this.wormholes.find((w) => w.slot === fromSlot) || this.wormholes[0] || new Wormhole('OPPONENT', fromSlot, 0, 240);
             this.hazardManager.spawnHazard(pkt.payload.hazardType, targetWh, this.player, this.missiles);
             this.gameState.stats.p2HazardsSent++;
             this.addChatLog(`Opponent sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> Your Realm`, 'system');
@@ -514,6 +536,17 @@ class WormholeGame {
         } else if (pkt.type === 'MATCH_START') {
           this.setDeckActive(false);
           this.resetArenaForNewRound();
+          const roundModal = document.getElementById('round-modal');
+          if (roundModal) {
+            roundModal.classList.remove('active');
+            roundModal.style.display = 'none';
+          }
+          const pauseModal = document.getElementById('pause-modal');
+          if (pauseModal) {
+            pauseModal.classList.remove('active');
+            pauseModal.style.display = 'none';
+          }
+          this.modalHangarView.stopPreview();
           this.gameState.targetWins = pkt.targetWins;
           this.gameState.currentRound = pkt.round || this.gameState.currentRound + 1;
           this.gameState.startCountdown();
@@ -747,6 +780,8 @@ class WormholeGame {
           this.isLanMatchHost = false;
           this.isLanMatchClient = true;
           this.currentMatchConfig = match;
+          joinBtn.disabled = true;
+          joinBtn.innerText = 'CONNECTING...';
           this.sendLanPacket({
             type: 'MATCH_JOIN_REQUEST',
             matchId: match.id,
