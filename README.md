@@ -22,11 +22,11 @@ Rather than shooting each other directly, pilots shoot their central orbital **W
 
 - **No Java Required**: Rebuilt from scratch using modern web standards (HTML5 Canvas 2D + TypeScript) running at a locked **120–144+ FPS** with crisp glowing vector lines and CRT scanlines.
 - **Zero-Config LAN Multiplayer**: Native WebSocket relay server built directly into server.cjs. Run the launcher on one PC, and any machine or tablet on your local network can join from their web browser.
-- **All 8 Classic Fighter Classes**: Dart, Wedge, Vector, Cruiser, Stingray, Mantis, Nautilus, and Flagship.
+- **All Classic Fighter Classes**: Dart, Wedge, Vector, Cruiser, Stingray, Mantis, Nautilus, and Flagship.
 - **Full 20-Item Arsenal**: All 6 utility upgrades and 14 offensive sendable hazards with authentic physics, discrete drop momentum, and portal ingestion.
 - **Full Gamepad Support**: Xbox / PlayStation controller support with analog flight, custom deadzones, key remapping, and local state saving.
 - **Adaptive AI Bots**: Single-player training and bot-filled multiplayer lobbies with Rookie, Veteran, and Ace difficulties.
-- **Live PiP Feed**: Picture-in-Picture feed tracking opponent realms in real time.
+- **Live PiP Feed**: Picture-in-Picture feed tracking of bot realms in real time.
 
 ---
 
@@ -67,7 +67,7 @@ ode server.cjs).
 
 - **Original Game**: Created by **Centerfleet** (later Centerscore) in the early 2000s.
 - **Community Preservation**: Inspired by the community revival project at [Wormhole Redux](https://www.wormholeredux.com/).
-- **Remake**: Modernized HTML5/TypeScript engine by Marcus Robinson (docsucram).
+- **Remake**: Modernized HTML5/TypeScript engine by docsucram.
 
 ---
 
