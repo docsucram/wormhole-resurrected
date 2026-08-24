@@ -15,7 +15,7 @@ export class Artillery implements Hazard {
   public radius = 22;
   public health = 35;
   public maxHealth = 35;
-  public damage = 30;
+  public damage = 5;
   public isAlive = true;
   public color = '#ff3344';
   public slot = 1;
@@ -60,7 +60,7 @@ export class Artillery implements Hazard {
           this.y,
           Math.cos(this.angle) * bSpeed,
           Math.sin(this.angle) * bSpeed,
-          18,
+          2,
           6,
           '#ffffff',
           this.color,

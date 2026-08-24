@@ -16,7 +16,7 @@ export class Inflator implements Hazard {
   public radius = 20;
   public health = 30;
   public maxHealth = 45;
-  public damage = 25;
+  public damage = 15;
   public isAlive = true;
   public color = '#ff3344';
   public slot = 1;

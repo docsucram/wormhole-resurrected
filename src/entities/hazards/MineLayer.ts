@@ -17,7 +17,7 @@ export class MineLayer implements Hazard {
   public radius = 28;
   public health = 50;
   public maxHealth = 50;
-  public damage = 20;
+  public damage = 10;
   public isAlive = true;
   public color = '#ff3344';
   public slot = 1;

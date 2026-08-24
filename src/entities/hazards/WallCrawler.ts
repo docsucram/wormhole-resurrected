@@ -15,7 +15,7 @@ export class WallCrawler implements Hazard {
   public radius = 24;
   public health = 150;
   public maxHealth = 150;
-  public damage = 25;
+  public damage = 20;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;

@@ -14,7 +14,7 @@ export class PortalTurret implements Hazard {
   public radius = 24;
   public health = 50;
   public maxHealth = 50;
-  public damage = 15;
+  public damage = 7;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;
@@ -75,7 +75,7 @@ export class PortalTurret implements Hazard {
           this.y + perpY,
           Math.cos(this.turretAngle) * bSpeed,
           Math.sin(this.turretAngle) * bSpeed,
-          8,
+          1,
           4,
           '#ffffff',
           this.color,
@@ -90,7 +90,7 @@ export class PortalTurret implements Hazard {
           this.y - perpY,
           Math.cos(this.turretAngle) * bSpeed,
           Math.sin(this.turretAngle) * bSpeed,
-          8,
+          1,
           4,
           '#ffffff',
           this.color,

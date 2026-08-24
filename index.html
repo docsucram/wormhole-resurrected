@@ -874,20 +874,36 @@
       .hud-score-display {
         font-size: 16px;
         font-weight: 900;
+        line-height: 1;
         color: #ffffff;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
         font-variant-numeric: tabular-nums;
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 5px;
+        gap: 6px;
       }
 
       .hud-score-num {
-        display: inline-block;
-        min-width: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
+        height: 18px;
+        line-height: 1;
         text-align: center;
         font-variant-numeric: tabular-nums;
+      }
+
+      .hud-score-sep {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 18px;
+        line-height: 1;
+        color: #64748b;
+        font-weight: 700;
+        user-select: none;
       }
 
       .hud-score-label {
@@ -2195,7 +2211,7 @@
 
         <!-- Col 3: Match Telemetry & Score -->
         <div class="hud-match-col">
-          <div class="hud-score-display"><span class="hud-score-num" id="hud-classic-wins" style="color: var(--neon-cyan);">0</span><span style="color: #64748b; font-weight: 400; padding: 0 1px;">-</span><span class="hud-score-num" id="hud-classic-losses" style="color: var(--neon-magenta);">0</span></div>
+          <div class="hud-score-display"><span class="hud-score-num" id="hud-classic-wins" style="color: var(--neon-cyan);">0</span><span class="hud-score-sep">-</span><span class="hud-score-num" id="hud-classic-losses" style="color: var(--neon-magenta);">0</span></div>
           <div class="hud-score-label" id="hud-round-label">ROUND 1 // MATCH</div>
         </div>
       </div>

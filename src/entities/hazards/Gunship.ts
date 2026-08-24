@@ -16,7 +16,7 @@ export class Gunship implements Hazard {
   public radius = 32;
   public health = 50;
   public maxHealth = 50;
-  public damage = 25;
+  public damage = 10;
   public isAlive = true;
   public color = '#ff3344';
   public slot = 1;
@@ -174,7 +174,7 @@ export class Gunship implements Hazard {
             worldTurretY,
             Math.cos(aimAngle) * 6.0,
             Math.sin(aimAngle) * 6.0,
-            12,
+            2,
             5,
             '#ffffff',
             this.color,

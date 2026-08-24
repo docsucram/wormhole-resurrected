@@ -15,7 +15,7 @@ export class GhostPud implements Hazard {
   public radius = 20;
   public health = 999;
   public maxHealth = 999;
-  public damage = 20;
+  public damage = 1;
   public isAlive = true;
   public color = '#9966ff';
   public slot = 1;

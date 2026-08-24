@@ -17,7 +17,7 @@ export class Scarab implements Hazard {
   public radius = 18;
   public health = 25;
   public maxHealth = 25;
-  public damage = 20;
+  public damage = 5;
   public isAlive = true;
   public color = '#ffaa00';
   public slot = 1;

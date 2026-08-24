@@ -18,7 +18,7 @@ export class UFO implements Hazard {
   public radius = 24;
   public health = 40;
   public maxHealth = 40;
-  public damage = 15;
+  public damage = 20;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;

@@ -13,7 +13,7 @@ export class PortalBeam implements Hazard {
   public radius = 10;
   public health = 99999;
   public maxHealth = 99999;
-  public damage = 35;
+  public damage = 1;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;
@@ -78,8 +78,8 @@ export class PortalBeam implements Hazard {
     const distToBeam = Math.hypot(player.x - projX, player.y - projY);
 
     if (distToBeam < this.beamRad + 10 && this.damageTimer <= 0) {
-      this.damageTimer = 0.12; // Pulse damage every 120ms (eliminates particle/audio flood)
-      player.takeDamage(6, particles, sound, {
+      this.damageTimer = 0.05; // 20 Hz damage tick
+      player.takeDamage(this.damage, particles, sound, {
         name: this.parentWormhole.ownerName,
         weapon: 'SWEEPING BEAM',
         slot: this.slot,

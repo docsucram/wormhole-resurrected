@@ -12,7 +12,7 @@ export class EMPShockwave implements Hazard {
   public radius = 0;
   public health = 99999;
   public maxHealth = 99999;
-  public damage = 5;
+  public damage = 0;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;
