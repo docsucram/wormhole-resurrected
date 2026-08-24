@@ -195,7 +195,7 @@ class WormholeGame {
         this.missiles
       );
       this.gameState.stats.p2HazardsSent++;
-      this.addChatLog(`${botName} sent ${POWERUP_NAMES[powerupType]} -> Your Realm`, 'bot');
+      this.addChatLog(`${botName} sent ${POWERUP_NAMES[powerupType]} -> Your Realm`, 'bot', this.getPlayerColor(sourceBotSlot));
     };
 
     this.simulatedRealm.onBotDeath = (slot?: number) => {
@@ -572,6 +572,10 @@ class WormholeGame {
           if (this.isLanMatchHost) {
             this.addChatLog(`${pkt.playerName || 'Opponent'} is ready for next round! [SPACE to start]`, 'system');
           }
+        } else if (pkt.type === 'CHAT_MSG') {
+          const senderSlot = pkt.senderSlot ?? data.fromSlot;
+          const senderColor = this.getPlayerColor(senderSlot);
+          this.addChatLog(`${pkt.senderName}: ${pkt.message}`, 'player', senderColor);
         }
       }
     } else if (data.type === 'MATCH_TERMINATED') {
@@ -961,8 +965,8 @@ class WormholeGame {
       color: botColor,
     };
 
-    this.addChatLog(`${botName} joined the arena.`, 'bot');
-    this.triggerBotJoinChat(botName);
+    this.addChatLog(`${botName} joined the arena.`, 'bot', botColor);
+    this.triggerBotJoinChat(botName, emptySlot);
     this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty);
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
@@ -1193,18 +1197,35 @@ class WormholeGame {
     }
   }
 
-  private addChatLog(text: string, type: 'system' | 'player' | 'bot' = 'system'): void {
+  private getPlayerColor(nameOrSlot: string | number): string {
+    if (typeof nameOrSlot === 'number') {
+      const col = PLAYER_COLORS[nameOrSlot % PLAYER_COLORS.length];
+      return col ? col.primary : '#00ffcc';
+    }
+    const found = this.tablePlayers.find((p) => p && p.name.toLowerCase() === nameOrSlot.toLowerCase());
+    if (found) {
+      const col = PLAYER_COLORS[found.slot % PLAYER_COLORS.length];
+      return col ? col.primary : '#00ffcc';
+    }
+    return '#00ffcc';
+  }
+
+  private addChatLog(text: string, type: 'system' | 'player' | 'bot' = 'system', customColor?: string): void {
     const chatLog = document.getElementById('match-chat-log') || document.getElementById('table-chat-log');
     if (!chatLog) return;
 
     const div = document.createElement('div');
     div.className = `chat-msg ${type}`;
+    if (customColor) {
+      div.style.color = customColor;
+      div.style.textShadow = `0 0 6px ${customColor}88`;
+    }
     div.innerText = text;
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  private triggerBotJoinChat(botName: string): void {
+  private triggerBotJoinChat(botName: string, botSlot = 1): void {
     const greetings = [
       'Vector core online. Ready for battle.',
       'Target lock acquired. Good luck, pilot.',
@@ -1214,12 +1235,13 @@ class WormholeGame {
       'Reactor hot. Prepare for dogfight!',
     ];
     const msg = greetings[Math.floor(Math.random() * greetings.length)];
+    const color = this.getPlayerColor(botSlot);
     setTimeout(() => {
-      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+      this.addChatLog(`${botName}: "${msg}"`, 'bot', color);
     }, 400);
   }
 
-  private triggerBotKillChat(botName: string): void {
+  private triggerBotKillChat(botName: string, botSlot = 1): void {
     const taunts = [
       'Calculation complete. Direct hit!',
       'Too slow on the retro thrusters!',
@@ -1229,12 +1251,13 @@ class WormholeGame {
       'Target neutralized.',
     ];
     const msg = taunts[Math.floor(Math.random() * taunts.length)];
+    const color = this.getPlayerColor(botSlot);
     setTimeout(() => {
-      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+      this.addChatLog(`${botName}: "${msg}"`, 'bot', color);
     }, 300);
   }
 
-  private triggerBotDeathChat(botName: string): void {
+  private triggerBotDeathChat(botName: string, botSlot = 1): void {
     const reactions = [
       'Hull integrity failure... good shot!',
       'Critical damage! Recalibrating next round...',
@@ -1244,8 +1267,9 @@ class WormholeGame {
       'My reactor! Well played, pilot.',
     ];
     const msg = reactions[Math.floor(Math.random() * reactions.length)];
+    const color = this.getPlayerColor(botSlot);
     setTimeout(() => {
-      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+      this.addChatLog(`${botName}: "${msg}"`, 'bot', color);
     }, 300);
   }
 
@@ -1353,16 +1377,18 @@ class WormholeGame {
         this.sound.playVictoryFanfare();
         const activeBot = this.tablePlayers.find((p) => p && p.isBot);
         if (activeBot) {
+          const botColor = this.getPlayerColor(activeBot.slot);
           setTimeout(() => {
-            this.addChatLog(`${activeBot.name}: "Match concluded. Commendable piloting, human."`, 'bot');
+            this.addChatLog(`${activeBot.name}: "Match concluded. Commendable piloting, human."`, 'bot', botColor);
           }, 600);
         }
       } else {
         this.sound.playDefeatFanfare();
         const winningBot = this.tablePlayers.find((p) => p && p.isBot);
         if (winningBot) {
+          const botColor = this.getPlayerColor(winningBot.slot);
           setTimeout(() => {
-            this.addChatLog(`${winningBot.name}: "Match finalized. Dominance confirmed!"`, 'bot');
+            this.addChatLog(`${winningBot.name}: "Match finalized. Dominance confirmed!"`, 'bot', botColor);
           }, 600);
         }
       }
@@ -1379,7 +1405,7 @@ class WormholeGame {
     // Trigger bot taunt on player elimination
     const activeBot = this.tablePlayers.find((p) => p && p.isBot && p.isAlive);
     if (activeBot) {
-      this.triggerBotKillChat(activeBot.name);
+      this.triggerBotKillChat(activeBot.name, activeBot.slot);
     }
 
     // 1. Register opponent kill so stats & scores are synchronized across all elements
@@ -1496,7 +1522,7 @@ class WormholeGame {
     const botPlayer = this.tablePlayers[botSlot];
     const botName = botPlayer ? botPlayer.name : 'Opponent';
     this.addChatLog(`${botName} was destroyed!`, 'system');
-    this.triggerBotDeathChat(botName);
+    this.triggerBotDeathChat(botName, botSlot);
     this.sound.playExplosion(true);
 
     if (this.tablePlayers[botSlot]) {
@@ -1959,7 +1985,23 @@ class WormholeGame {
     const sendChat = () => {
       const msg = inputChat.value.trim();
       if (!msg) return;
-      this.addChatLog(`${this.playerName}: ${msg}`, 'player');
+      const myColor = this.getPlayerColor(this.player.slot);
+      this.addChatLog(`${this.playerName}: ${msg}`, 'player', myColor);
+
+      if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+        this.sendLanPacket({
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'CHAT_MSG',
+            senderName: this.playerName,
+            senderSlot: this.player.slot,
+            message: msg,
+          },
+        });
+      }
+
       inputChat.value = '';
     };
     document.getElementById('btn-chat-send')!.onclick = sendChat;
@@ -1968,7 +2010,21 @@ class WormholeGame {
     });
 
     document.getElementById('btn-emote-smile')!.onclick = () => {
-      this.addChatLog(`${this.playerName}: 😄`, 'player');
+      const myColor = this.getPlayerColor(this.player.slot);
+      this.addChatLog(`${this.playerName}: 😄`, 'player', myColor);
+      if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+        this.sendLanPacket({
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'CHAT_MSG',
+            senderName: this.playerName,
+            senderSlot: this.player.slot,
+            message: '😄',
+          },
+        });
+      }
     };
 
     document.getElementById('btn-chat-clear')!.onclick = () => {
