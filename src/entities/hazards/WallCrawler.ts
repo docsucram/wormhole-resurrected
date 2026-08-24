@@ -15,12 +15,15 @@ export class WallCrawler implements Hazard {
   public radius = 24;
   public health = 150;
   public maxHealth = 150;
-  public damage = 20;
+  public damage = 20; // Authentic WallCrawlerSprite.java:36: setHealth(150, 20)
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;
   public powerupType = 15;
 
+  public isCrawling = false;
+  public isClockwise = true;
+  public angle = 0;
   private side = 0; // 0=Top, 1=Right, 2=Bottom, 3=Left
   private shotCooldown = 0;
   public bound = 420;
@@ -44,34 +47,22 @@ export class WallCrawler implements Hazard {
   ];
 
   constructor(x: number, y: number, bound = 420, slot = 1) {
+    this.x = x;
+    this.y = y;
     this.bound = bound;
     this.slot = slot;
     this.color = (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
+    this.isClockwise = Math.random() < 0.5;
 
-    // Attach directly onto nearest perimeter wall line
-    const distTop = Math.abs(y - (-bound));
-    const distBottom = Math.abs(y - bound);
-    const distLeft = Math.abs(x - (-bound));
-    const distRight = Math.abs(x - bound);
-
-    const minDist = Math.min(distTop, distBottom, distLeft, distRight);
-    if (minDist === distTop) {
-      this.side = 0;
-      this.x = Math.max(-bound, Math.min(bound, x));
-      this.y = -this.bound;
-    } else if (minDist === distRight) {
-      this.side = 1;
-      this.x = this.bound;
-      this.y = Math.max(-bound, Math.min(bound, y));
-    } else if (minDist === distBottom) {
-      this.side = 2;
-      this.x = Math.max(-bound, Math.min(bound, x));
-      this.y = this.bound;
-    } else {
-      this.side = 3;
-      this.x = -this.bound;
-      this.y = Math.max(-bound, Math.min(bound, y));
-    }
+    // Initial outward trajectory from wormhole toward perimeter wall
+    const outwardAngle = (x === 0 && y === 0) 
+      ? Math.random() * Math.PI * 2 
+      : Math.atan2(y, x) + (Math.random() - 0.5) * 0.4;
+    
+    this.angle = outwardAngle;
+    const launchSpeed = 4.0;
+    this.vx = Math.cos(outwardAngle) * launchSpeed;
+    this.vy = Math.sin(outwardAngle) * launchSpeed;
   }
 
   public update(
@@ -86,57 +77,127 @@ export class WallCrawler implements Hazard {
     this.cycle += dt * 60;
     this.shotCooldown += dt;
 
-    // Authentic speed = 4.0 px/frame
-    const speed = 4.0 * dt * 60;
-    switch (this.side) {
-      case 0: // Top wall (y = -bound): move right -> corner -> right wall
-        this.x += speed;
-        this.y = -this.bound;
-        this.vx = speed;
-        this.vy = 0;
-        if (this.x >= this.bound) {
-          this.x = this.bound;
-          this.y = -this.bound;
-          this.side = 1;
-        }
-        break;
-      case 1: // Right wall (x = bound): move down -> corner -> bottom wall
-        this.y += speed;
-        this.x = this.bound;
-        this.vx = 0;
-        this.vy = speed;
-        if (this.y >= this.bound) {
-          this.x = this.bound;
-          this.y = this.bound;
-          this.side = 2;
-        }
-        break;
-      case 2: // Bottom wall (y = bound): move left -> corner -> left wall
-        this.x -= speed;
-        this.y = this.bound;
-        this.vx = -speed;
-        this.vy = 0;
-        if (this.x <= -this.bound) {
-          this.x = -this.bound;
-          this.y = this.bound;
-          this.side = 3;
-        }
-        break;
-      case 3: // Left wall (x = -bound): move up -> corner -> top wall
-        this.y -= speed;
-        this.x = -this.bound;
-        this.vx = 0;
-        this.vy = -speed;
-        if (this.y <= -this.bound) {
-          this.x = -this.bound;
-          this.y = -this.bound;
+    if (!this.isCrawling) {
+      // 1. FLIGHT PHASE: Travel outward from wormhole to the arena boundary wall
+      this.x += this.vx * dt * 60;
+      this.y += this.vy * dt * 60;
+
+      // Check if reached perimeter wall
+      if (
+        this.x >= this.bound ||
+        this.x <= -this.bound ||
+        this.y >= this.bound ||
+        this.y <= -this.bound
+      ) {
+        this.isCrawling = true;
+        particles.createExplosion(this.x, this.y, this.color, 12);
+        sound.playSpecial(0);
+
+        // Latch onto the closest wall
+        const distTop = Math.abs(this.y - (-this.bound));
+        const distBottom = Math.abs(this.y - this.bound);
+        const distLeft = Math.abs(this.x - (-this.bound));
+        const distRight = Math.abs(this.x - this.bound);
+
+        const minDist = Math.min(distTop, distBottom, distLeft, distRight);
+        if (minDist === distTop) {
           this.side = 0;
+          this.y = -this.bound;
+          this.x = Math.max(-this.bound, Math.min(this.bound, this.x));
+        } else if (minDist === distRight) {
+          this.side = 1;
+          this.x = this.bound;
+          this.y = Math.max(-this.bound, Math.min(this.bound, this.y));
+        } else if (minDist === distBottom) {
+          this.side = 2;
+          this.y = this.bound;
+          this.x = Math.max(-this.bound, Math.min(this.bound, this.x));
+        } else {
+          this.side = 3;
+          this.x = -this.bound;
+          this.y = Math.max(-this.bound, Math.min(this.bound, this.y));
         }
-        break;
+      }
+    } else {
+      // 2. WALL CRAWLING PHASE: Navigate perimeter boundary wall
+      const speed = 4.0 * dt * 60;
+
+      if (this.isClockwise) {
+        switch (this.side) {
+          case 0: // Top wall (y = -bound): move right
+            this.x += speed;
+            this.y = -this.bound;
+            if (this.x >= this.bound) {
+              this.x = this.bound;
+              this.side = 1;
+            }
+            break;
+          case 1: // Right wall (x = bound): move down
+            this.y += speed;
+            this.x = this.bound;
+            if (this.y >= this.bound) {
+              this.y = this.bound;
+              this.side = 2;
+            }
+            break;
+          case 2: // Bottom wall (y = bound): move left
+            this.x -= speed;
+            this.y = this.bound;
+            if (this.x <= -this.bound) {
+              this.x = -this.bound;
+              this.side = 3;
+            }
+            break;
+          case 3: // Left wall (x = -bound): move up
+            this.y -= speed;
+            this.x = -this.bound;
+            if (this.y <= -this.bound) {
+              this.y = -this.bound;
+              this.side = 0;
+            }
+            break;
+        }
+      } else {
+        // Counter-clockwise
+        switch (this.side) {
+          case 0: // Top wall: move left
+            this.x -= speed;
+            this.y = -this.bound;
+            if (this.x <= -this.bound) {
+              this.x = -this.bound;
+              this.side = 3;
+            }
+            break;
+          case 3: // Left wall: move down
+            this.y += speed;
+            this.x = -this.bound;
+            if (this.y >= this.bound) {
+              this.y = this.bound;
+              this.side = 2;
+            }
+            break;
+          case 2: // Bottom wall: move right
+            this.x += speed;
+            this.y = this.bound;
+            if (this.x >= this.bound) {
+              this.x = this.bound;
+              this.side = 1;
+            }
+            break;
+          case 1: // Right wall: move up
+            this.y -= speed;
+            this.x = this.bound;
+            if (this.y <= -this.bound) {
+              this.y = -this.bound;
+              this.side = 0;
+            }
+            break;
+        }
+      }
     }
 
-    // Authentic lead targeting: fires every 35 cycles (0.58s)
-    if (this.shotCooldown >= 0.65 && player.isAlive) {
+    // Authentic lead targeting: fires turret laser every 35 cycles (0.58s)
+    if (this.shotCooldown >= 0.58 && player.isAlive) {
       this.shotCooldown = 0;
       sound.playLaser(0);
 
@@ -145,16 +206,16 @@ export class WallCrawler implements Hazard {
       const targetX = player.x + player.vx * Math.min(leadDist, 15);
       const targetY = player.y + player.vy * Math.min(leadDist, 15);
 
-      const angle = Math.atan2(targetY - this.y, targetX - this.x);
+      const shootAngle = Math.atan2(targetY - this.y, targetX - this.x);
       const bSpeed = 6.0;
 
       bullets.push(
         new Bullet(
           this.x,
           this.y,
-          Math.cos(angle) * bSpeed,
-          Math.sin(angle) * bSpeed,
-          10,
+          Math.cos(shootAngle) * bSpeed,
+          Math.sin(shootAngle) * bSpeed,
+          3,
           4,
           '#ffffff',
           this.color,
@@ -189,15 +250,19 @@ export class WallCrawler implements Hazard {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    // Rotation angles matching legacy WallCrawlerSprite.g_c_directions:
-    // side 0 (Top) -> points 90 deg
-    // side 1 (Right) -> points 180 deg
-    // side 2 (Bottom) -> points 270 deg
-    // side 3 (Left) -> points 0 deg
-    const rotationAngles = [Math.PI / 2, Math.PI, (3 * Math.PI) / 2, 0];
-    ctx.rotate(rotationAngles[this.side]);
+    if (!this.isCrawling) {
+      ctx.rotate(this.angle);
+    } else {
+      // Rotation angles matching legacy WallCrawlerSprite.g_c_directions:
+      // side 0 (Top) -> points 90 deg
+      // side 1 (Right) -> points 180 deg
+      // side 2 (Bottom) -> points 270 deg
+      // side 3 (Left) -> points 0 deg
+      const rotationAngles = [Math.PI / 2, Math.PI, (3 * Math.PI) / 2, 0];
+      ctx.rotate(rotationAngles[this.side]);
+    }
 
-    // Draw authentic WallCrawler polygon straddling the perimeter wall
+    // Draw authentic WallCrawler polygon
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.0;
     ctx.shadowBlur = 8;
@@ -223,3 +288,4 @@ export class WallCrawler implements Hazard {
     ctx.restore();
   }
 }
+

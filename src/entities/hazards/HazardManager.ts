@@ -99,7 +99,7 @@ export class HazardManager {
         for (let i = 0; i < 2; i++) {
           const offsetX = (Math.random() - 0.5) * 40;
           const offsetY = (Math.random() - 0.5) * 40;
-          this.hazards.push(new Scarab(x + offsetX, y + offsetY, slot, this.arenaBound));
+          this.hazards.push(new Scarab(x + offsetX, y + offsetY, sourceWormhole, slot, this.arenaBound, this.onWarpHazard));
         }
         break;
       }
@@ -193,7 +193,7 @@ export class HazardManager {
     // 3. Update active hazards
     for (let i = this.hazards.length - 1; i >= 0; i--) {
       const h = this.hazards[i];
-      if (!h.update(dt, player, bullets, particles, sound, missiles, wormholes) || !h.isAlive) {
+      if (!h.update(dt, player, bullets, particles, sound, missiles, wormholes, powerups) || !h.isAlive) {
         this.hazards.splice(i, 1);
         continue;
       }

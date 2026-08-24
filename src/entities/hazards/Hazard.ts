@@ -26,7 +26,8 @@ export interface Hazard {
     particles: ParticleSystem,
     sound: SoundEngine,
     missiles?: HeatSeekerMissile[],
-    wormholes?: Wormhole[]
+    wormholes?: Wormhole[],
+    powerups?: Powerup[]
   ): boolean;
 
   draw(renderer: VectorRenderer): void;
