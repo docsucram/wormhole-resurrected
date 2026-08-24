@@ -98,16 +98,23 @@ export class Nuke implements Hazard {
         return false;
       }
 
-      // Linear damage falloff: 40 at center down to 5 at 1000px
-      this.damage = Math.max(5, Math.floor(40 * (1000 - this.blastRadius) / 1000));
+      // High base damage (90 near epicenter) with controlled falloff down to 35 at arena edge
+      this.damage = Math.max(35, Math.floor(90 - (this.blastRadius / 1000) * 55));
 
-      // Authentic safe eye:
-      // If player is near middle (dist <= 75px) or inside hollow ring (dist < blastRadius - 50), player is SAFE!
-      // Only the outward moving shockwave ring (dist <= blastRadius && dist > blastRadius - 50 && dist > 75) hits once!
+      // Tight safe eye (dist <= 30px) - dead center eye of the storm
+      // Only the outward moving shockwave ring hits the player once
       const dist = Math.hypot(player.x - this.x, player.y - this.y);
-      if (dist <= this.blastRadius && dist > this.blastRadius - 50 && dist > 75 && !this.hasDamagedPlayer) {
+      if (dist <= this.blastRadius && dist > this.blastRadius - 65 && dist > 30 && !this.hasDamagedPlayer) {
         this.hasDamagedPlayer = true;
-        player.takeDamage(this.damage, particles, sound);
+        player.takeDamage(this.damage, particles, sound, { weapon: 'TACTICAL NUKE', slot: this.slot });
+
+        // Impart powerful outward blast impulse to ship momentum
+        const blastAngle = Math.atan2(player.y - this.y, player.x - this.x);
+        const pushForce = Math.max(6.0, 16.0 * (1 - this.blastRadius / 1200));
+        player.vx += Math.cos(blastAngle) * pushForce;
+        player.vy += Math.sin(blastAngle) * pushForce;
+
+        particles.createExplosion(player.x, player.y, '#ffaa00', 16);
       }
     }
 
