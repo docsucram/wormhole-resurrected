@@ -251,7 +251,9 @@ export class SimulatedRealm {
         realm.botShip.vx = 0;
         realm.botShip.vy = 0;
         for (const wh of realm.wormholes) {
-          wh.update(dt, realm.particles, sound);
+          if (wh && wh.isAlive) {
+            wh.update(dt, realm.particles, sound);
+          }
         }
         continue;
       }
@@ -296,7 +298,9 @@ export class SimulatedRealm {
 
       // 2. Update All Wormholes in Realm
       for (const wh of realm.wormholes) {
-        wh.update(dt, realm.particles, sound);
+        if (wh && wh.isAlive) {
+          wh.update(dt, realm.particles, sound);
+        }
       }
 
       // 3. Update Hazards
@@ -381,6 +385,7 @@ export class SimulatedRealm {
         // Gravity & Absorption across all orbital wormholes in realm
         let bulletAbsorbed = false;
         for (const wh of realm.wormholes) {
+          if (!wh.isAlive) continue;
           if (b.isPowerup || b.ownerSlot === realm.botShip.slot) {
             const pullDx = wh.x - b.x;
             const pullDy = wh.y - b.y;

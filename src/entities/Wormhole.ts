@@ -24,6 +24,7 @@ export class Wormhole {
   public height = 60;
   public damageTaken = 0;
   public readonly damageThreshold = 150;
+  public isAlive = true;
 
   private cycle = 0;
 
@@ -40,12 +41,26 @@ export class Wormhole {
     this.orbitRadius = orbitRadius;
     this.isWarpingIn = warpIn;
     this.warpDist = warpIn ? 0 : orbitRadius;
+    this.isAlive = true;
 
     const colorProfile = PLAYER_COLORS[slot % PLAYER_COLORS.length];
     this.color = colorProfile.primary;
     this.glowColor = colorProfile.glow;
 
     this.updatePosition();
+  }
+
+  public killSelf(particles?: ParticleSystem, sound?: SoundEngine): void {
+    if (!this.isAlive) return;
+    this.isAlive = false;
+    if (particles) {
+      particles.createExplosion(this.x, this.y, this.color, 45);
+      particles.createExplosion(this.x, this.y, '#ffffff', 25);
+    }
+    if (sound) {
+      sound.playExplosion(true);
+      sound.playSpecial(1);
+    }
   }
 
   private updatePosition(): void {
@@ -56,6 +71,7 @@ export class Wormhole {
   }
 
   public update(dt: number, particles: ParticleSystem, sound: SoundEngine): void {
+    if (!this.isAlive) return;
     this.cycle += dt * 60;
 
     if (this.isWarpingIn) {
@@ -138,6 +154,7 @@ export class Wormhole {
   }
 
   public draw(renderer: VectorRenderer): void {
+    if (!this.isAlive) return;
     const ctx = renderer.ctx;
     ctx.save();
     ctx.translate(this.x, this.y);

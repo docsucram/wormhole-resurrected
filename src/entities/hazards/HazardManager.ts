@@ -198,9 +198,9 @@ export class HazardManager {
         continue;
       }
 
-      // Authentic Ghost Pud wormhole ingestion (only after 2.5s and punted by player lasers)
       if (wormholes && wormholes.length > 0 && h instanceof GhostPud && h.isAlive && h.age > 2.5 && h.wasPuntedByPlayer) {
         for (const wh of wormholes) {
+          if (!wh.isAlive) continue;
           const dx = (h.x - wh.x) / (wh.width / 2);
           const dy = (h.y - wh.y) / (wh.height / 2);
           const distSq = dx * dx + dy * dy;

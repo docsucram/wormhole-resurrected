@@ -46,6 +46,10 @@ export class PortalBeam implements Hazard {
     sound: SoundEngine
   ): boolean {
     if (!this.isAlive) return false;
+    if (this.parentWormhole && !this.parentWormhole.isAlive) {
+      this.isAlive = false;
+      return false;
+    }
 
     this.life -= dt;
     this.cycle += dt * 60;

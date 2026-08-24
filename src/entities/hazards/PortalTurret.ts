@@ -46,6 +46,12 @@ export class PortalTurret implements Hazard {
     sound: SoundEngine
   ): boolean {
     if (!this.isAlive) return false;
+    if (this.parentWormhole && !this.parentWormhole.isAlive) {
+      this.isAlive = false;
+      particles.createExplosion(this.x, this.y, this.color, 18);
+      sound.playExplosion(false);
+      return false;
+    }
 
     // Orbit around wormhole at 1 deg / frame (60 deg / sec)
     this.orbitAngle += dt * 1.0;

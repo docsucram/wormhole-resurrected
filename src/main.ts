@@ -529,6 +529,10 @@ class WormholeGame {
             if (pkt.slot !== this.player.slot && this.tablePlayers[pkt.slot] && this.tablePlayers[pkt.slot]!.isAlive) {
               this.tablePlayers[pkt.slot]!.isAlive = false;
               this.tablePlayers[pkt.slot]!.health = 0;
+              const victimWh = this.wormholes.find((w) => w.slot === pkt.slot);
+              if (victimWh) {
+                victimWh.killSelf(this.particles, this.sound);
+              }
               this.gameState.registerPlayer1Kill();
               this.addChatLog('Opponent ship was destroyed!', 'system');
               this.sendLanPacket({
@@ -553,6 +557,17 @@ class WormholeGame {
           this.gameState.player2Score = pkt.p2Score;
           if (this.gameState.onScoreUpdate) {
             this.gameState.onScoreUpdate(pkt.p1Score, pkt.p2Score);
+          }
+
+          if (pkt.victimSlot !== undefined && pkt.victimSlot !== this.player.slot) {
+            const victimWh = this.wormholes.find((w) => w.slot === pkt.victimSlot);
+            if (victimWh) {
+              victimWh.killSelf(this.particles, this.sound);
+            }
+            if (this.tablePlayers[pkt.victimSlot]) {
+              this.tablePlayers[pkt.victimSlot]!.isAlive = false;
+              this.tablePlayers[pkt.victimSlot]!.health = 0;
+            }
           }
 
           const isLocalVictim = pkt.victimSlot === this.player.slot;
@@ -1108,12 +1123,7 @@ class WormholeGame {
     // 2. Reset Player Ship & Upgrades
     this.respawnPlayer();
 
-    // 3. Reset Wormholes
-    for (const wh of this.wormholes) {
-      wh.damageTaken = 0;
-    }
-
-    // 4. Reset All Opponent Bot / Remote Realms
+    // 3. Reset All Opponent Bot / Remote Realms
     this.simulatedRealm.resetForNewRound();
     for (let i = 0; i < 8; i++) {
       if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
@@ -1129,6 +1139,8 @@ class WormholeGame {
       }
     }
 
+    // 4. Rebuild & Re-space all active wormholes evenly with warp-in animation
+    this.rebuildTableWormholes();
     this.updateTableRosterUI();
   }
 
@@ -1567,6 +1579,13 @@ class WormholeGame {
       this.tablePlayers[botSlot]!.health = 0;
       this.tablePlayers[botSlot]!.isAlive = false;
     }
+
+    // Destroy eliminated bot's wormhole with detonation
+    const botWh = this.wormholes.find((w) => w.slot === botSlot);
+    if (botWh) {
+      botWh.killSelf(this.particles, this.sound);
+    }
+
     this.updateTableRosterUI();
 
     // Check if any opponent remains alive
@@ -2707,6 +2726,16 @@ class WormholeGame {
         }
       } else if (e.key === 'm' || e.key === 'M') {
         this.sound.toggleMute();
+      } else if (e.key === 'Backspace' && this.inArena && this.player.isAlive && this.gameState.phase === 'PLAYING') {
+        this.player.health = 0;
+        this.player.isAlive = false;
+        const myColor = this.getPlayerColor(this.player.slot);
+        this.particles.createExplosion(this.player.x, this.player.y, myColor, 45);
+        this.particles.createExplosion(this.player.x, this.player.y, '#ffffff', 25);
+        this.sound.playExplosion(true);
+        this.sound.playSpecial(1);
+        this.addChatLog('Self-destruct executed!', 'player', myColor);
+        this.handlePlayerElimination();
       }
     });
   }
@@ -2986,6 +3015,7 @@ class WormholeGame {
       }
 
       for (const wh of this.wormholes) {
+        if (!wh.isAlive) continue;
         // Gravitational vortex funneling for launched powerup bullets near wormhole
         if (b.isPowerup) {
           const distToWh = Math.hypot(wh.x - b.x, wh.y - b.y);
@@ -3092,6 +3122,7 @@ class WormholeGame {
 
       if (m.wormholeImmunity <= 0) {
         for (const wh of this.wormholes) {
+          if (!wh.isAlive) continue;
           const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
           if (dist < 35) {
             wh.absorbDamage(m.damage, this.powerups, this.particles, this.sound);
