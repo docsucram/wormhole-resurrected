@@ -131,6 +131,7 @@ class WormholeGame {
   private pipThrottleTimer = 0;
 
   private lastTime = 0;
+  private roundStartTime = 0;
 
   constructor() {
     const savedCallsign = localStorage.getItem('wh_callsign');
@@ -486,7 +487,10 @@ class WormholeGame {
             if (this.tablePlayers[data.fromSlot]) {
               this.tablePlayers[data.fromSlot]!.health = pkt.snapshot.hp;
               this.tablePlayers[data.fromSlot]!.maxHealth = pkt.snapshot.maxHp;
-              this.tablePlayers[data.fromSlot]!.isAlive = pkt.snapshot.isAlive;
+              // Only apply isAlive from snapshot during active PLAYING phase after grace period
+              if (this.gameState.phase === 'PLAYING' && Date.now() - this.roundStartTime > 1200) {
+                this.tablePlayers[data.fromSlot]!.isAlive = pkt.snapshot.isAlive;
+              }
             }
           }
         } else if (pkt.type === 'WARP_HAZARD') {
@@ -508,7 +512,13 @@ class WormholeGame {
           }
         } else if (pkt.type === 'PLAYER_DEATH') {
           if (this.isLanMatchHost && this.gameState.phase === 'PLAYING') {
-            if (pkt.slot !== this.player.slot) {
+            // Guard: ensure round has been active for at least 1.0s before accepting death
+            if (Date.now() - this.roundStartTime < 1000) {
+              return;
+            }
+            if (pkt.slot !== this.player.slot && this.tablePlayers[pkt.slot] && this.tablePlayers[pkt.slot]!.isAlive) {
+              this.tablePlayers[pkt.slot]!.isAlive = false;
+              this.tablePlayers[pkt.slot]!.health = 0;
               this.gameState.registerPlayer1Kill();
               this.addChatLog('Opponent ship was destroyed!', 'system');
               this.sendLanPacket({
@@ -545,7 +555,12 @@ class WormholeGame {
             this.gameState.phase = 'ROUND_OVER';
             this.gameState.roundOverTimer = 4.0;
             this.gameState.roundWinner = roundWinner;
-            if (!isLocalVictim) {
+            if (isLocalVictim) {
+              // Local player died - ensure defeat modal is displayed
+              if (!document.getElementById('round-modal')?.classList.contains('active')) {
+                this.handlePlayerElimination();
+              }
+            } else {
               this.showVictoryModal();
             }
             if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(roundWinner, pkt.p1Score, pkt.p2Score);
@@ -1278,6 +1293,7 @@ class WormholeGame {
     const matchModal = document.getElementById('match-modal')!;
 
     this.gameState.onRoundStart = () => {
+      this.roundStartTime = Date.now();
       this.respawnPlayer();
       this.simulatedRealm.resetForNewRound();
       this.hazardManager.hazards = [];
@@ -1287,10 +1303,14 @@ class WormholeGame {
     };
 
     this.gameState.onScoreUpdate = (p1, p2) => {
+      const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
+      const myWins = isP1Local ? p1 : p2;
+      const myLosses = isP1Local ? p2 : p1;
+
       const winsEl = document.getElementById('hud-classic-wins');
-      if (winsEl) winsEl.innerText = p1.toString();
+      if (winsEl) winsEl.innerText = myWins.toString();
       const lossesEl = document.getElementById('hud-classic-losses');
-      if (lossesEl) lossesEl.innerText = p2.toString();
+      if (lossesEl) lossesEl.innerText = myLosses.toString();
       if (this.tablePlayers[0]) this.tablePlayers[0]!.wins = p1;
       if (this.tablePlayers[1]) this.tablePlayers[1]!.wins = p2;
       this.updateTableRosterUI();
@@ -1302,15 +1322,17 @@ class WormholeGame {
       const subEl = document.getElementById('round-modal-subtitle')!;
       const scoreEl = document.getElementById('round-modal-score')!;
 
-      const isP1Local = !this.network.isConnected || this.network.isHost;
+      const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
       const isLocalRoundWin = (roundWinner === 'PLAYER 1' && isP1Local) || (roundWinner === 'PLAYER 2' && !isP1Local);
+      const myWins = isP1Local ? p1Score : p2Score;
+      const oppWins = isP1Local ? p2Score : p1Score;
 
       titleEl.innerText = isLocalRoundWin ? 'ROUND VICTORY!' : 'YOU DIED';
       titleEl.style.color = isLocalRoundWin ? 'var(--neon-cyan)' : '#ff3344';
       titleEl.style.textShadow = isLocalRoundWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
 
       subEl.innerText = isLocalRoundWin ? 'ENEMY SHIP ELIMINATED' : 'YOUR SHIP WAS DESTROYED';
-      scoreEl.innerText = `${p1Score} - ${p2Score}`;
+      scoreEl.innerText = `${myWins} - ${oppWins}`;
 
       roundModal.classList.add('active');
       roundModal.style.display = 'block';
@@ -1333,6 +1355,7 @@ class WormholeGame {
         countdownEl.classList.add('active');
         this.lastCountdownSec = -1;
       } else if (phase === 'PLAYING') {
+        this.roundStartTime = Date.now();
         countdownEl.innerText = 'ENGAGE!';
         countdownEl.style.display = 'block';
         countdownEl.classList.add('active');
@@ -1367,7 +1390,10 @@ class WormholeGame {
         this.buildShipGrid();
       }
 
+      const myWins = isP1 ? this.gameState.player1Score : this.gameState.player2Score;
+      const oppWins = isP1 ? this.gameState.player2Score : this.gameState.player1Score;
       document.getElementById('modal-title')!.innerText = isLocalWin ? 'VICTORY!' : 'DEFEAT!';
+      document.getElementById('stat-final-score')!.innerText = `${myWins} - ${oppWins}`;
       document.getElementById('modal-title')!.style.color = isLocalWin ? 'var(--neon-cyan)' : '#ff3344';
       document.getElementById('modal-title')!.style.textShadow = isLocalWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
       document.getElementById('modal-subtitle')!.innerText = isLocalWin ? 'YOU WON THE MATCH!' : 'OPPONENT WON THE MATCH!';
@@ -1473,7 +1499,10 @@ class WormholeGame {
         }
       }
 
-      scoreEl.innerText = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+      const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
+      const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
+      const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
+      scoreEl.innerText = `${myWins} - ${oppWins}`;
       btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
       roundModal.classList.add('active');
@@ -1503,7 +1532,10 @@ class WormholeGame {
       killerEl.innerText = '';
       killerEl.style.display = 'none';
     }
-    scoreEl.innerText = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+    const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
+    const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
+    const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
+    scoreEl.innerText = `${myWins} - ${oppWins}`;
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
     roundModal.classList.add('active');
@@ -2766,6 +2798,8 @@ class WormholeGame {
       let anyOpponentAlive = false;
       let hasOpponents = false;
 
+      const roundGraceElapsed = Date.now() - this.roundStartTime > 1000;
+
       for (let i = 1; i < 8; i++) {
         if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
           hasOpponents = true;
@@ -2775,7 +2809,7 @@ class WormholeGame {
             this.tablePlayers[i]!.health = realm.botShip.health;
             this.tablePlayers[i]!.maxHealth = realm.botShip.maxHealth;
             this.tablePlayers[i]!.isAlive = realm.botShip.isAlive;
-            if (wasAlive && !realm.botShip.isAlive) {
+            if (wasAlive && !realm.botShip.isAlive && roundGraceElapsed && this.gameState.phase === 'PLAYING') {
               this.handleBotElimination(i);
             }
             if (realm.botShip.isAlive) {
@@ -2789,6 +2823,7 @@ class WormholeGame {
       if (
         this.gameState.phase === 'PLAYING' &&
         !this.isMatchWaitingForPilots &&
+        roundGraceElapsed &&
         hasOpponents &&
         !anyOpponentAlive &&
         this.player.isAlive &&
@@ -2800,8 +2835,8 @@ class WormholeGame {
       }
     }
 
-    // 3. Network snapshot streaming
-    if (this.inArena && this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
+    // 3. Network snapshot streaming (strictly during active PLAYING phase when ship is alive)
+    if (this.inArena && this.currentMatchConfig && this.gameState.phase === 'PLAYING' && this.player.isAlive && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
       this.snapshotTimer += dt;
       if (this.snapshotTimer >= 0.04) {
         this.snapshotTimer = 0;
