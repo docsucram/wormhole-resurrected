@@ -63,7 +63,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let reqPath = decodeURI(req.url.split('?')[0]);
+  const urlPath = req.url.split('?')[0];
+  if (urlPath === '/healthz' || urlPath === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', server: 'Wormhole Resurrected Dedicated Relay', activeClients: wsClients.size }));
+    return;
+  }
+
+  let reqPath = decodeURI(urlPath);
   if (reqPath === '/' || reqPath === '') {
     reqPath = '/index.html';
   }
@@ -79,7 +86,6 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Fallback to index.html for SPA routing
       filePath = path.join(DIST_DIR, 'index.html');
     }
 
@@ -88,8 +94,19 @@ const server = http.createServer((req, res) => {
 
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
-        res.writeHead(500);
-        res.end('500 Internal Server Error');
+        // Fallback: If dist/ was not built, serve a clean status page
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+        res.end(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Wormhole Relay Online</title><style>body{background:#040714;color:#00ffff;font-family:sans-serif;text-align:center;padding:50px;}</style></head>
+            <body>
+              <h1>🌌 Wormhole Dedicated Relay Online</h1>
+              <p>WebSocket endpoint: <code>/lan-relay</code></p>
+              <p>Active Pilots: ${wsClients.size}</p>
+            </body>
+          </html>
+        `);
       } else {
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(content);
