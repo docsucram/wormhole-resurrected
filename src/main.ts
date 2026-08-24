@@ -240,7 +240,8 @@ class WormholeGame {
           this.network.sendWarpHazard(warpPayload);
         }
       }
-      this.addChatLog(`Punted Ghost-Pud -> Slot ${targetSlot + 1}'s Wormhole!`, 'player');
+      const targetName = this.tablePlayers[targetSlot] ? this.tablePlayers[targetSlot]!.name : `Slot ${targetSlot + 1}`;
+      this.addChatLog(`Warped ${POWERUP_NAMES[hazardType] || 'Hazard'} -> ${targetName}'s Wormhole!`, 'player', this.getPlayerColor(this.player.slot));
     };
 
     // Rebuild Wormholes for current arena roster
@@ -477,10 +478,19 @@ class WormholeGame {
         this.updateTableRosterUI();
       }
     } else if (data.type === 'MATCH_PACKET') {
-      if (this.inArena && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
-        const pkt = data.packet;
-        if (!pkt) return;
+      const pkt = data.packet;
+      if (!pkt) return;
 
+      if (pkt.type === 'CHAT_MSG') {
+        if (data.fromSlot !== this.player.slot && pkt.senderName !== this.playerName) {
+          const senderSlot = pkt.senderSlot ?? data.fromSlot ?? 1;
+          const senderColor = this.getPlayerColor(senderSlot);
+          this.addChatLog(`${pkt.senderName}: ${pkt.message}`, 'player', senderColor);
+        }
+        return;
+      }
+
+      if (this.inArena && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
         if (pkt.type === 'SNAPSHOT') {
           if (data.fromSlot !== this.player.slot) {
             this.simulatedRealm.applyRemoteSnapshot(pkt.snapshot);
@@ -587,10 +597,6 @@ class WormholeGame {
           if (this.isLanMatchHost) {
             this.addChatLog(`${pkt.playerName || 'Opponent'} is ready for next round! [SPACE to start]`, 'system');
           }
-        } else if (pkt.type === 'CHAT_MSG') {
-          const senderSlot = pkt.senderSlot ?? data.fromSlot;
-          const senderColor = this.getPlayerColor(senderSlot);
-          this.addChatLog(`${pkt.senderName}: ${pkt.message}`, 'player', senderColor);
         }
       }
     } else if (data.type === 'MATCH_TERMINATED') {
@@ -2669,6 +2675,10 @@ class WormholeGame {
     });
 
     window.addEventListener('keydown', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       if (e.key === 'Escape' && this.inArena) {
         const modal = document.getElementById('pause-modal')!;
         modal.classList.toggle('active');

@@ -82,6 +82,10 @@ export class InputManager {
 
   private setupListeners(): void {
     window.addEventListener('keydown', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       this.keys[e.code] = true;
       // Prevent default scrolling for game controls
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
@@ -90,6 +94,10 @@ export class InputManager {
     });
 
     window.addEventListener('keyup', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       this.keys[e.code] = false;
     });
 
