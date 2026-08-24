@@ -95,9 +95,9 @@ export class Scarab implements Hazard {
         const dist = Math.hypot(dx, dy);
         this.angle = Math.atan2(dy, dx);
 
-        const speed = 4.8;
-        this.vx += (Math.cos(this.angle) * speed - this.vx) * 0.12;
-        this.vy += (Math.sin(this.angle) * speed - this.vy) * 0.12;
+        const speed = 2.5; // Authentic ScarabSprite.java:29 maxThrust = 5.0 at 30Hz (2.5 px/frame at 60Hz)
+        this.vx += (Math.cos(this.angle) * speed - this.vx) * 0.08;
+        this.vy += (Math.sin(this.angle) * speed - this.vy) * 0.08;
 
         if (dist < 45) {
           // Deposit powerup into wormhole!
@@ -118,8 +118,8 @@ export class Scarab implements Hazard {
         }
       } else {
         // No living wormholes left - wander off
-        this.vx = Math.cos(this.angle) * 4;
-        this.vy = Math.sin(this.angle) * 4;
+        this.vx = Math.cos(this.angle) * 2.2;
+        this.vy = Math.sin(this.angle) * 2.2;
       }
     } else {
       // 2. SEEKING POWERUP: Scan screen for nearest sendable offensive powerup (type >= 6)
@@ -144,9 +144,9 @@ export class Scarab implements Hazard {
         const dy = closestPup.y - this.y;
         this.angle = Math.atan2(dy, dx);
 
-        const speed = 5.2;
-        this.vx += (Math.cos(this.angle) * speed - this.vx) * 0.1;
-        this.vy += (Math.sin(this.angle) * speed - this.vy) * 0.1;
+        const speed = 2.6; // Authentic travel speed
+        this.vx += (Math.cos(this.angle) * speed - this.vx) * 0.08;
+        this.vy += (Math.sin(this.angle) * speed - this.vy) * 0.08;
 
         if (closestDist < 26) {
           // Snatch powerup!
@@ -171,8 +171,8 @@ export class Scarab implements Hazard {
           this.wanderAngle += (Math.random() - 0.5) * 1.5;
         }
         this.angle = this.wanderAngle;
-        this.vx += (Math.cos(this.angle) * 3.5 - this.vx) * 0.05;
-        this.vy += (Math.sin(this.angle) * 3.5 - this.vy) * 0.05;
+        this.vx += (Math.cos(this.angle) * 1.8 - this.vx) * 0.05;
+        this.vy += (Math.sin(this.angle) * 1.8 - this.vy) * 0.05;
       }
     }
 
@@ -237,24 +237,16 @@ export class Scarab implements Hazard {
     if (!this.isAlive) return;
     const ctx = renderer.ctx;
 
+    // 1. Draw Stolen Powerup carried in mandibles
+    if (this.hasPowerup && this.storedPowerup) {
+      this.storedPowerup.x = this.x + Math.cos(this.angle) * 26;
+      this.storedPowerup.y = this.y + Math.sin(this.angle) * 26;
+      this.storedPowerup.draw(renderer);
+    }
+
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-
-    // 1. Draw Stolen Powerup carried in mandibles
-    if (this.hasPowerup && this.storedPowerup) {
-      ctx.save();
-      ctx.translate(28, 0);
-      const pulse = Math.sin(this.cycle * 0.2) * 2;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-10 - pulse / 2, -10 - pulse / 2, 20 + pulse, 20 + pulse);
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
 
     // 2. Draw Authentic Scarab Carapace & Segmented Legs
     ctx.save();
