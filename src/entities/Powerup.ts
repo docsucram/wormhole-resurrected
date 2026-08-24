@@ -379,12 +379,12 @@ export class Powerup {
 
         // Emergency escalation depending on match time (legacy PowerupSprite.java:148-171)
         if (candidate === 3) {
-          if (elapsedSec > 120) candidate = 6;
-          else if (elapsedSec > 80 && Math.random() < 0.75 && Powerup.powerupRule === 'EXTENDED') candidate = 14;
+          if (elapsedSec > 120) candidate = 6; // Escalates into HeatSeeker
+          else if (elapsedSec > 80 && Math.random() < 0.75) candidate = 14; // Escalates into Nuke
         } else if (candidate === 4) {
-          if (elapsedSec > 120) candidate = 7;
+          if (elapsedSec > 120) candidate = 7; // Escalates into Turret
         } else if (candidate === 5) {
-          if (elapsedSec > 60 && Powerup.powerupRule === 'EXTENDED') candidate = 14;
+          if (elapsedSec > 60) candidate = 14; // Escalates into Nuke
         }
 
         valid = true;
@@ -392,17 +392,13 @@ export class Powerup {
 
       type = candidate;
     } else {
-      // 66.7% Chance: Offensive Sendable Hazards
-      if (Powerup.powerupRule === 'EXTENDED') {
-        // Extended: All 14 hazards (6..19) including Nuke (14)
-        type = 6 + Math.floor(Math.random() * 14);
-        if (type === 14 && Math.random() < 0.5) {
-          type = 6 + Math.floor(Math.random() * 14);
-        }
-      } else {
-        // Standard: 13 hazards (6..19 excluding Nuke 14)
-        const standardHazards = [6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19];
-        type = standardHazards[Math.floor(Math.random() * standardHazards.length)];
+      // 66.7% Chance: Offensive Hazards (11 in Standard: 6..16; 14 in Extended: 6..19)
+      const hazardCount = Powerup.powerupRule === 'EXTENDED' ? 14 : 11;
+      type = 6 + Math.floor(Math.random() * hazardCount);
+
+      // Authentic Nuke rarity damping (legacy PowerupSprite.java:178):
+      if (type === 14 && Math.random() < 0.5) {
+        type = 6 + Math.floor(Math.random() * hazardCount);
       }
     }
 

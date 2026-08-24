@@ -766,7 +766,7 @@ class WormholeGame {
       card.className = 'match-row-card';
 
       const sizeLabel = match.size === 'SMALL' ? '2-P DUEL' : match.size === 'MEDIUM' ? '4-P BATTLE' : match.size === 'LARGE' ? '6-P ARENA' : '8-P MEGA';
-      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (14)' : match.powerupRule === 'EXTENDED' ? 'EXTENDED (20)' : 'PURE DOGFIGHT';
+      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (17)' : match.powerupRule === 'EXTENDED' ? 'EXTENDED (20)' : 'PURE DOGFIGHT';
       const isFull = match.currentPlayers >= match.maxPlayers;
 
       card.innerHTML = `
