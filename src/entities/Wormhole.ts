@@ -176,12 +176,12 @@ export class Wormhole {
 
     const time = this.cycle * 0.012; // Majestic cosmic rotation
 
-    // 1. Deep Cosmic Cauldron Vortex Streams (3 Tiers of 3 Arms: Vibrant -> Mid-Saturation -> Pastel Glow)
+    // 1. Deep Cosmic Cauldron Vortex Streams (3 Tiers of 3 Arms with Differential Rotation)
     ctx.save();
     const tiers = [
-      { sat: 1.0, width: 2.2, alpha: 0.85, offset: 0, steps: 28, maxDist: 2.1 },
-      { sat: 0.65, width: 1.8, alpha: 0.6, offset: (Math.PI * 2) / 9, steps: 25, maxDist: 1.9 },
-      { sat: 0.35, width: 1.3, alpha: 0.42, offset: (Math.PI * 4) / 9, steps: 22, maxDist: 1.7 },
+      { sat: 1.0, width: 2.2, alpha: 0.85, offset: 0, steps: 28, maxDist: 2.1, rotSpeed: 1.35 },
+      { sat: 0.65, width: 1.8, alpha: 0.6, offset: (Math.PI * 2) / 9, steps: 25, maxDist: 1.9, rotSpeed: 1.05 },
+      { sat: 0.35, width: 1.3, alpha: 0.42, offset: (Math.PI * 4) / 9, steps: 22, maxDist: 1.7, rotSpeed: 0.80 },
     ];
 
     for (const tier of tiers) {
@@ -190,12 +190,12 @@ export class Wormhole {
       ctx.globalAlpha = tier.alpha;
 
       for (let arm = 0; arm < 3; arm++) {
-        const baseAngle = arm * ((Math.PI * 2) / 3) + tier.offset + time * 1.2;
+        const baseAngle = arm * ((Math.PI * 2) / 3) + tier.offset + time * tier.rotSpeed;
         ctx.beginPath();
         for (let s = 0; s < tier.steps; s++) {
           const theta = baseAngle + s * 0.14;
           const rx = 18 + s * tier.maxDist;
-          const ry = rx * 0.48; // flat 2:1 accretion plane
+          const ry = rx * 0.45; // flat 2.2:1 elliptical accretion plane
           const px = Math.cos(theta) * rx;
           const py = Math.sin(theta) * ry;
           if (s === 0) ctx.moveTo(px, py);
