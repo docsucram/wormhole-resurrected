@@ -336,7 +336,7 @@ export class Powerup {
     renderer.ctx.restore();
   }
 
-  public static powerupRule: 'STANDARD' | 'EXTENDED' | 'DOGFIGHT' | 'NO_NUKES' = 'STANDARD';
+  public static powerupRule: 'STANDARD' | 'EXTENDED' = 'STANDARD';
   public static allPowerupsAllowed = true;
 
   public static spawnRandom(
@@ -349,14 +349,7 @@ export class Powerup {
   ): Powerup {
     let type = 0;
 
-    if (Powerup.powerupRule === 'DOGFIGHT' || Powerup.powerupRule === 'NO_NUKES') {
-      // Pure Dogfight: 100% Ship Utility & Cannon Upgrades (0..5), 0 Hazards
-      let candidate = Math.floor(Math.random() * 6);
-      if (candidate === 0 && playerContext && (playerContext.bulletLevel ?? 1) >= 3) candidate = 1;
-      if (candidate === 1 && playerContext && playerContext.isMaxThrust) candidate = 3;
-      if (candidate === 2 && playerContext && playerContext.hasRetros) candidate = 5;
-      type = candidate;
-    } else if (Math.random() < 0.333) {
+    if (Math.random() < 0.333) {
       // 33.3% Chance: Defensive & Upgrade pool (0..5)
       let candidate = 0;
       let valid = false;
