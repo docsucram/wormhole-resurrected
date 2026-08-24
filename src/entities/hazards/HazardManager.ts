@@ -283,6 +283,19 @@ export class HazardManager {
         }
       }
 
+      // Intercept incoming Heat Seeker Missiles with player laser fire
+      if (!hit && missiles) {
+        for (let mIdx = missiles.length - 1; mIdx >= 0; mIdx--) {
+          const mis = missiles[mIdx];
+          if (mis.isAlive && Collision.testCircleCircle(b.x, b.y, b.size + 4, mis.x, mis.y, mis.radius || 10)) {
+            mis.takeDamage(b.damage, particles, sound);
+            missiles.splice(mIdx, 1);
+            hit = true;
+            break;
+          }
+        }
+      }
+
       if (hit) {
         bullets.splice(i, 1);
       }

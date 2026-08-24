@@ -9,11 +9,12 @@ export class HeatSeekerMissile {
   public angle = 0; // in radians
   public maxSpeed = 7.5;
   public thrust = 0.25;
-  public turnSpeed = (18 * Math.PI) / 180; // 18 deg per frame
+  public turnSpeed = (12 * Math.PI) / 180; // 12 deg per frame (authentic slingshot overshoot)
   public damage = 12;
   public life = 5.5;
   public isAlive = true;
   public color = '#00ffff';
+  public radius = 10;
   public wormholeImmunity = 0.8; // Ignore wormhole collision for first 0.8s so it escapes
 
   private joints: Point2D[] = [];
@@ -43,6 +44,16 @@ export class HeatSeekerMissile {
     }
   }
 
+  public takeDamage(_dmg: number, particles: any, sound: any): void {
+    this.isAlive = false;
+    if (particles && particles.createExplosion) {
+      particles.createExplosion(this.x, this.y, this.color, 10);
+    }
+    if (sound && sound.playExplosion) {
+      sound.playExplosion(false);
+    }
+  }
+
   public update(dt: number, targetX?: number, targetY?: number): boolean {
     this.life -= dt;
     if (this.wormholeImmunity > 0) this.wormholeImmunity -= dt;
@@ -52,10 +63,14 @@ export class HeatSeekerMissile {
       return false;
     }
 
+    // Natural fluid aerodynamic drag allowing overshoots & slingshot loops
+    this.vx *= 0.988;
+    this.vy *= 0.988;
+
     if (this.burstDelay > 0) {
       this.burstDelay -= dt * 60;
     } else if (targetX !== undefined && targetY !== undefined) {
-      // Actively track target player
+      // Actively track target player with clamped turn arc
       const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
       let diff = targetAngle - this.angle;
       while (diff < -Math.PI) diff += Math.PI * 2;

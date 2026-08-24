@@ -955,6 +955,7 @@ class WormholeGame {
     };
 
     this.addChatLog(`${botName} joined the arena.`, 'bot');
+    this.triggerBotJoinChat(botName);
     this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty);
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
@@ -1196,6 +1197,51 @@ class WormholeGame {
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
+  private triggerBotJoinChat(botName: string): void {
+    const greetings = [
+      'Vector core online. Ready for battle.',
+      'Target lock acquired. Good luck, pilot.',
+      'Subspace thrusters primed. Let\'s dance.',
+      'Combat subroutines active. Show me what you\'ve got!',
+      'Sensors calibrated. Ready to deploy.',
+      'Reactor hot. Prepare for dogfight!',
+    ];
+    const msg = greetings[Math.floor(Math.random() * greetings.length)];
+    setTimeout(() => {
+      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+    }, 400);
+  }
+
+  private triggerBotKillChat(botName: string): void {
+    const taunts = [
+      'Calculation complete. Direct hit!',
+      'Too slow on the retro thrusters!',
+      'Trajectory intercepted. Better luck next round!',
+      'Shields depleted. Flawless strike.',
+      'Got you in my crosshairs!',
+      'Target neutralized.',
+    ];
+    const msg = taunts[Math.floor(Math.random() * taunts.length)];
+    setTimeout(() => {
+      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+    }, 300);
+  }
+
+  private triggerBotDeathChat(botName: string): void {
+    const reactions = [
+      'Hull integrity failure... good shot!',
+      'Critical damage! Recalibrating next round...',
+      'Shield collapsed! You\'ll pay for that!',
+      'Wormhole backlash... impressive maneuvering!',
+      'Power diverted... see you next round!',
+      'My reactor! Well played, pilot.',
+    ];
+    const msg = reactions[Math.floor(Math.random() * reactions.length)];
+    setTimeout(() => {
+      this.addChatLog(`${botName}: "${msg}"`, 'bot');
+    }, 300);
+  }
+
   private setupMatchCallbacks(): void {
     const countdownEl = document.getElementById('countdown-overlay')!;
     const matchModal = document.getElementById('match-modal')!;
@@ -1298,8 +1344,20 @@ class WormholeGame {
 
       if (isLocalWin) {
         this.sound.playVictoryFanfare();
+        const activeBot = this.tablePlayers.find((p) => p && p.isBot);
+        if (activeBot) {
+          setTimeout(() => {
+            this.addChatLog(`${activeBot.name}: "Match concluded. Commendable piloting, human."`, 'bot');
+          }, 600);
+        }
       } else {
         this.sound.playDefeatFanfare();
+        const winningBot = this.tablePlayers.find((p) => p && p.isBot);
+        if (winningBot) {
+          setTimeout(() => {
+            this.addChatLog(`${winningBot.name}: "Match finalized. Dominance confirmed!"`, 'bot');
+          }, 600);
+        }
       }
     };
   }
@@ -1310,6 +1368,12 @@ class WormholeGame {
     }
 
     this.addChatLog('Your ship was destroyed!', 'system');
+
+    // Trigger bot taunt on player elimination
+    const activeBot = this.tablePlayers.find((p) => p && p.isBot && p.isAlive);
+    if (activeBot) {
+      this.triggerBotKillChat(activeBot.name);
+    }
 
     // 1. Register opponent kill so stats & scores are synchronized across all elements
     if (this.isLanMatchHost) {
@@ -1425,6 +1489,7 @@ class WormholeGame {
     const botPlayer = this.tablePlayers[botSlot];
     const botName = botPlayer ? botPlayer.name : 'Opponent';
     this.addChatLog(`${botName} was destroyed!`, 'system');
+    this.triggerBotDeathChat(botName);
     this.sound.playExplosion(true);
 
     if (this.tablePlayers[botSlot]) {
