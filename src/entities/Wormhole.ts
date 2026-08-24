@@ -153,21 +153,6 @@ export class Wormhole {
     ctx.restore();
   }
 
-  private hexToRgb(hex: string): [number, number, number] {
-    let c = hex.replace('#', '');
-    if (c.length === 3) c = c.split('').map((x) => x + x).join('');
-    const num = parseInt(c, 16) || 0;
-    return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
-  }
-
-  private getTierColor(hex: string, sat: number): string {
-    const [r, g, b] = this.hexToRgb(hex);
-    const nr = Math.round(r * sat + 255 * (1 - sat));
-    const ng = Math.round(g * sat + 255 * (1 - sat));
-    const nb = Math.round(b * sat + 255 * (1 - sat));
-    return `rgb(${nr}, ${ng}, ${nb})`;
-  }
-
   public draw(renderer: VectorRenderer): void {
     if (!this.isAlive) return;
     const ctx = renderer.ctx;
@@ -176,33 +161,25 @@ export class Wormhole {
 
     const time = this.cycle * 0.012; // Majestic cosmic rotation
 
-    // 1. Deep Cosmic Cauldron Vortex Streams (3 Tiers of 3 Arms with Differential Rotation)
+    // 1. Deep Cosmic Cauldron Vortex Streams (Graceful, Powerful Gravitational Inflow)
     ctx.save();
-    const tiers = [
-      { sat: 1.0, width: 2.2, alpha: 0.85, offset: 0, steps: 28, maxDist: 2.1, rotSpeed: 1.35 },
-      { sat: 0.65, width: 1.8, alpha: 0.6, offset: (Math.PI * 2) / 9, steps: 25, maxDist: 1.9, rotSpeed: 1.05 },
-      { sat: 0.35, width: 1.3, alpha: 0.42, offset: (Math.PI * 4) / 9, steps: 22, maxDist: 1.7, rotSpeed: 0.80 },
-    ];
-
-    for (const tier of tiers) {
-      ctx.strokeStyle = this.getTierColor(this.color, tier.sat);
-      ctx.lineWidth = tier.width;
-      ctx.globalAlpha = tier.alpha;
-
-      for (let arm = 0; arm < 3; arm++) {
-        const baseAngle = arm * ((Math.PI * 2) / 3) + tier.offset + time * tier.rotSpeed;
-        ctx.beginPath();
-        for (let s = 0; s < tier.steps; s++) {
-          const theta = baseAngle + s * 0.14;
-          const rx = 18 + s * tier.maxDist;
-          const ry = rx * 0.45; // flat 2.2:1 elliptical accretion plane
-          const px = Math.cos(theta) * rx;
-          const py = Math.sin(theta) * ry;
-          if (s === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.stroke();
+    for (let arm = 0; arm < 6; arm++) {
+      const baseAngle = arm * (Math.PI / 3) + time * 1.2;
+      ctx.beginPath();
+      for (let s = 0; s < 26; s++) {
+        const theta = baseAngle + s * 0.14;
+        const rx = 18 + s * 2.0;
+        const ry = rx * 0.48; // flat 2:1 accretion plane
+        const px = Math.cos(theta) * rx;
+        const py = Math.sin(theta) * ry;
+        if (s === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
       }
+      const isMajor = arm % 2 === 0;
+      ctx.strokeStyle = isMajor ? this.color : '#ffffff';
+      ctx.lineWidth = isMajor ? 2.0 : 1.2;
+      ctx.globalAlpha = isMajor ? 0.6 : 0.35;
+      ctx.stroke();
     }
     ctx.restore();
 
