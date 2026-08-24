@@ -5,7 +5,7 @@ const os = require('os');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, 'dist');
 
 const MIME_TYPES = {
@@ -266,7 +266,9 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  Press Ctrl + C in this window to stop the server.');
   console.log('================================================================\n');
 
-  // Auto-launch default browser on host machine
-  const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  exec(`${startCmd} http://localhost:${PORT}`);
+  // Auto-launch default browser on host machine (local development only)
+  if (!process.env.RENDER && !process.env.PORT) {
+    const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+    exec(`${startCmd} http://localhost:${PORT}`);
+  }
 });

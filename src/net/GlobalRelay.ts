@@ -8,6 +8,7 @@ export class GlobalRelay {
   private clientId: string;
   private topic = 'wormhole_resurrected/v1/hub';
   private canonicalBroker = 'wss://broker.emqx.io:8084/mqtt';
+  private retryCount = 0;
   private pingInterval: any = null;
   private reconnectTimer: any = null;
   private onMessageCallback: ((data: any) => void) | null = null;
@@ -28,18 +29,25 @@ export class GlobalRelay {
     }
 
     const host = window.location.hostname;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const isLocalLan = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
+    const isRenderHosted = host.includes('onrender.com');
 
-    if (isLocalLan) {
-      // 1. Try local Node.js WebSocket relay first
+    if (isLocalLan || isRenderHosted) {
+      // 1. Direct dedicated Node.js WebSocket relay (LAN or Render)
       this.isMqttMode = false;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const localUrl = `${protocol}//${window.location.host}/lan-relay`;
       this.initWebSocket(localUrl, false);
     } else {
-      // 2. Connect to canonical global public MQTT over WebSocket broker
-      this.isMqttMode = true;
-      this.initWebSocket(this.canonicalBroker, true);
+      // 2. Connect to dedicated Render WebSocket relay from Cloudflare / web (with MQTT fallback)
+      if (this.retryCount > 2) {
+        this.isMqttMode = true;
+        this.initWebSocket(this.canonicalBroker, true);
+      } else {
+        this.isMqttMode = false;
+        const renderRelayUrl = `wss://wormhole-resurrected.onrender.com/lan-relay`;
+        this.initWebSocket(renderRelayUrl, false);
+      }
     }
   }
 
