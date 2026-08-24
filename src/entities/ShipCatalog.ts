@@ -42,15 +42,7 @@ export class ShipCatalog {
     return ship;
   }
 
-  public static isShipUnlocked(shipId: number, totalWins = 0): boolean {
-    const config = SHIP_CONFIGS[shipId];
-    if (!config) return false;
-    if (config.unlockedByDefault) return true;
-    if (shipId === 3) return totalWins >= 1;
-    if (shipId === 4) return totalWins >= 2;
-    if (shipId === 5) return totalWins >= 3;
-    if (shipId === 6) return totalWins >= 4;
-    if (shipId === 7) return totalWins >= 5;
-    return false;
+  public static isShipUnlocked(_shipId: number, _totalWins = 0): boolean {
+    return true; // All 8 fighter classes immediately unlocked for full tactical variety
   }
 }

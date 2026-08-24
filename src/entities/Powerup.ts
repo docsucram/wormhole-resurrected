@@ -336,6 +336,7 @@ export class Powerup {
     renderer.ctx.restore();
   }
 
+  public static powerupRule: 'STANDARD' | 'EXTENDED' | 'DOGFIGHT' | 'NO_NUKES' = 'STANDARD';
   public static allPowerupsAllowed = true;
 
   public static spawnRandom(
@@ -346,10 +347,16 @@ export class Powerup {
     vx?: number,
     vy?: number
   ): Powerup {
-    // Exact replica of legacy PowerupSprite.genPowerup() algorithm with smart maxed-upgrade rerolling:
     let type = 0;
 
-    if (Math.random() < 0.333) {
+    if (Powerup.powerupRule === 'DOGFIGHT' || Powerup.powerupRule === 'NO_NUKES') {
+      // Pure Dogfight: 100% Ship Utility & Cannon Upgrades (0..5), 0 Hazards
+      let candidate = Math.floor(Math.random() * 6);
+      if (candidate === 0 && playerContext && (playerContext.bulletLevel ?? 1) >= 3) candidate = 1;
+      if (candidate === 1 && playerContext && playerContext.isMaxThrust) candidate = 3;
+      if (candidate === 2 && playerContext && playerContext.hasRetros) candidate = 5;
+      type = candidate;
+    } else if (Math.random() < 0.333) {
       // 33.3% Chance: Defensive & Upgrade pool (0..5)
       let candidate = 0;
       let valid = false;
@@ -361,29 +368,23 @@ export class Powerup {
 
         // Smart reroll check matching legacy PowerupSprite.java:136-146
         if (candidate === 0 && playerContext && (playerContext.bulletLevel ?? 1) >= 3) {
-          // Max shot upgrade reached -> reroll
           continue;
         }
         if (candidate === 1 && playerContext && playerContext.isMaxThrust) {
-          // Max thrust upgrade reached -> reroll
           continue;
         }
         if (candidate === 2 && playerContext && playerContext.hasRetros) {
-          // Retros already installed -> reroll
           continue;
         }
 
         // Emergency escalation depending on match time (legacy PowerupSprite.java:148-171)
         if (candidate === 3) {
-          // Shield
-          if (elapsedSec > 120) candidate = 6; // Escalates into HeatSeeker
-          else if (elapsedSec > 80 && Math.random() < 0.75) candidate = 14; // Escalates into Nuke
+          if (elapsedSec > 120) candidate = 6;
+          else if (elapsedSec > 80 && Math.random() < 0.75 && Powerup.powerupRule === 'EXTENDED') candidate = 14;
         } else if (candidate === 4) {
-          // Zap Attack
-          if (elapsedSec > 120) candidate = 7; // Escalates into Turret
+          if (elapsedSec > 120) candidate = 7;
         } else if (candidate === 5) {
-          // Extra Health
-          if (elapsedSec > 60) candidate = 14; // Escalates into Nuke
+          if (elapsedSec > 60 && Powerup.powerupRule === 'EXTENDED') candidate = 14;
         }
 
         valid = true;
@@ -391,14 +392,17 @@ export class Powerup {
 
       type = candidate;
     } else {
-      // 66.7% Chance: Offensive Sendable Hazards (6..19 if allPowerupsAllowed else 6..16)
-      const hazardCount = Powerup.allPowerupsAllowed ? 14 : 11;
-      type = 6 + Math.floor(Math.random() * hazardCount);
-
-      // Authentic Nuke rarity damping (legacy PowerupSprite.java:178):
-      // 50% chance to re-roll if Nuke (14) is picked, keeping Nukes half as frequent in normal rotation
-      if (type === 14 && Math.random() < 0.5) {
-        type = 6 + Math.floor(Math.random() * hazardCount);
+      // 66.7% Chance: Offensive Sendable Hazards
+      if (Powerup.powerupRule === 'EXTENDED') {
+        // Extended: All 14 hazards (6..19) including Nuke (14)
+        type = 6 + Math.floor(Math.random() * 14);
+        if (type === 14 && Math.random() < 0.5) {
+          type = 6 + Math.floor(Math.random() * 14);
+        }
+      } else {
+        // Standard: 13 hazards (6..19 excluding Nuke 14)
+        const standardHazards = [6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19];
+        type = standardHazards[Math.floor(Math.random() * standardHazards.length)];
       }
     }
 

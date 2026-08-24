@@ -45,7 +45,7 @@ export interface LobbyMatch {
   password?: string;
   size: 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
   targetWins: number;
-  powerupRule: 'STANDARD' | 'EXTENDED' | 'NO_NUKES';
+  powerupRule: 'STANDARD' | 'EXTENDED' | 'DOGFIGHT' | 'NO_NUKES';
   shipRestriction: 'STANDARD' | 'ALL';
   botDifficulty: BotDifficulty | 'none';
   maxPlayers: number;
@@ -766,7 +766,7 @@ class WormholeGame {
       card.className = 'match-row-card';
 
       const sizeLabel = match.size === 'SMALL' ? '2-P DUEL' : match.size === 'MEDIUM' ? '4-P BATTLE' : match.size === 'LARGE' ? '6-P ARENA' : '8-P MEGA';
-      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (14)' : match.powerupRule === 'EXTENDED' ? 'EXTENDED (20)' : 'NO NUKES';
+      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (14)' : match.powerupRule === 'EXTENDED' ? 'EXTENDED (20)' : 'PURE DOGFIGHT';
       const isFull = match.currentPlayers >= match.maxPlayers;
 
       card.innerHTML = `
@@ -844,6 +844,8 @@ class WormholeGame {
   public joinLobbyMatch(match: LobbyMatch): void {
     this.currentMatchConfig = match;
     this.currentArenaSize = match.size;
+    Powerup.powerupRule = match.powerupRule;
+    Powerup.allPowerupsAllowed = match.powerupRule === 'EXTENDED';
     const sizeCfg = GAME_CONSTANTS.SIZES[this.currentArenaSize as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
     this.arenaRing.setDimensions(sizeCfg.orbitDistance, sizeCfg.boardWidth, sizeCfg.boardHeight);
     this.hazardManager.arenaBound = sizeCfg.boardWidth / 2;
@@ -1842,7 +1844,7 @@ class WormholeGame {
         const nameInput = (document.getElementById('host-match-name') as HTMLInputElement).value.trim() || `${this.playerName}'s Match`;
         const sizeSelect = (document.getElementById('host-match-size') as HTMLSelectElement).value as 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
         const winsSelect = parseInt((document.getElementById('host-target-wins') as HTMLSelectElement).value, 10) || 5;
-        const pupsSelect = (document.getElementById('host-powerup-pool') as HTMLSelectElement).value as 'STANDARD' | 'EXTENDED' | 'NO_NUKES';
+        const pupsSelect = (document.getElementById('host-powerup-pool') as HTMLSelectElement).value as 'STANDARD' | 'EXTENDED' | 'DOGFIGHT';
         const shipSelect = (document.getElementById('host-ship-restriction') as HTMLSelectElement).value as 'STANDARD' | 'ALL';
         const botDiff = (document.getElementById('host-bot-diff') as HTMLSelectElement).value as BotDifficulty | 'none';
         const passInput = (document.getElementById('host-match-password') as HTMLInputElement).value.trim();
