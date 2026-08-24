@@ -142,36 +142,17 @@ export class Wormhole {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    const time = this.cycle * 0.012; // Slow, majestic cosmic rotation
+    const time = this.cycle * 0.012; // Majestic cosmic rotation
 
-    // 1. Concentric Resonance Ring Torus (Authentic Centerfleet Torus Band)
-    ctx.save();
-    const numRings = 14;
-    for (let i = 0; i < numRings; i++) {
-      const t = i / (numRings - 1);
-      const rx = 28 + t * 32; // spans 28px to 60px radius (56px to 120px total width)
-      const ry = 13 + t * 15; // spans 13px to 28px radius (26px to 56px total height)
-      const wave = Math.sin(time * 3.0 + i * 0.45);
-      const alpha = 0.25 + wave * 0.18 + (1 - t) * 0.2;
-
-      ctx.strokeStyle = this.color;
-      ctx.lineWidth = 1.4;
-      ctx.globalAlpha = Math.max(0.1, Math.min(0.85, alpha));
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // 2. Cosmic Cauldron Vortex Streams (Swirling accretion inflow across the 120x60 torus)
+    // 1. Deep Cosmic Cauldron Vortex Streams (Graceful, Powerful Gravitational Inflow)
     ctx.save();
     for (let arm = 0; arm < 6; arm++) {
       const baseAngle = arm * (Math.PI / 3) + time * 1.2;
       ctx.beginPath();
-      for (let s = 0; s < 28; s++) {
-        const theta = baseAngle + s * 0.15;
-        const rx = 28 + s * 1.15;
-        const ry = rx * 0.46; // flat accretion aspect ratio
+      for (let s = 0; s < 26; s++) {
+        const theta = baseAngle + s * 0.14;
+        const rx = 18 + s * 2.0;
+        const ry = rx * 0.48; // flat 2:1 accretion plane
         const px = Math.cos(theta) * rx;
         const py = Math.sin(theta) * ry;
         if (s === 0) ctx.moveTo(px, py);
@@ -179,49 +160,41 @@ export class Wormhole {
       }
       const isMajor = arm % 2 === 0;
       ctx.strokeStyle = isMajor ? this.color : '#ffffff';
-      ctx.lineWidth = isMajor ? 1.8 : 1.0;
-      ctx.globalAlpha = isMajor ? 0.6 : 0.3;
+      ctx.lineWidth = isMajor ? 2.0 : 1.2;
+      ctx.globalAlpha = isMajor ? 0.6 : 0.35;
       ctx.stroke();
     }
     ctx.restore();
 
-    // 3. Central Pitch-Black Event Horizon Void Shadow
+    // 2. Central Pitch-Black Event Horizon Void Shadow
     ctx.fillStyle = '#010206';
     ctx.globalAlpha = 1.0;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 27, 12.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Razor-Sharp Scorching Photon Sphere Boundary
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 27, 12.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = 1.4;
-    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.6;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 31, 14.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 25, 18, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 4. Outer Torus Edge Boundary Line
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 1.8;
-    ctx.globalAlpha = 0.85;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 60, 28, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 5. Event-Horizon Powerup Harvest Damage Indicator Arc
+    // 3. Tight Event-Horizon Powerup Harvest Damage Indicator Arc
     const dmgRatio = Math.min(1.0, this.damageTaken / this.damageThreshold);
     if (dmgRatio > 0) {
       ctx.strokeStyle = dmgRatio > 0.8 ? '#ff3344' : '#00ffcc';
-      ctx.lineWidth = 2.4;
+      ctx.lineWidth = 1.8;
       ctx.globalAlpha = 0.95;
       ctx.beginPath();
-      ctx.ellipse(0, 0, 62, 29.5, 0, -Math.PI / 2, -Math.PI / 2 + dmgRatio * Math.PI * 2);
+      ctx.ellipse(0, 0, 26.5, 19.5, 0, -Math.PI / 2, -Math.PI / 2 + dmgRatio * Math.PI * 2);
       ctx.stroke();
     }
 
@@ -231,7 +204,7 @@ export class Wormhole {
     renderer.drawGlowText(
       `${this.ownerName.toUpperCase()}'S WORMHOLE`,
       0,
-      48,
+      46,
       'bold 11px "Courier New", monospace',
       this.color,
       this.glowColor,

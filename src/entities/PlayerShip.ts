@@ -628,7 +628,7 @@ export class PlayerShip {
       poly,
       this.x,
       this.y,
-      1.5,
+      1.0,
       color.primary,
       color.glow,
       2.0,
