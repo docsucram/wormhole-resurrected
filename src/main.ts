@@ -217,22 +217,27 @@ class WormholeGame {
         seed: Math.floor(Math.random() * 10000),
       };
 
-      if (this.isLanMatchHost || this.isLanMatchClient) {
-        if (this.currentMatchConfig) {
-          this.sendLanPacket({
-            type: 'MATCH_PACKET',
-            matchId: this.currentMatchConfig.id,
-            fromSlot: this.player.slot,
-            packet: {
-              type: 'WARP_HAZARD',
-              payload: warpPayload,
-            },
-          });
-        }
-      } else if (this.network.isConnected) {
-        this.network.sendWarpHazard(warpPayload);
-      } else {
+      const targetPlayer = this.tablePlayers[targetSlot];
+      const isTargetBot = targetPlayer ? targetPlayer.isBot : (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected);
+
+      if (isTargetBot || (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected)) {
         this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetSlot);
+      } else {
+        if (this.isLanMatchHost || this.isLanMatchClient) {
+          if (this.currentMatchConfig) {
+            this.sendLanPacket({
+              type: 'MATCH_PACKET',
+              matchId: this.currentMatchConfig.id,
+              fromSlot: this.player.slot,
+              packet: {
+                type: 'WARP_HAZARD',
+                payload: warpPayload,
+              },
+            });
+          }
+        } else if (this.network.isConnected) {
+          this.network.sendWarpHazard(warpPayload);
+        }
       }
       this.addChatLog(`Punted Ghost-Pud -> Slot ${targetSlot + 1}'s Wormhole!`, 'player');
     };
@@ -2924,22 +2929,27 @@ class WormholeGame {
                   seed: Math.floor(Math.random() * 10000),
                 };
 
-                if (this.isLanMatchHost || this.isLanMatchClient) {
-                  if (this.currentMatchConfig) {
-                    this.sendLanPacket({
-                      type: 'MATCH_PACKET',
-                      matchId: this.currentMatchConfig.id,
-                      fromSlot: this.player.slot,
-                      packet: {
-                        type: 'WARP_HAZARD',
-                        payload: warpPayload,
-                      },
-                    });
-                  }
-                } else if (this.network.isConnected) {
-                  this.network.sendWarpHazard(warpPayload);
-                } else {
+                const targetPlayer = this.tablePlayers[targetWh.slot];
+                const isTargetBot = targetPlayer ? targetPlayer.isBot : (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected);
+
+                if (isTargetBot || (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected)) {
                   this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetWh.slot);
+                } else {
+                  if (this.isLanMatchHost || this.isLanMatchClient) {
+                    if (this.currentMatchConfig) {
+                      this.sendLanPacket({
+                        type: 'MATCH_PACKET',
+                        matchId: this.currentMatchConfig.id,
+                        fromSlot: this.player.slot,
+                        packet: {
+                          type: 'WARP_HAZARD',
+                          payload: warpPayload,
+                        },
+                      });
+                    }
+                  } else if (this.network.isConnected) {
+                    this.network.sendWarpHazard(warpPayload);
+                  }
                 }
 
                 this.gameState.stats.p1HazardsSent++;
