@@ -272,6 +272,7 @@ export class SimulatedRealm {
         const botTargets = [
           ...realm.wormholes.map((wh) => ({ x: wh.x, y: wh.y })),
           ...realm.hazardManager.hazards.map((h) => ({ x: h.x, y: h.y })),
+          ...realm.missiles.map((m) => ({ x: m.x, y: m.y })),
         ];
 
         realm.botShip.update(
@@ -433,10 +434,10 @@ export class SimulatedRealm {
         }
       }
 
-      // 6. Update Missiles
+      // 6. Update Missiles (actively homing onto AI bot ship)
       for (let i = realm.missiles.length - 1; i >= 0; i--) {
         const m = realm.missiles[i];
-        if (!m.update(dt)) {
+        if (!m.update(dt, realm.botShip.isAlive ? realm.botShip.x : undefined, realm.botShip.isAlive ? realm.botShip.y : undefined)) {
           realm.missiles.splice(i, 1);
           continue;
         }
