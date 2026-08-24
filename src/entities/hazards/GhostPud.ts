@@ -21,6 +21,8 @@ export class GhostPud implements Hazard {
   public slot = 1;
   public powerupType = 18;
   public isIndestructible = true; // Authentic GhostPud is immune to standard bullets
+  public age = 0;
+  public wasPuntedByPlayer = false;
 
   private cycle = 0;
   private bound = 420;
@@ -67,6 +69,7 @@ export class GhostPud implements Hazard {
   ): boolean {
     if (!this.isAlive) return false;
 
+    this.age += dt;
     this.cycle += dt * 60;
 
     this.x += this.vx * dt * 60;
@@ -95,6 +98,7 @@ export class GhostPud implements Hazard {
 
   public onHitByBullet(bullet: Bullet, particles: ParticleSystem, sound: SoundEngine): void {
     // Bullets bounce / punt GhostPud (authentic behavior)
+    this.wasPuntedByPlayer = true;
     this.vx += bullet.vx * 0.25;
     this.vy += bullet.vy * 0.25;
     particles.createExplosion(this.x, this.y, '#ffffff', 6);

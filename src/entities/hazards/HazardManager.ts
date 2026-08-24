@@ -124,8 +124,11 @@ export class HazardManager {
         break;
       }
       case 18: {
-        // Ghost-Pud
-        this.hazards.push(new GhostPud(x, y, Math.random() * Math.PI * 2, slot, this.arenaBound));
+        // Ghost-Pud (spawn slightly outside the event horizon with outward velocity)
+        const outwardAngle = Math.atan2(y, x) + (Math.random() - 0.5) * 0.5;
+        const spawnX = x + Math.cos(outwardAngle) * 60;
+        const spawnY = y + Math.sin(outwardAngle) * 60;
+        this.hazards.push(new GhostPud(spawnX, spawnY, outwardAngle, slot, this.arenaBound));
         break;
       }
       case 19: {
@@ -195,8 +198,8 @@ export class HazardManager {
         continue;
       }
 
-      // Authentic Ghost Pud wormhole ingestion (punted by lasers into wormholes)
-      if (wormholes && wormholes.length > 0 && h instanceof GhostPud && h.isAlive) {
+      // Authentic Ghost Pud wormhole ingestion (only after 2.5s and punted by player lasers)
+      if (wormholes && wormholes.length > 0 && h instanceof GhostPud && h.isAlive && h.age > 2.5 && h.wasPuntedByPlayer) {
         for (const wh of wormholes) {
           const dx = (h.x - wh.x) / (wh.width / 2);
           const dy = (h.y - wh.y) / (wh.height / 2);
