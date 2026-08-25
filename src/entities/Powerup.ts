@@ -229,9 +229,31 @@ export class Powerup {
         break;
       }
       case 7: {
-        // Portal Turret
-        renderer.drawGlowCircle(0, 2, 5, this.color, this.color, 2);
-        renderer.drawGlowLine(0, -8, 0, 2, '#ffffff', this.color, 2.5);
+        // Portal Turret: Swept crescent station with twin turret pods
+        renderer.ctx.save();
+        renderer.ctx.beginPath();
+        const pts: [number, number][] = [
+          [-6, 0],
+          [-2, -5],
+          [6, -7],
+          [3, -2],
+          [3, 2],
+          [6, 7],
+          [-2, 5],
+        ];
+        for (let i = 0; i < pts.length; i++) {
+          if (i === 0) renderer.ctx.moveTo(pts[i][0], pts[i][1]);
+          else renderer.ctx.lineTo(pts[i][0], pts[i][1]);
+        }
+        renderer.ctx.closePath();
+        renderer.ctx.strokeStyle = this.color;
+        renderer.ctx.lineWidth = 1.8;
+        renderer.ctx.stroke();
+
+        // Twin glowing turret pods
+        renderer.drawGlowCircle(0, -2.5, 2, '#ffffff', this.color, 1);
+        renderer.drawGlowCircle(0, 2.5, 2, '#ffffff', this.color, 1);
+        renderer.ctx.restore();
         break;
       }
       case 8: {
