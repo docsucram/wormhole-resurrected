@@ -24,6 +24,7 @@ export class Inflator implements Hazard {
 
   private perceivedSize = 20;
   private cycle = 0;
+  private growthPauseTimer = 0;
   public bound = 650;
 
   constructor(x: number, y: number, slot = 1, bound = 650) {
@@ -45,15 +46,19 @@ export class Inflator implements Hazard {
 
     this.cycle += dt * 60;
 
-    // Authentic InflatorSprite.java expansion: grows continuously (+3.5 HP/sec) unless shot down
-    this.health += dt * 3.5;
-    this.maxHealth = Math.max(this.maxHealth, this.health);
+    // Authentic fast growth (+16.0 HP/sec) up to massive radius 240px, paused when actively damaged
+    if (this.growthPauseTimer > 0) {
+      this.growthPauseTimer -= dt;
+    } else {
+      this.health = Math.min(240, this.health + dt * 16.0);
+      this.maxHealth = Math.max(this.maxHealth, this.health);
+    }
 
-    // Catch up perceivedSize with health
+    // Catch up perceivedSize with health smoothly and rapidly
     if (this.perceivedSize > this.health) {
-      this.perceivedSize = Math.max(8, this.perceivedSize - dt * 25);
+      this.perceivedSize = Math.max(8, this.perceivedSize - dt * 45);
     } else if (this.perceivedSize < this.health) {
-      this.perceivedSize = Math.min(this.health, this.perceivedSize + dt * 10);
+      this.perceivedSize = Math.min(this.health, this.perceivedSize + dt * 20);
     }
 
     this.radius = 10 + this.perceivedSize;
@@ -88,6 +93,8 @@ export class Inflator implements Hazard {
     sound: SoundEngine,
     powerups?: Powerup[]
   ): void {
+    // Interruption stun window: pause growth on hit so continuous fire deflates it
+    this.growthPauseTimer = 0.5;
     this.health -= dmg;
     this.perceivedSize = Math.max(8, this.health);
     particles.createExplosion(this.x, this.y, this.color, 5);

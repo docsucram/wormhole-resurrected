@@ -245,6 +245,28 @@ export class HazardManager {
       }
     }
 
+    // 3.5 Mutual soft-body separation between overlapping Inflators
+    for (let i = 0; i < this.hazards.length; i++) {
+      const hA = this.hazards[i];
+      if (!hA.isAlive || !(hA instanceof Inflator)) continue;
+      for (let j = i + 1; j < this.hazards.length; j++) {
+        const hB = this.hazards[j];
+        if (!hB.isAlive || !(hB instanceof Inflator)) continue;
+        const dx = hB.x - hA.x;
+        const dy = hB.y - hA.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const minDist = (hA.radius + hB.radius) * 0.75;
+        if (dist < minDist) {
+          const overlap = (minDist - dist) / minDist;
+          const force = overlap * dt * 80.0;
+          hA.vx -= (dx / dist) * force;
+          hA.vy -= (dy / dist) * force;
+          hB.vx += (dx / dist) * force;
+          hB.vy += (dy / dist) * force;
+        }
+      }
+    }
+
     // 4. Update active mines
     for (let i = this.mines.length - 1; i >= 0; i--) {
       const m = this.mines[i];
@@ -274,12 +296,12 @@ export class HazardManager {
           } else {
             h.takeDamage(b.damage, particles, sound, powerups);
           }
-          // If Inflator, also apply splash damage to overlapping Inflators in cluster
+          // If Inflator, apply full impact damage and growth pause to all overlapping Inflators in cluster
           if (h instanceof Inflator) {
             for (const other of this.hazards) {
               if (other !== h && other.isAlive && other instanceof Inflator) {
-                if (Collision.testCircleCircle(b.x, b.y, b.size + 20, other.x, other.y, other.radius)) {
-                  other.takeDamage(b.damage * 0.5, particles, sound, powerups);
+                if (Collision.testCircleCircle(b.x, b.y, b.size + 35, other.x, other.y, other.radius)) {
+                  other.takeDamage(b.damage, particles, sound, powerups);
                 }
               }
             }
