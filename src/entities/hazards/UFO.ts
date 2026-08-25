@@ -132,8 +132,6 @@ export class UFO implements Hazard {
     // 1. Authentic Flat Saucer Oval (60x26) from UFOSprite.java
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.0;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(10, 25, 45, 0.85)';
 
     ctx.beginPath();

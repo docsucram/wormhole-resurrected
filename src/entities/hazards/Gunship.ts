@@ -213,8 +213,6 @@ export class Gunship implements Hazard {
     // 1. Draw Authentic Battleship Cruiser Hull Polygon
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.0;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(8, 18, 32, 0.9)';
 
     ctx.beginPath();

@@ -265,8 +265,6 @@ export class WallCrawler implements Hazard {
     // Draw authentic WallCrawler polygon
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.0;
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(8, 20, 36, 0.9)';
 
     ctx.beginPath();

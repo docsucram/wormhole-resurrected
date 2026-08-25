@@ -118,10 +118,8 @@ export class GhostPud implements Hazard {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    // 1. Central glowing nucleus core
+    // 1. Central nucleus core
     ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = this.color;
     ctx.beginPath();
     ctx.arc(0, 0, 8, 0, Math.PI * 2);
     ctx.fill();

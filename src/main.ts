@@ -3473,6 +3473,9 @@ class WormholeGame {
       if (this.inArena) {
         this.renderer.pushCamera(this.camX, this.camY, this.zoom);
 
+        // =========================================================
+        // PASS 1: STANDARD SOLID / BASE WIREFRAMES (source-over)
+        // =========================================================
         const borderCol = (PLAYER_COLORS[this.selectedColorIndex] || PLAYER_COLORS[0]).primary;
         this.arenaRing.draw(this.renderer, borderCol);
 
@@ -3485,17 +3488,31 @@ class WormholeGame {
         }
 
         this.hazardManager.draw(this.renderer);
+        this.player.draw(this.renderer);
 
-        for (const b of this.bullets) {
-          b.draw(this.renderer);
-        }
+        // =========================================================
+        // PASS 2: GLOBAL ADDITIVE BLOOM (Switched ONCE for glow/bullets/sparks)
+        // =========================================================
+        const ctx = this.renderer.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        // 1. Batched Bullets (All colors in unified passes - 0% blur stall)
+        Bullet.drawAll(this.bullets, this.renderer);
+
+        // 2. Missiles & Trails
         for (const m of this.missiles) {
           m.draw(this.renderer);
         }
 
-        this.player.draw(this.renderer);
-        this.particles.draw(this.renderer);
+        // 3. Batched Particles & Needle Sparks
+        this.particles.drawDirect(this.renderer);
 
+        ctx.restore(); // Switched back to source-over ONCE
+
+        // =========================================================
+        // PASS 3: FOREGROUND OVERLAYS & TEXT POPUPS (source-over)
+        // =========================================================
         for (const pop of this.popups) {
           pop.draw(this.renderer);
         }

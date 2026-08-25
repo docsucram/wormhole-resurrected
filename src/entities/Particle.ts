@@ -485,6 +485,13 @@ export class ParticleSystem {
     }
   }
 
+  public drawDirect(renderer: VectorRenderer): void {
+    if (this.particles.length === 0) return;
+    for (const p of this.particles) {
+      p.draw(renderer);
+    }
+  }
+
   public draw(renderer: VectorRenderer): void {
     if (this.particles.length === 0) return;
 

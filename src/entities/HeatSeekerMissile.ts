@@ -112,8 +112,6 @@ export class HeatSeekerMissile {
     // Segmented neon trail
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.0;
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = this.color;
 
     ctx.beginPath();
     ctx.moveTo(this.joints[0].x, this.joints[0].y);

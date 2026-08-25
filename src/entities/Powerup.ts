@@ -325,12 +325,10 @@ export class Powerup {
       }
     }
 
-    // 3. Clear Glowing Floating Label Below Powerup
+    // 3. Clear Floating Label Below Powerup
     renderer.ctx.font = 'bold 9px Orbitron, sans-serif';
     renderer.ctx.textAlign = 'center';
     renderer.ctx.fillStyle = '#ffffff';
-    renderer.ctx.shadowBlur = 6;
-    renderer.ctx.shadowColor = this.color;
     renderer.ctx.fillText(this.shortTag, 0, currentRadius + 11);
 
     renderer.ctx.restore();

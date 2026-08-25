@@ -691,8 +691,6 @@ export class PlayerShip {
 
     const fillCol = hpRatio > 0.4 ? '#33ff33' : hpRatio > 0.2 ? '#ffee00' : '#ff3344';
     ctx.fillStyle = fillCol;
-    ctx.shadowBlur = 6;
-    ctx.shadowColor = fillCol;
     const fillH = barH * hpRatio;
     ctx.fillRect(barX, barY + (barH - fillH), barW, fillH);
     ctx.restore();
