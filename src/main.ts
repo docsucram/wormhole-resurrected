@@ -239,6 +239,11 @@ class WormholeGame {
       this.handlePlayerElimination();
     };
 
+    this.hazardManager.onScarabDeploy = (stolenType: number, sourceWh: Wormhole) => {
+      this.showAlert(`SCARAB TRIGGERED // ${POWERUP_NAMES[stolenType] || 'HAZARD'} DEPLOYED FROM ${sourceWh.ownerName.toUpperCase()}!`);
+      this.addChatLog(`Scarab activated ${POWERUP_NAMES[stolenType] || 'Hazard'} against you!`, 'bot', this.getPlayerColor(sourceWh.slot));
+    };
+
     this.hazardManager.onWarpHazard = (hazardType: number, targetSlot: number) => {
       const warpPayload: WarpPayload = {
         hazardId: `haz-${Date.now()}-${Math.random()}`,

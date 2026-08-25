@@ -27,7 +27,7 @@ export class Scarab implements Hazard {
 
   public bound = 650;
   public parentWormhole?: Wormhole;
-  public onWarpHazard?: (hazardType: number, targetSlot: number) => void;
+  public onDeployHazard?: (hazardType: number, sourceWormhole: Wormhole) => void;
 
   public hasPowerup = false;
   public storedPowerup: Powerup | null = null;
@@ -58,14 +58,14 @@ export class Scarab implements Hazard {
     parentWormhole?: Wormhole,
     slot = 1,
     bound = 650,
-    onWarpHazard?: (hazardType: number, targetSlot: number) => void
+    onDeployHazard?: (hazardType: number, sourceWormhole: Wormhole) => void
   ) {
     this.x = x;
     this.y = y;
     this.parentWormhole = parentWormhole;
     this.slot = slot;
     this.bound = bound;
-    this.onWarpHazard = onWarpHazard;
+    this.onDeployHazard = onDeployHazard;
     this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
     this.wanderAngle = Math.random() * Math.PI * 2;
   }
@@ -84,7 +84,7 @@ export class Scarab implements Hazard {
     this.cycle += dt * 60;
 
     if (this.hasPowerup && this.storedPowerup) {
-      // 1. CARRYING POWERUP: Fly back to sender's wormhole to deposit and trigger hazard!
+      // 1. CARRYING POWERUP: Fly back to sender's wormhole to deposit and deploy hazard against player!
       const targetWh = (this.parentWormhole && this.parentWormhole.isAlive) 
         ? this.parentWormhole 
         : (wormholes && wormholes.find(w => w.isAlive) ? wormholes.find(w => w.isAlive)! : null);
@@ -100,13 +100,13 @@ export class Scarab implements Hazard {
         this.vy += (Math.sin(this.angle) * speed - this.vy) * 0.08;
 
         if (dist < 45) {
-          // Deposit powerup into wormhole!
+          // Deposit stolen powerup into wormhole -> immediately deploys hazard into current arena against player!
           const stolenType = this.storedPowerup.type;
           targetWh.absorbPowerupShot(stolenType, particles, sound);
           sound.playWormholeCharge();
 
-          if (this.onWarpHazard) {
-            this.onWarpHazard(stolenType, targetWh.slot);
+          if (this.onDeployHazard) {
+            this.onDeployHazard(stolenType, targetWh);
           }
 
           particles.createExplosion(this.x, this.y, this.color, 24);

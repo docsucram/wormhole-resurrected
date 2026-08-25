@@ -28,6 +28,7 @@ export class HazardManager {
   public mines: Mine[] = [];
   public arenaBound = 505;
   public onWarpHazard?: (hazardType: number, targetSlot: number) => void;
+  public onScarabDeploy?: (hazardType: number, sourceWormhole: Wormhole) => void;
 
   constructor(arenaBound = 505) {
     this.arenaBound = arenaBound;
@@ -99,7 +100,22 @@ export class HazardManager {
         for (let i = 0; i < 2; i++) {
           const offsetX = (Math.random() - 0.5) * 40;
           const offsetY = (Math.random() - 0.5) * 40;
-          this.hazards.push(new Scarab(x + offsetX, y + offsetY, sourceWormhole, slot, this.arenaBound, this.onWarpHazard));
+          this.hazards.push(
+            new Scarab(
+              x + offsetX,
+              y + offsetY,
+              sourceWormhole,
+              slot,
+              this.arenaBound,
+              (stolenType, wh) => {
+                // Deploy the stolen hazard right here in this arena from the wormhole!
+                this.spawnHazard(stolenType, wh, _targetPlayer, missiles);
+                if (this.onScarabDeploy) {
+                  this.onScarabDeploy(stolenType, wh);
+                }
+              }
+            )
+          );
         }
         break;
       }
