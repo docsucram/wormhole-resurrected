@@ -179,9 +179,10 @@ class WormholeGame {
     // Create Local Player Ship in orbit
     this.player = new PlayerShip(
       this.selectedShipIndex,
-      this.selectedColorIndex,
       0,
-      -initialSize.orbitDistance
+      0,
+      -initialSize.orbitDistance,
+      this.selectedColorIndex
     );
     this.player.onDeath = () => this.handlePlayerElimination();
 
@@ -973,7 +974,8 @@ class WormholeGame {
   }
 
   private initTableRoster(): void {
-    this.player.slot = this.selectedColorIndex;
+    this.player.slot = 0;
+    this.player.colorIndex = this.selectedColorIndex;
     this.simulatedRealm.clearAllBots();
     this.tablePlayers = new Array(8).fill(null);
     // Slot 0: Local Player
@@ -1123,7 +1125,7 @@ class WormholeGame {
     const activeOpponents: TablePlayer[] = [];
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
-      if (p && p.slot !== this.player.slot) {
+      if (p && !p.isLocal && p.slot !== this.player.slot) {
         activeOpponents.push(p);
       }
     }
@@ -2667,8 +2669,8 @@ class WormholeGame {
       }
     }
 
-    // 2. Update local player ship slot & tablePlayer color
-    this.player.slot = newColor;
+    // 2. Update local player ship color & tablePlayer color (preserving seat slot 0)
+    this.player.colorIndex = newColor;
     if (this.tablePlayers[0]) {
       this.tablePlayers[0].color = PLAYER_COLORS[newColor].primary;
     }

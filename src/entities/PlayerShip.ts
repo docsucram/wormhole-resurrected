@@ -65,10 +65,12 @@ export class PlayerShip {
   private thrustCount = 0;
   public isAlive = true;
   public onDeath?: () => void;
+  public colorIndex = 0;
 
-  constructor(shipId = 1, slot = 0, x = 0, y = 0) {
+  constructor(shipId = 1, slot = 0, x = 0, y = 0, colorIndex = slot) {
     this.shipId = shipId;
     this.slot = slot;
+    this.colorIndex = colorIndex;
     this.x = x;
     this.y = y;
     this.compiled = ShipCatalog.get(shipId);
@@ -274,8 +276,8 @@ export class PlayerShip {
   private firePrimary(bullets: Bullet[], sound: SoundEngine, particles?: ParticleSystem): void {
     this.shotCooldown = 0.14;
     const speed = 14.0;
-    const color = (PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary;
-    const glow = (PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).glow;
+    const color = (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary;
+    const glow = (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).glow;
 
     const cos = Math.cos(this.angle);
     const sin = Math.sin(this.angle);
@@ -596,7 +598,7 @@ export class PlayerShip {
   public draw(renderer: VectorRenderer): void {
     if (!this.isAlive) return;
 
-    const color = PLAYER_COLORS[this.slot] || PLAYER_COLORS[0];
+    const color = PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0];
 
     // 1. Draw Attractor / Repulser Field if Flagship special is active
     if (this.isAttractorActive) {
