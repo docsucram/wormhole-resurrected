@@ -602,6 +602,47 @@
         font-weight: bold;
       }
 
+      /* Color Palette Swatches */
+      .color-palette-bar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .color-swatch-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.12s ease-out;
+        position: relative;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+      }
+
+      .color-swatch-btn:hover {
+        transform: scale(1.18);
+        border-color: #ffffff;
+      }
+
+      .color-swatch-btn.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 14px currentColor, inset 0 0 4px #ffffff;
+        transform: scale(1.15);
+      }
+
+      .color-swatch-btn.active::after {
+        content: '✓';
+        font-size: 11px;
+        font-weight: 900;
+        color: #000000;
+        text-shadow: 0 0 2px #ffffff;
+      }
+
       .ship-detail-card {
         background: #040916;
         border: 1px solid rgba(0, 229, 255, 0.25);
@@ -1657,6 +1698,12 @@
             <!-- 4x2 Ship Selection Grid -->
             <div class="ship-grid-4x2" id="hangar-ship-bar"></div>
 
+            <!-- Pilot Laser / Realm Color Palette -->
+            <div style="background: rgba(4, 9, 22, 0.7); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #88bbdd; letter-spacing: 1px;">PILOT COLOR:</span>
+              <div class="color-palette-bar" id="hangar-color-bar"></div>
+            </div>
+
             <!-- Selected Ship Detail Card -->
             <div class="ship-detail-card">
               <div class="hologram-box">
@@ -2019,7 +2066,7 @@
       <div class="manual-tabs" style="margin-bottom: 14px;">
         <button class="manual-tab-btn active" id="opt-tab-btn-keys" data-opttab="opt-tab-keys">⌨ KEYBOARD</button>
         <button class="manual-tab-btn" id="opt-tab-btn-gamepad" data-opttab="opt-tab-gamepad">🎮 CONTROLLER</button>
-        <button class="manual-tab-btn" id="opt-tab-btn-display" data-opttab="opt-tab-display">🖥 HUD & AUDIO</button>
+        <button class="manual-tab-btn" id="opt-tab-btn-display" data-opttab="opt-tab-display">🖥 GRAPHICS & DISPLAY</button>
       </div>
 
       <!-- Tab 1: Keyboard Keybindings -->
@@ -2059,8 +2106,24 @@
         </div>
       </div>
 
-      <!-- Tab 3: Display & Audio -->
+      <!-- Tab 3: Graphics & Display -->
       <div class="opt-tab-pane" id="opt-tab-display" style="display: none; text-align: left; max-height: 48vh; overflow-y: auto; padding-right: 6px;">
+        <!-- Neon Vector Glow Slider -->
+        <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: #ffffff;">NEON VECTOR GLOW INTENSITY</div>
+              <div style="font-size: 10px; color: #94a3b8;">Adjust laser bloom and vector phosphor aura</div>
+            </div>
+            <span id="opt-glow-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 9px; font-weight: 800; color: #64748b;">OFF</span>
+            <input type="range" id="opt-glow-slider" min="0" max="2.0" step="0.1" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+            <span style="font-size: 9px; font-weight: 800; color: #64748b;">ULTRA</span>
+          </div>
+        </div>
+
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
           <div>
             <div style="font-size: 12px; font-weight: 800; color: #ffffff;">FPS & PERFORMANCE COUNTER</div>
@@ -2088,10 +2151,16 @@
 
       <div style="font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; color: #ffffff; margin: 10px 0;" id="stat-final-score">5 - 2</div>
 
-      <!-- In-Modal Ship Selector -->
-      <div style="margin: 10px 0 14px 0; background: rgba(0, 0, 0, 0.4); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.2);">
-        <div style="font-size: 10px; font-weight: 800; color: #88bbdd; margin-bottom: 6px; letter-spacing: 1px;">SELECT SHIP CLASS:</div>
-        <div class="modal-ship-grid" id="modal-match-ship-bar" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;"></div>
+      <!-- In-Modal Ship & Color Selector -->
+      <div style="margin: 10px 0 14px 0; background: rgba(0, 0, 0, 0.4); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.2); display: flex; flex-direction: column; gap: 8px;">
+        <div>
+          <div style="font-size: 10px; font-weight: 800; color: #88bbdd; margin-bottom: 6px; letter-spacing: 1px;">SELECT SHIP CLASS:</div>
+          <div class="modal-ship-grid" id="modal-match-ship-bar" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;"></div>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 9px; font-weight: 800; color: #88bbdd; letter-spacing: 1px;">PILOT COLOR:</span>
+          <div class="color-palette-bar" id="modal-match-color-bar"></div>
+        </div>
       </div>
 
       <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px;">
@@ -2109,7 +2178,13 @@
 
       <!-- Rich In-Game Ship Selector with Rotating Wireframe & Stats -->
       <div style="background: rgba(4, 12, 28, 0.9); border: 1.5px solid rgba(0, 229, 255, 0.35); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
-        <div style="font-size: 10px; font-weight: 800; color: #88bbdd; letter-spacing: 1px; margin-bottom: 6px; text-align: left;">DEPLOY FIGHTER CLASS:</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <div style="font-size: 10px; font-weight: 800; color: #88bbdd; letter-spacing: 1px;">DEPLOY FIGHTER CLASS:</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 8px; font-weight: 800; color: #88bbdd; letter-spacing: 0.5px;">COLOR:</span>
+            <div class="color-palette-bar" id="modal-round-color-bar"></div>
+          </div>
+        </div>
         <div class="modal-ship-grid" id="modal-round-ship-bar" style="display: flex; gap: 5px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 10px;"></div>
 
         <!-- 2-Column Hologram & Spec Inspector -->

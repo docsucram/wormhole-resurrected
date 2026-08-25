@@ -33,7 +33,8 @@ export class Wormhole {
     slot = 0,
     startDegrees = 0,
     orbitRadius = 270,
-    warpIn = true
+    warpIn = true,
+    customColor?: string
   ) {
     this.ownerName = ownerName;
     this.slot = slot;
@@ -43,9 +44,14 @@ export class Wormhole {
     this.warpDist = warpIn ? 0 : orbitRadius;
     this.isAlive = true;
 
-    const colorProfile = PLAYER_COLORS[slot % PLAYER_COLORS.length];
-    this.color = colorProfile.primary;
-    this.glowColor = colorProfile.glow;
+    if (customColor) {
+      this.color = customColor;
+      this.glowColor = customColor;
+    } else {
+      const colorProfile = PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0];
+      this.color = colorProfile.primary;
+      this.glowColor = colorProfile.glow;
+    }
 
     this.updatePosition();
   }

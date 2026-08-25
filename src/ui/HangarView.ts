@@ -1,9 +1,10 @@
 import { VectorRenderer } from '../graphics/VectorRenderer';
 import { ShipCatalog, CompiledShip } from '../entities/ShipCatalog';
+import { PLAYER_COLORS } from '../core/Constants';
 
 export class HangarView {
-  private canvas: HTMLCanvasElement;
-  private renderer: VectorRenderer;
+  public canvas: HTMLCanvasElement;
+  public renderer: VectorRenderer;
   public selectedShipIndex = 0; // Default to The Tank
   public selectedColorIndex = 0; // Default to Cyan
   private rotationAngle = 0;
@@ -77,9 +78,11 @@ export class HangarView {
     const cy = this.renderer.height / 2;
 
     const ship = this.getSelectedShip();
-    const neonGreen = '#00ff88';
+    const colorProfile = PLAYER_COLORS[this.selectedColorIndex % PLAYER_COLORS.length] || PLAYER_COLORS[0];
+    const shipColor = colorProfile.primary;
+    const shipGlow = colorProfile.glow;
 
-    // 1. Draw 3D Rotating Ship Mesh in pure neon green wireframe
+    // 1. Draw 3D Rotating Ship Mesh in selected player color wireframe
     const poly = ship.visualPoly.clone();
     poly.setAngle(this.rotationAngle);
 
@@ -90,8 +93,8 @@ export class HangarView {
       cx,
       cy,
       scale,
-      neonGreen,
-      neonGreen,
+      shipColor,
+      shipGlow,
       2.4,
       true,
       'rgba(0, 255, 136, 0.04)'

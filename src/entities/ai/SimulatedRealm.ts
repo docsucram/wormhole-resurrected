@@ -108,9 +108,11 @@ export class SimulatedRealm {
     slot: number,
     name: string,
     shipId = 0,
-    difficulty: BotDifficulty = 'medium'
+    difficulty: BotDifficulty = 'medium',
+    colorIdx?: number
   ): BotRealmInstance {
-    const ship = new PlayerShip(shipId, slot, 0, this.orbitDistance);
+    const assignedSlot = colorIdx !== undefined ? colorIdx : slot;
+    const ship = new PlayerShip(shipId, assignedSlot, 0, this.orbitDistance);
     const controller = new BotController(difficulty);
     const wh = new Wormhole('PLAYER 1', 0, 0, this.orbitDistance, true);
     const hazards = new HazardManager(this.arenaBound);
@@ -147,7 +149,7 @@ export class SimulatedRealm {
   }
 
   public rebuildTableWormholes(
-    tablePlayers: Array<{ name: string; slot: number } | null>,
+    tablePlayers: Array<{ name: string; slot: number; color?: string } | null>,
     orbitDistance = this.orbitDistance
   ): void {
     this.orbitDistance = orbitDistance;
@@ -156,7 +158,7 @@ export class SimulatedRealm {
     for (const [slot, realm] of this.botRealms.entries()) {
       realm.wormholes = [];
 
-      const otherPlayers: Array<{ name: string; slot: number }> = [];
+      const otherPlayers: Array<{ name: string; slot: number; color?: string }> = [];
       for (let i = 0; i < tablePlayers.length; i++) {
         const p = tablePlayers[i];
         if (p && p.slot !== slot) {
@@ -171,7 +173,7 @@ export class SimulatedRealm {
         otherPlayers.forEach((other, idx) => {
           const angle = idx * angleStep;
           realm.wormholes.push(
-            new Wormhole(other.name, other.slot, angle, orbitDistance, true)
+            new Wormhole(other.name, other.slot, angle, orbitDistance, true, other.color)
           );
         });
       }

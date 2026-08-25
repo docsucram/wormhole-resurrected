@@ -33,6 +33,16 @@ export class VectorRenderer {
     this.resize();
   }
 
+  public setGlowIntensity(intensity: number): void {
+    if (intensity <= 0.01) {
+      this.options.enableGlow = false;
+      this.options.glowBlur = 0;
+    } else {
+      this.options.enableGlow = true;
+      this.options.glowBlur = Math.round(8 * intensity);
+    }
+  }
+
   public resize(): void {
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = this.canvas.getBoundingClientRect();

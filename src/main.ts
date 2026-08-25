@@ -169,6 +169,10 @@ class WormholeGame {
     const savedWins = localStorage.getItem('wh_total_wins');
     this.totalMatchWins = savedWins ? parseInt(savedWins, 10) : 0;
 
+    // Load persisted player color
+    const savedColor = localStorage.getItem('wh_selected_color');
+    this.selectedColorIndex = savedColor !== null ? parseInt(savedColor, 10) % PLAYER_COLORS.length : 0;
+
     ShipCatalog.initialize();
 
     // Create Local Player Ship in orbit
@@ -179,6 +183,14 @@ class WormholeGame {
       -initialSize.orbitDistance
     );
     this.player.onDeath = () => this.handlePlayerElimination();
+
+    this.hangarView.setColor(this.selectedColorIndex);
+    this.modalHangarView.setColor(this.selectedColorIndex);
+
+    // Apply persisted glow intensity
+    const savedGlow = localStorage.getItem('wh_opt_glow');
+    const initialGlow = savedGlow !== null ? parseFloat(savedGlow) : 1.0;
+    this.applyGlowIntensity(initialGlow);
 
     // Initialize 8-Player Arena Roster with Slot 0 as Local Player
     this.initTableRoster();
@@ -942,10 +954,11 @@ class WormholeGame {
   }
 
   private initTableRoster(): void {
-    this.player.slot = 0;
+    this.player.slot = this.selectedColorIndex;
     this.simulatedRealm.clearAllBots();
     this.tablePlayers = new Array(8).fill(null);
     // Slot 0: Local Player
+    const playerColor = (PLAYER_COLORS[this.selectedColorIndex] || PLAYER_COLORS[0]).primary;
     this.tablePlayers[0] = {
       slot: 0,
       name: this.playerName,
@@ -957,7 +970,7 @@ class WormholeGame {
       isAlive: true,
       rank: 0,
       wins: this.totalMatchWins,
-      color: PLAYER_COLORS[0].primary,
+      color: playerColor,
     };
   }
 
@@ -979,11 +992,31 @@ class WormholeGame {
     const waitOverlay = document.getElementById('waiting-pilots-overlay');
     if (waitOverlay) waitOverlay.style.display = 'none';
 
+    // Find all colors already in use by player or other active participants to ensure strict uniqueness
+    const takenColors = new Set<number>();
+    takenColors.add(this.selectedColorIndex);
+    for (let i = 0; i < 8; i++) {
+      const p = this.tablePlayers[i];
+      if (p) {
+        const cIdx = PLAYER_COLORS.findIndex((c) => c.primary.toLowerCase() === p.color.toLowerCase());
+        if (cIdx !== -1) takenColors.add(cIdx);
+      }
+    }
+
+    // Find first unused color
+    let botColorIdx = emptySlot % PLAYER_COLORS.length;
+    for (let c = 0; c < PLAYER_COLORS.length; c++) {
+      if (!takenColors.has(c)) {
+        botColorIdx = c;
+        break;
+      }
+    }
+    const botColor = (PLAYER_COLORS[botColorIdx] || PLAYER_COLORS[emptySlot % PLAYER_COLORS.length]).primary;
+
     const diffTag = difficulty === 'hard' ? 'HARD AI' : difficulty === 'easy' ? 'EASY AI' : 'MED AI';
     const botNames = ['Vector', 'Nova', 'Centurion', 'Viper', 'Aegis', 'Titan', 'Spectre'];
     const botName = `${botNames[(emptySlot - 1) % botNames.length]} [${diffTag}]`;
     const botShipId = (emptySlot - 1) % 8;
-    const botColor = (PLAYER_COLORS[emptySlot] || PLAYER_COLORS[0]).primary;
     const botShip = ShipCatalog.get(botShipId);
 
     this.tablePlayers[emptySlot] = {
@@ -1003,7 +1036,7 @@ class WormholeGame {
 
     this.addChatLog(`${botName} joined the arena.`, 'bot', botColor);
     this.triggerBotJoinChat(botName, emptySlot);
-    this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty);
+    this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty, botColorIdx);
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
 
@@ -1018,39 +1051,24 @@ class WormholeGame {
   }
 
   public removeBotFromTable(slot: number): void {
-    if (slot <= 0 || slot >= 8) return;
     const bot = this.tablePlayers[slot];
     if (!bot || !bot.isBot) return;
 
-    this.simulatedRealm.removeBotRealm(slot);
     this.tablePlayers[slot] = null;
-    this.addChatLog(`${bot.name} was removed from the match.`, 'system');
+    this.simulatedRealm.removeBotRealm(slot);
+    this.addChatLog(`${bot.name} left the arena.`, 'system');
 
-    // If no opponents remain, update waiting state
-    const remainingOpponents = this.tablePlayers.filter((p) => p !== null && !p.isLocal).length;
-    if (remainingOpponents === 0) {
-      if (this.isLanMatchHost || !this.network.isConnected) {
-        this.isMatchWaitingForPilots = true;
-        const waitOverlay = document.getElementById('waiting-pilots-overlay');
-        if (waitOverlay) waitOverlay.style.display = 'block';
-        const scoreEl = document.getElementById('round-modal-score');
-        if (scoreEl && this.gameState.phase === 'STANDBY') {
-          scoreEl.innerText = 'WAITING FOR OPPONENTS // CLICK + BOT TO ADD AI';
-        }
+    if (this.selectedOpponentSlot === slot) {
+      // Switch pip feed to next available opponent
+      const activeSlots: number[] = [];
+      for (let i = 1; i < 8; i++) {
+        if (this.tablePlayers[i]) activeSlots.push(i);
       }
+      this.selectedOpponentSlot = activeSlots.length > 0 ? activeSlots[0] : 1;
     }
 
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
-
-    // Update match count in lobby list if hosting
-    if (this.isLanMatchHost && this.currentMatchConfig) {
-      const activeCount = this.tablePlayers.filter((p) => p !== null).length;
-      this.currentMatchConfig.currentPlayers = activeCount;
-      const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
-      if (matchInList) matchInList.currentPlayers = activeCount;
-      this.broadcastMatches();
-    }
   }
 
   private cycleOpponent(direction: 1 | -1): void {
@@ -1063,8 +1081,12 @@ class WormholeGame {
     let idx = activeSlots.indexOf(this.selectedOpponentSlot);
     if (idx === -1) idx = 0;
     idx = (idx + direction + activeSlots.length) % activeSlots.length;
-    this.selectedOpponentSlot = activeSlots[idx];
+    this.setOpponentFeedSlot(activeSlots[idx]);
+  }
 
+  public setOpponentFeedSlot(slot: number): void {
+    if (slot === 0 || !this.tablePlayers[slot]) return;
+    this.selectedOpponentSlot = slot;
     const opp = this.tablePlayers[this.selectedOpponentSlot];
     const nameEl = document.getElementById('pip-opponent-name');
     if (nameEl && opp) {
@@ -1097,7 +1119,7 @@ class WormholeGame {
       activeOpponents.forEach((opp, idx) => {
         const angle = idx * angleStep;
         this.wormholes.push(
-          new Wormhole(opp.name, opp.slot, angle, orbitDistance, true)
+          new Wormhole(opp.name, opp.slot, angle, orbitDistance, true, opp.color)
         );
       });
     }
@@ -2301,6 +2323,26 @@ class WormholeGame {
       };
     }
 
+    // Glow Intensity Slider (Persistent)
+    const glowSlider = document.getElementById('opt-glow-slider') as HTMLInputElement | null;
+    const glowVal = document.getElementById('opt-glow-val');
+    const savedGlow = localStorage.getItem('wh_opt_glow');
+    const initialGlow = savedGlow !== null ? parseFloat(savedGlow) : 1.0;
+    if (glowSlider) {
+      glowSlider.value = initialGlow.toString();
+      if (glowVal) {
+        glowVal.innerText = initialGlow === 0 ? 'OFF' : `${Math.round(initialGlow * 100)}%`;
+      }
+      glowSlider.oninput = () => {
+        const val = parseFloat(glowSlider.value);
+        if (glowVal) {
+          glowVal.innerText = val === 0 ? 'OFF' : `${Math.round(val * 100)}%`;
+        }
+        this.applyGlowIntensity(val);
+        try { localStorage.setItem('wh_opt_glow', val.toString()); } catch {}
+      };
+    }
+
     // Stick Deadzone Slider (Persistent)
     const deadzoneSlider = document.getElementById('opt-stick-deadzone') as HTMLInputElement | null;
     const deadzoneVal = document.getElementById('opt-deadzone-val');
@@ -2485,7 +2527,127 @@ class WormholeGame {
     }
   }
 
+  public applyGlowIntensity(intensity: number): void {
+    if (this.renderer) {
+      this.renderer.setGlowIntensity(intensity);
+    }
+    if (this.pipRenderer) {
+      this.pipRenderer.setGlowIntensity(intensity);
+    }
+    if (this.hangarView && (this.hangarView as any).renderer) {
+      (this.hangarView as any).renderer.setGlowIntensity(intensity);
+    }
+    if (this.modalHangarView && (this.modalHangarView as any).renderer) {
+      (this.modalHangarView as any).renderer.setGlowIntensity(intensity);
+    }
+  }
+
+  public selectColor(colorIndex: number): void {
+    const newColor = (colorIndex + PLAYER_COLORS.length) % PLAYER_COLORS.length;
+    this.selectedColorIndex = newColor;
+    try {
+      localStorage.setItem('wh_selected_color', newColor.toString());
+    } catch {}
+
+    // 1. Ensure all participant colors are strictly unique
+    // Collect all colors used by player and peers/bots
+    const usedColors = new Set<number>();
+    usedColors.add(newColor); // Local player takes newColor
+
+    for (let i = 1; i < 8; i++) {
+      const p = this.tablePlayers[i];
+      if (!p) continue;
+      // Get current participant's color index
+      let pColorIdx = PLAYER_COLORS.findIndex(
+        (c) => c.primary.toLowerCase() === p.color.toLowerCase()
+      );
+      if (pColorIdx === -1) pColorIdx = p.slot % PLAYER_COLORS.length;
+
+      // If conflict with player's new color or another already-allocated color
+      if (usedColors.has(pColorIdx)) {
+        // Find first free unused color index [0..7]
+        let freeIdx = -1;
+        for (let c = 0; c < PLAYER_COLORS.length; c++) {
+          if (!usedColors.has(c)) {
+            freeIdx = c;
+            break;
+          }
+        }
+        if (freeIdx !== -1) {
+          p.color = PLAYER_COLORS[freeIdx].primary;
+          usedColors.add(freeIdx);
+          // If this is a bot simulated in simulatedRealm, update its botShip slot & color
+          const realm = this.simulatedRealm.botRealms.get(p.slot);
+          if (realm && realm.botShip) {
+            realm.botShip.slot = freeIdx;
+          }
+        }
+      } else {
+        usedColors.add(pColorIdx);
+      }
+    }
+
+    // 2. Update local player ship slot & tablePlayer color
+    this.player.slot = newColor;
+    if (this.tablePlayers[0]) {
+      this.tablePlayers[0].color = PLAYER_COLORS[newColor].primary;
+    }
+
+    // 3. Update Hangar 3D preview meshes
+    this.hangarView.setColor(newColor);
+    this.modalHangarView.setColor(newColor);
+
+    // 4. Update UI color swatches across all screens
+    this.syncColorSelectionUI(newColor);
+
+    // 5. Update Wormholes and Roster UI
+    this.rebuildTableWormholes();
+    this.updateTableRosterUI();
+  }
+
+  private buildColorSwatches(): void {
+    const hangarColorBar = document.getElementById('hangar-color-bar');
+    const modalRoundColorBar = document.getElementById('modal-round-color-bar');
+    const modalMatchColorBar = document.getElementById('modal-match-color-bar');
+
+    if (hangarColorBar) hangarColorBar.innerHTML = '';
+    if (modalRoundColorBar) modalRoundColorBar.innerHTML = '';
+    if (modalMatchColorBar) modalMatchColorBar.innerHTML = '';
+
+    PLAYER_COLORS.forEach((profile, index) => {
+      const createSwatch = (container: HTMLElement | null) => {
+        if (!container) return;
+        const btn = document.createElement('button');
+        btn.className = `color-swatch-btn ${index === this.selectedColorIndex ? 'active' : ''}`;
+        btn.style.backgroundColor = profile.primary;
+        btn.style.color = profile.primary;
+        btn.title = profile.name;
+        btn.dataset.colorIndex = index.toString();
+        btn.onclick = () => {
+          this.selectColor(index);
+          this.sound.playPowerup();
+        };
+        container.appendChild(btn);
+      };
+
+      createSwatch(hangarColorBar);
+      createSwatch(modalRoundColorBar);
+      createSwatch(modalMatchColorBar);
+    });
+
+    this.syncColorSelectionUI(this.selectedColorIndex);
+  }
+
+  private syncColorSelectionUI(selectedIndex: number): void {
+    document.querySelectorAll('.color-swatch-btn').forEach((btn) => {
+      const idx = parseInt((btn as HTMLElement).dataset.colorIndex || '0', 10);
+      btn.classList.toggle('active', idx === selectedIndex);
+    });
+  }
+
   private buildShipGrid(): void {
+    this.buildColorSwatches();
+
     const hangarShipBar = document.getElementById('hangar-ship-bar');
     const modalRoundBar = document.getElementById('modal-round-ship-bar');
     const modalMatchBar = document.getElementById('modal-match-ship-bar');
