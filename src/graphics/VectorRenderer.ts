@@ -123,48 +123,44 @@ export class VectorRenderer {
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
 
-    // 1. Outer Saturated Neon Aura Pass
-    if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 16;
-      this.ctx.shadowColor = glowColor;
-    } else {
-      this.ctx.shadowBlur = 0;
-    }
-
     const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
-    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
-      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
-      : lineWidth * this.options.lineWidthScale!;
+    const isGlowActive = this.options.enableGlow && intensity > 0.05;
 
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = auraWidth;
-
+    // Path geometry
     this.ctx.beginPath();
     this.ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
       this.ctx.lineTo(points[i].x, points[i].y);
     }
     this.ctx.closePath();
-    this.ctx.stroke();
 
-    // 2. White-Hot Searing Core Pass (Geometry Wars Aesthetic)
-    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
-      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
-      this.ctx.shadowColor = '#ffffff';
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        this.ctx.lineTo(points[i].x, points[i].y);
-      }
-      this.ctx.closePath();
+    // 1. Outer Radiant Saturated Aura Pass (GPU Additive Blending, 0% CPU Blur Stall)
+    if (isGlowActive) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = glowColor;
+      this.ctx.lineWidth = (lineWidth + 4.5 * intensity) * this.options.lineWidthScale!;
+      this.ctx.globalAlpha = Math.min(0.55, 0.28 * intensity);
       this.ctx.stroke();
+      this.ctx.restore();
     }
 
-    this.ctx.shadowBlur = 0;
-    this.ctx.shadowColor = 'transparent';
+    // 2. Main Vivid Color Core Stroke
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.stroke();
+
+    // 3. Softened Center Highlight Sheen (Subtle, never overpowering)
+    if (this.options.dualStrokeBloom && isGlowActive && intensity > 0.2) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(0.8, lineWidth * 0.45);
+      this.ctx.globalAlpha = Math.min(0.40, 0.20 * intensity);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
     this.ctx.restore();
   }
 
@@ -207,37 +203,39 @@ export class VectorRenderer {
       this.ctx.fill();
     }
 
-    if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 16;
-      this.ctx.shadowColor = glowColor;
-    } else {
-      this.ctx.shadowBlur = 0;
-    }
-
     const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
-    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
-      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
-      : lineWidth * this.options.lineWidthScale!;
+    const isGlowActive = this.options.enableGlow && intensity > 0.05;
 
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = auraWidth;
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    this.ctx.stroke();
 
-    // White-hot core
-    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
-      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
-      this.ctx.shadowColor = '#ffffff';
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
-      this.ctx.beginPath();
-      this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    // 1. Outer Radiant Aura Pass
+    if (isGlowActive) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = glowColor;
+      this.ctx.lineWidth = (lineWidth + 4.5 * intensity) * this.options.lineWidthScale!;
+      this.ctx.globalAlpha = Math.min(0.55, 0.28 * intensity);
       this.ctx.stroke();
+      this.ctx.restore();
     }
 
-    this.ctx.shadowBlur = 0;
-    this.ctx.shadowColor = 'transparent';
+    // 2. Primary Color Vector Stroke
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.stroke();
+
+    // 3. Subtle Luminous Core
+    if (this.options.dualStrokeBloom && isGlowActive && intensity > 0.2) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(0.8, lineWidth * 0.45);
+      this.ctx.globalAlpha = Math.min(0.40, 0.20 * intensity);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
     this.ctx.restore();
   }
 
@@ -255,36 +253,40 @@ export class VectorRenderer {
     lineWidth = 2
   ): void {
     this.ctx.save();
-    if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 16;
-      this.ctx.shadowColor = glowColor;
-    } else {
-      this.ctx.shadowBlur = 0;
-    }
 
     const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
-    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
-      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
-      : lineWidth * this.options.lineWidthScale!;
+    const isGlowActive = this.options.enableGlow && intensity > 0.05;
 
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = auraWidth;
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, radius, startAngle, endAngle);
-    this.ctx.stroke();
 
-    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
-      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
-      this.ctx.shadowColor = '#ffffff';
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
-      this.ctx.beginPath();
-      this.ctx.arc(cx, cy, radius, startAngle, endAngle);
+    // 1. Outer Radiant Aura Pass
+    if (isGlowActive) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = glowColor;
+      this.ctx.lineWidth = (lineWidth + 4.5 * intensity) * this.options.lineWidthScale!;
+      this.ctx.globalAlpha = Math.min(0.55, 0.28 * intensity);
       this.ctx.stroke();
+      this.ctx.restore();
     }
 
-    this.ctx.shadowBlur = 0;
-    this.ctx.shadowColor = 'transparent';
+    // 2. Primary Color Vector Stroke
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.stroke();
+
+    // 3. Subtle Luminous Core
+    if (this.options.dualStrokeBloom && isGlowActive && intensity > 0.2) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(0.8, lineWidth * 0.45);
+      this.ctx.globalAlpha = Math.min(0.40, 0.20 * intensity);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
     this.ctx.restore();
   }
 
@@ -301,39 +303,42 @@ export class VectorRenderer {
     lineWidth = 2
   ): void {
     this.ctx.save();
-    if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 16;
-      this.ctx.shadowColor = glowColor;
-    } else {
-      this.ctx.shadowBlur = 0;
-    }
 
     const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
-    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
-      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
-      : lineWidth * this.options.lineWidthScale!;
+    const isGlowActive = this.options.enableGlow && intensity > 0.05;
 
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = auraWidth;
     this.ctx.lineCap = 'round';
     this.ctx.beginPath();
     this.ctx.moveTo(x1, y1);
     this.ctx.lineTo(x2, y2);
-    this.ctx.stroke();
 
-    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
-      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
-      this.ctx.shadowColor = '#ffffff';
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
-      this.ctx.beginPath();
-      this.ctx.moveTo(x1, y1);
-      this.ctx.lineTo(x2, y2);
+    // 1. Outer Radiant Aura Pass
+    if (isGlowActive) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = glowColor;
+      this.ctx.lineWidth = (lineWidth + 4.5 * intensity) * this.options.lineWidthScale!;
+      this.ctx.globalAlpha = Math.min(0.55, 0.28 * intensity);
       this.ctx.stroke();
+      this.ctx.restore();
     }
 
-    this.ctx.shadowBlur = 0;
-    this.ctx.shadowColor = 'transparent';
+    // 2. Primary Color Vector Stroke
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.stroke();
+
+    // 3. Subtle Luminous Core
+    if (this.options.dualStrokeBloom && isGlowActive && intensity > 0.2) {
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'lighter';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(0.8, lineWidth * 0.45);
+      this.ctx.globalAlpha = Math.min(0.40, 0.20 * intensity);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
     this.ctx.restore();
   }
 

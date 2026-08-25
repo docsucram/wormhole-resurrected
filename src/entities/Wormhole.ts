@@ -166,32 +166,50 @@ export class Wormhole {
     ctx.translate(this.x, this.y);
 
     const time = this.cycle * 0.012; // Majestic cosmic rotation
+    const intensity = renderer.options.glowIntensity !== undefined ? renderer.options.glowIntensity : (renderer.options.enableGlow ? 1.0 : 0.0);
+    const isGlowActive = renderer.options.enableGlow && intensity > 0.05;
 
     // 1. Deep Cosmic Cauldron Vortex Streams (Graceful, Powerful Gravitational Inflow)
-    ctx.save();
-    if (renderer.options.enableGlow) {
-      ctx.shadowBlur = renderer.options.glowBlur || 16;
-      ctx.shadowColor = this.glowColor;
-    }
+    // Pre-calculate stream arm paths for multi-pass rendering
+    const armPaths: Path2D[] = [];
     for (let arm = 0; arm < 6; arm++) {
       const baseAngle = arm * (Math.PI / 3) + time * 1.2;
-      ctx.beginPath();
+      const path = new Path2D();
       for (let s = 0; s < 26; s++) {
         const theta = baseAngle + s * 0.14;
         const rx = 18 + s * 2.0;
         const ry = rx * 0.48; // flat 2:1 accretion plane
         const px = Math.cos(theta) * rx;
         const py = Math.sin(theta) * ry;
-        if (s === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        if (s === 0) path.moveTo(px, py);
+        else path.lineTo(px, py);
       }
+      armPaths.push(path);
+    }
+
+    // Pass 1: Outer Radiant Saturated Aura (GPU Additive Blending, 0% CPU Blur Stall)
+    if (isGlowActive) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let arm = 0; arm < 6; arm++) {
+        const isMajor = arm % 2 === 0;
+        ctx.strokeStyle = isMajor ? this.color : '#ffffff';
+        ctx.lineWidth = isMajor ? (2.0 + 4.5 * intensity) : (1.2 + 3.0 * intensity);
+        ctx.globalAlpha = isMajor ? Math.min(0.65, 0.35 * intensity) : Math.min(0.40, 0.20 * intensity);
+        ctx.stroke(armPaths[arm]);
+      }
+      ctx.restore();
+    }
+
+    // Pass 2: Main Vivid Vector Inflow Arms
+    ctx.save();
+    for (let arm = 0; arm < 6; arm++) {
       const isMajor = arm % 2 === 0;
       ctx.strokeStyle = isMajor ? this.color : '#ffffff';
       ctx.lineWidth = isMajor ? 2.0 : 1.2;
-      ctx.globalAlpha = isMajor ? 0.75 : 0.45;
-      ctx.stroke();
+      ctx.globalAlpha = isMajor ? 0.90 : 0.60;
+      ctx.stroke(armPaths[arm]);
     }
-    ctx.shadowBlur = 0;
     ctx.restore();
 
     // 2. Central Pitch-Black Event Horizon Void Shadow
@@ -202,27 +220,30 @@ export class Wormhole {
     ctx.fill();
 
     // Razor-Sharp Scorching Photon Sphere Boundary
-    if (renderer.options.enableGlow) {
-      ctx.shadowBlur = Math.round((renderer.options.glowBlur || 16) * 0.6);
-      ctx.shadowColor = '#ffffff';
+    if (isGlowActive) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = 2.0 + 4.0 * intensity;
+      ctx.globalAlpha = Math.min(0.60, 0.30 * intensity);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 24, 17, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
+
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.0;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    if (renderer.options.enableGlow) {
-      ctx.shadowBlur = renderer.options.glowBlur || 16;
-      ctx.shadowColor = this.glowColor;
-    }
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = 1.2;
     ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.ellipse(0, 0, 25, 18, 0, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
     // 3. Tight Event-Horizon Powerup Harvest Damage Indicator Arc
     const dmgRatio = Math.min(1.0, this.damageTaken / this.damageThreshold);

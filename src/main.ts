@@ -123,10 +123,11 @@ class WormholeGame {
   private snapshotTimer = 0;
   private rosterThrottleTimer = 0;
 
-  // Real-time FPS Monitoring
+  // Real-time FPS & Performance Diagnostics Monitoring
   private frameCount = 0;
   private fpsTimer = 0;
   private currentFps = 60;
+  private totalFrameExecTime = 0;
   private fpsElement: HTMLElement | null = null;
   private pipThrottleTimer = 0;
 
@@ -3511,18 +3512,24 @@ class WormholeGame {
 
     if (dt > 0.1) dt = 0.1;
 
-    // Real-time FPS Measurement (smooth 0.25s sample rate)
+    // Real-time FPS & Performance Diagnostics Measurement (smooth 0.25s sample rate)
     this.frameCount++;
     this.fpsTimer += dt;
     if (this.fpsTimer >= 0.25) {
       this.currentFps = Math.round(this.frameCount / this.fpsTimer);
+      const avgExecMs = this.frameCount > 0 ? (this.totalFrameExecTime / this.frameCount).toFixed(1) : '0.0';
+      const objCount = (this.hazardManager?.hazards?.length || 0) + (this.bullets?.length || 0) + (this.missiles?.length || 0) + (this.powerups?.length || 0);
+      const particleCount = this.particles?.particles?.length || 0;
+
       this.frameCount = 0;
       this.fpsTimer = 0;
+      this.totalFrameExecTime = 0;
+
       if (!this.fpsElement) {
         this.fpsElement = document.getElementById('fps-counter');
       }
       if (this.fpsElement) {
-        this.fpsElement.innerText = `FPS: ${this.currentFps}`;
+        this.fpsElement.innerText = `FPS: ${this.currentFps} | ${avgExecMs}ms | OBJ: ${objCount} | PT: ${particleCount}`;
         if (this.currentFps >= 55) {
           this.fpsElement.style.color = '#00ff88';
           this.fpsElement.style.borderColor = 'rgba(0, 255, 136, 0.4)';
@@ -3539,12 +3546,15 @@ class WormholeGame {
       }
     }
 
+    const t0 = performance.now();
     try {
       this.update(dt);
       this.render(dt);
     } catch (err) {
       console.error('Update/Render loop error:', err);
     }
+    const t1 = performance.now();
+    this.totalFrameExecTime += (t1 - t0);
   }
 }
 
