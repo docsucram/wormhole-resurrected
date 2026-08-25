@@ -13,7 +13,7 @@ import { SoundEngine } from './audio/SoundEngine';
 import { InputManager, InputAction } from './core/InputManager';
 import { HazardManager } from './entities/hazards/HazardManager';
 import { SimulatedRealm } from './entities/ai/SimulatedRealm';
-import { BotDifficulty } from './entities/ai/BotController';
+import { BotController, BotDifficulty } from './entities/ai/BotController';
 import { GameStateManager } from './core/GameState';
 import { HangarView } from './ui/HangarView';
 import { NetworkManager, WarpPayload } from './net/NetworkManager';
@@ -82,6 +82,8 @@ class WormholeGame {
   public playerName = 'BrightNomad';
   public totalMatchWins = 0;
   private localClientId = Math.random().toString(36).substring(2, 9);
+  public playerPilotMode: 'human' | 'easy' | 'medium' | 'hard' = 'human';
+  private playerBotController: BotController | null = null;
 
   // 8-Player Match Roster & Multi-Opponent PiP
   public tablePlayers: (TablePlayer | null)[] = new Array(8).fill(null);
@@ -2546,8 +2548,29 @@ class WormholeGame {
       }
     };
 
+    const pilotSelect = document.getElementById('spawner-pilot-select') as HTMLSelectElement;
+    if (pilotSelect) {
+      pilotSelect.value = this.playerPilotMode;
+      pilotSelect.onchange = () => {
+        this.playerPilotMode = (pilotSelect.value || 'human') as any;
+        if (this.playerPilotMode !== 'human') {
+          if (!this.playerBotController) {
+            this.playerBotController = new BotController(this.playerPilotMode);
+          } else {
+            this.playerBotController.difficulty = this.playerPilotMode;
+          }
+          this.showAlert(`AUTOPILOT // PLAYER 1 SET TO AI (${this.playerPilotMode.toUpperCase()})`);
+          this.addChatLog(`[TEST] Player 1 switched to AI (${this.playerPilotMode.toUpperCase()})`, 'system');
+        } else {
+          this.showAlert('AUTOPILOT // PLAYER 1 SET TO MANUAL (HUMAN)');
+          this.addChatLog('[TEST] Player 1 switched to Manual (Human)', 'system');
+        }
+      };
+    }
+
     const openSpawner = () => {
       populateTargets();
+      if (pilotSelect) pilotSelect.value = this.playerPilotMode;
       spawnerModal?.classList.add('active');
     };
     const closeSpawner = () => {
@@ -3018,7 +3041,24 @@ class WormholeGame {
     this.hazardManager.arenaBound = wallHalfW;
     this.simulatedRealm.arenaBound = wallHalfW;
 
-    const inputState = this.input.getState();
+    let inputState = this.input.getState();
+
+    // AI Autopilot mode for Player 1 ship (configured via Test Hazards menu)
+    if (this.playerPilotMode !== 'human' && this.player.isAlive) {
+      if (!this.playerBotController) {
+        this.playerBotController = new BotController(this.playerPilotMode);
+      } else {
+        this.playerBotController.difficulty = this.playerPilotMode;
+      }
+      inputState = this.playerBotController.update(
+        dt,
+        this.player,
+        this.wormholes,
+        this.powerups,
+        this.bullets,
+        this.hazardManager.hazards
+      );
+    }
 
     if (this.isMatchWaitingForPilots || this.gameState.phase === 'COUNTDOWN' || this.gameState.phase === 'ROUND_OVER' || this.gameState.phase === 'MATCH_OVER') {
       inputState.fire = false;

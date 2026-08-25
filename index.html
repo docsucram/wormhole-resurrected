@@ -2038,8 +2038,19 @@
     <div id="spawner-modal">
       <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: #ffaa00; margin-bottom: 4px;">⚡ TEST HAZARD SPAWNER</div>
       
+      <!-- Player 1 Pilot Control Mode Selector -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 6px 0; background: rgba(0, 255, 136, 0.08); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(0, 255, 136, 0.3);">
+        <span style="font-size: 11px; font-weight: 800; color: #00ff88; letter-spacing: 1px;">PLAYER 1 PILOT:</span>
+        <select id="spawner-pilot-select" class="styled-select" style="padding: 4px 10px; font-size: 11px; width: auto; color: #ffffff; border-color: rgba(0, 255, 136, 0.6);">
+          <option value="human">HUMAN PLAYER (MANUAL)</option>
+          <option value="easy">AI BOT // EASY</option>
+          <option value="medium">AI BOT // MEDIUM</option>
+          <option value="hard">AI BOT // HARD</option>
+        </select>
+      </div>
+
       <!-- Target Player Selector -->
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 12px 0; background: rgba(0, 0, 0, 0.4); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 170, 0, 0.3);">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 12px 0; background: rgba(0, 0, 0, 0.4); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 170, 0, 0.3);">
         <span style="font-size: 11px; font-weight: 800; color: var(--neon-cyan); letter-spacing: 1px;">SPAWN TO:</span>
         <select id="spawner-target-select" class="styled-select" style="padding: 4px 10px; font-size: 11px; width: auto; color: #ffffff; border-color: rgba(255, 170, 0, 0.6);"></select>
       </div>

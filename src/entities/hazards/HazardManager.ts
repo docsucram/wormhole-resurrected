@@ -245,7 +245,7 @@ export class HazardManager {
       }
     }
 
-    // 3.5 Mutual soft-body separation between overlapping Inflators
+    // 3.5 Mutual soft-body separation between overlapping Inflators (calm sliding separation)
     for (let i = 0; i < this.hazards.length; i++) {
       const hA = this.hazards[i];
       if (!hA.isAlive || !(hA instanceof Inflator)) continue;
@@ -255,14 +255,21 @@ export class HazardManager {
         const dx = hB.x - hA.x;
         const dy = hB.y - hA.y;
         const dist = Math.hypot(dx, dy) || 1;
-        const minDist = (hA.radius + hB.radius) * 0.75;
+        const minDist = (hA.radius + hB.radius) * 0.7;
         if (dist < minDist) {
-          const overlap = (minDist - dist) / minDist;
-          const force = overlap * dt * 80.0;
-          hA.vx -= (dx / dist) * force;
-          hA.vy -= (dy / dist) * force;
-          hB.vx += (dx / dist) * force;
-          hB.vy += (dy / dist) * force;
+          const overlap = minDist - dist;
+          const slide = overlap * dt * 3.5;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          hA.x -= nx * slide;
+          hA.y -= ny * slide;
+          hB.x += nx * slide;
+          hB.y += ny * slide;
+          // Dampen bouncing velocity to keep drift calm
+          hA.vx *= 0.95;
+          hA.vy *= 0.95;
+          hB.vx *= 0.95;
+          hB.vy *= 0.95;
         }
       }
     }
