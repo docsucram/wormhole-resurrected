@@ -8,8 +8,7 @@ export class HangarView {
   public selectedShipIndex = 0; // Default to The Tank
   public selectedColorIndex = 0; // Default to Cyan
   private rotationAngle = 0;
-  private isAnimating = false;
-  private animFrameId: number | null = null;
+  public isAnimating = false;
   private uiPrefix: string;
 
   constructor(canvasId: string, uiPrefix = 'hangar-') {
@@ -48,27 +47,19 @@ export class HangarView {
   }
 
   public startPreview(): void {
-    if (this.isAnimating) return;
     this.isAnimating = true;
     this.resize();
-    this.animate();
+    this.render();
   }
 
   public stopPreview(): void {
     this.isAnimating = false;
-    if (this.animFrameId !== null) {
-      cancelAnimationFrame(this.animFrameId);
-      this.animFrameId = null;
-    }
   }
 
-  private animate(): void {
+  public updateAndRender(dt: number): void {
     if (!this.isAnimating) return;
-
-    this.rotationAngle += 0.012; // Smooth and graceful rotation speed
+    this.rotationAngle += dt * 0.75; // Smooth 60FPS calibrated rotation speed
     this.render();
-
-    this.animFrameId = requestAnimationFrame(this.animate.bind(this));
   }
 
   public render(): void {

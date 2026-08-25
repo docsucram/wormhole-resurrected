@@ -3520,6 +3520,14 @@ class WormholeGame {
         this.pipRenderer.endFrame();
       }
     }
+
+    // Render active Hangar preview models synchronously in single master rAF frame
+    if (!this.inArena && this.hangarView.isAnimating) {
+      this.hangarView.updateAndRender(dt);
+    }
+    if (this.modalHangarView.isAnimating) {
+      this.modalHangarView.updateAndRender(dt);
+    }
   }
 
   private loop(timestamp: number): void {
