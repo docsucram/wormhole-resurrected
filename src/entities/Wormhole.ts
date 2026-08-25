@@ -90,8 +90,9 @@ export class Wormhole {
         sound.playSpecial(0);
       }
     } else {
-      // Authentic orbit speed from PortalSprite.java: ARC_SPEED = 0.5 deg/frame at 30Hz = 15.0 deg/sec
-      this.currentDegrees = (this.currentDegrees + dt * 15.0) % 360;
+      // Authentic orbit speed from PortalSprite.java & WormholeModel.java (15ms sleep = ~45-50 Hz loop)
+      // 0.5 deg/frame at 45Hz = 22.5 deg/sec (exact 16.0s per revolution)
+      this.currentDegrees = (this.currentDegrees + dt * 22.5) % 360;
     }
 
     this.updatePosition();

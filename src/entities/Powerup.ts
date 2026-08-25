@@ -25,9 +25,10 @@ export class Powerup {
     this.y = y;
     this.type = type;
     this.name = POWERUP_NAMES[type] || 'POWERUP';
-
-    this.vx = vx !== undefined ? vx : (Math.random() - 0.5) * 0.75;
-    this.vy = vy !== undefined ? vy : (Math.random() - 0.5) * 0.75;
+    const defaultSpeed = 4.5 + Math.random() * 3.0; // Authentic high velocity matching legacy PowerupSprite.java (270 - 450 px/sec)
+    const defaultAngle = Math.random() * Math.PI * 2;
+    this.vx = vx !== undefined ? vx : Math.cos(defaultAngle) * defaultSpeed;
+    this.vy = vy !== undefined ? vy : Math.sin(defaultAngle) * defaultSpeed;
 
     // Distinct vibrant color & short tag per powerup
     const configMap: Record<number, { col: string; tag: string }> = {
@@ -394,11 +395,12 @@ export class Powerup {
     }
 
     if (vx === undefined || vy === undefined) {
-      // Authentic discrete drop roll from PowerupSprite.java:183 & WHUtil.randInt(10)
-      // Produces integer-based vector distributions (-9..+9 scaled from 30Hz to 60Hz)
-      // where drops sometimes roll near-zero (static) and sometimes higher drift speed
-      vx = (Math.floor(Math.random() * 19) - 9) * 0.35;
-      vy = (Math.floor(Math.random() * 19) - 9) * 0.35;
+      // Authentic high-velocity dispersion from PowerupSprite.java:183 & WHUtil.randInt(10)
+      // Launches outward at speed 4.5 to 7.5 px/frame (270 - 450 px/sec at 60 FPS)
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4.5 + Math.random() * 3.0;
+      vx = Math.cos(angle) * speed;
+      vy = Math.sin(angle) * speed;
     }
 
     return new Powerup(x, y, type, vx, vy);
