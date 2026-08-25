@@ -15,6 +15,7 @@ export class Starfield {
   public count = 160;
   public arenaWidth = 2400;
   public arenaHeight = 2400;
+  public showVectorGrid = true;
 
   constructor(arenaWidth = 2400, arenaHeight = 2400, count = 160) {
     this.arenaWidth = arenaWidth;
@@ -52,6 +53,27 @@ export class Starfield {
     const cy = h / 2;
 
     ctx.save();
+
+    // 1. Retro Vector Grid (Geometry Wars ambient grid)
+    if (this.showVectorGrid) {
+      const gridSize = 90;
+      const offsetX = (cx - camX * 0.2) % gridSize;
+      const offsetY = (cy - camY * 0.2) % gridSize;
+
+      ctx.strokeStyle = 'rgba(0, 210, 255, 0.08)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+
+      for (let x = offsetX - gridSize; x <= w + gridSize; x += gridSize) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+      }
+      for (let y = offsetY - gridSize; y <= h + gridSize; y += gridSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+    }
     // Use fast pre-defined alpha buckets to eliminate 160 string allocations per frame
     const bucketFar: number[][] = [];
     const bucketMid: number[][] = [];

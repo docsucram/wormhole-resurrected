@@ -287,13 +287,88 @@ export class WormholeImplosion implements Particle {
   }
 }
 
+export class SparkShard implements Particle {
+  public x: number;
+  public y: number;
+  public vx: number;
+  public vy: number;
+  public length: number;
+  public life: number;
+  public maxLife: number;
+  public color: string;
+
+  constructor(x: number, y: number, color = '#ffaa00', vx?: number, vy?: number) {
+    this.x = x;
+    this.y = y;
+    if (vx !== undefined && vy !== undefined) {
+      this.vx = vx;
+      this.vy = vy;
+    } else {
+      const speed = 4.0 + Math.random() * 6.5;
+      const dir = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(dir) * speed;
+      this.vy = Math.sin(dir) * speed;
+    }
+    this.length = 6 + Math.random() * 8;
+    this.maxLife = 0.30 + Math.random() * 0.20;
+    this.life = this.maxLife;
+    this.color = color;
+  }
+
+  public update(dt: number): boolean {
+    this.life -= dt;
+    if (this.life <= 0) return false;
+
+    this.x += this.vx * dt * 60;
+    this.y += this.vy * dt * 60;
+    this.vx *= 0.96;
+    this.vy *= 0.96;
+    return true;
+  }
+
+  public draw(renderer: VectorRenderer): void {
+    const alpha = Math.max(0, this.life / this.maxLife);
+    const speed = Math.hypot(this.vx, this.vy);
+    const trailLen = Math.max(this.length, speed * 2.2);
+    const angle = Math.atan2(this.vy, this.vx);
+    const tx = this.x - Math.cos(angle) * trailLen;
+    const ty = this.y - Math.sin(angle) * trailLen;
+    const ctx = renderer.ctx;
+
+    // 1. Neon Saturated Tail
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
+    // 2. White-Hot Searing Needle Head
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x - Math.cos(angle) * (trailLen * 0.4), this.y - Math.sin(angle) * (trailLen * 0.4));
+    ctx.stroke();
+  }
+}
+
 export class ParticleSystem {
   public particles: Particle[] = [];
-  public maxParticles = 220;
+  public enableSparkShards = true;
 
   public add(p: Particle): void {
-    if (this.particles.length < this.maxParticles) {
+    if (this.particles.length < 240) {
       this.particles.push(p);
+    }
+  }
+
+  public createThrust(x: number, y: number, vx: number, vy: number, color?: string): void {
+    this.add(new ThrustParticle(x, y, vx, vy, color));
+    if (this.enableSparkShards && Math.random() < 0.35) {
+      this.add(new SparkShard(x, y, color || '#ffaa00', vx * 1.5 + (Math.random() - 0.5) * 1.2, vy * 1.5 + (Math.random() - 0.5) * 1.2));
     }
   }
 
@@ -301,7 +376,11 @@ export class ParticleSystem {
     this.add(new Explosion(x, y, color));
     const count = Math.min(shrapnelCount, 8);
     for (let i = 0; i < count; i++) {
-      this.add(new Shrapnel(x, y, color));
+      if (this.enableSparkShards && Math.random() < 0.6) {
+        this.add(new SparkShard(x, y, color));
+      } else {
+        this.add(new Shrapnel(x, y, color));
+      }
     }
   }
 

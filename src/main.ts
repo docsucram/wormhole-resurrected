@@ -192,6 +192,19 @@ class WormholeGame {
     const initialGlow = savedGlow !== null ? parseFloat(savedGlow) : 1.0;
     this.applyGlowIntensity(initialGlow);
 
+    // Apply persisted Geometry Wars & retro graphics options
+    const savedDualBloom = localStorage.getItem('wh_opt_dual_bloom');
+    const isDualBloom = savedDualBloom !== null ? savedDualBloom === 'true' : true;
+    this.renderer.setDualStrokeBloom(isDualBloom);
+    if ((this.hangarView as any).renderer) (this.hangarView as any).renderer.setDualStrokeBloom(isDualBloom);
+    if ((this.modalHangarView as any).renderer) (this.modalHangarView as any).renderer.setDualStrokeBloom(isDualBloom);
+
+    const savedVectorGrid = localStorage.getItem('wh_opt_vector_grid');
+    this.starfield.showVectorGrid = savedVectorGrid !== null ? savedVectorGrid === 'true' : true;
+
+    const savedSparkShards = localStorage.getItem('wh_opt_spark_shards');
+    this.particles.enableSparkShards = savedSparkShards !== null ? savedSparkShards === 'true' : true;
+
     // Initialize 8-Player Arena Roster with Slot 0 as Local Player
     this.initTableRoster();
 
@@ -2340,6 +2353,47 @@ class WormholeGame {
         }
         this.applyGlowIntensity(val);
         try { localStorage.setItem('wh_opt_glow', val.toString()); } catch {}
+      };
+    }
+
+    // Dual-Stroke Geometry Wars Bloom Toggle (Persistent)
+    const chkDualBloom = document.getElementById('chk-opt-dual-bloom') as HTMLInputElement | null;
+    const savedDualBloom = localStorage.getItem('wh_opt_dual_bloom');
+    if (chkDualBloom) {
+      if (savedDualBloom !== null) {
+        chkDualBloom.checked = savedDualBloom === 'true';
+      }
+      chkDualBloom.onchange = () => {
+        this.renderer.setDualStrokeBloom(chkDualBloom.checked);
+        if ((this.hangarView as any).renderer) (this.hangarView as any).renderer.setDualStrokeBloom(chkDualBloom.checked);
+        if ((this.modalHangarView as any).renderer) (this.modalHangarView as any).renderer.setDualStrokeBloom(chkDualBloom.checked);
+        try { localStorage.setItem('wh_opt_dual_bloom', chkDualBloom.checked.toString()); } catch {}
+      };
+    }
+
+    // Retro Ambient Vector Grid Toggle (Persistent)
+    const chkVectorGrid = document.getElementById('chk-opt-vector-grid') as HTMLInputElement | null;
+    const savedVectorGrid = localStorage.getItem('wh_opt_vector_grid');
+    if (chkVectorGrid) {
+      if (savedVectorGrid !== null) {
+        chkVectorGrid.checked = savedVectorGrid === 'true';
+      }
+      chkVectorGrid.onchange = () => {
+        this.starfield.showVectorGrid = chkVectorGrid.checked;
+        try { localStorage.setItem('wh_opt_vector_grid', chkVectorGrid.checked.toString()); } catch {}
+      };
+    }
+
+    // Linear Spark Shards & Debris Toggle (Persistent)
+    const chkSparkShards = document.getElementById('chk-opt-spark-shards') as HTMLInputElement | null;
+    const savedSparkShards = localStorage.getItem('wh_opt_spark_shards');
+    if (chkSparkShards) {
+      if (savedSparkShards !== null) {
+        chkSparkShards.checked = savedSparkShards === 'true';
+      }
+      chkSparkShards.onchange = () => {
+        this.particles.enableSparkShards = chkSparkShards.checked;
+        try { localStorage.setItem('wh_opt_spark_shards', chkSparkShards.checked.toString()); } catch {}
       };
     }
 

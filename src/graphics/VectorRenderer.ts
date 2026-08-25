@@ -3,6 +3,8 @@ import { Point2D, RotationalPolygon } from '../math/RotationalPolygon';
 export interface RenderOptions {
   enableGlow?: boolean;
   glowBlur?: number;
+  glowIntensity?: number;
+  dualStrokeBloom?: boolean;
   bloomPasses?: number;
   lineWidthScale?: number;
 }
@@ -15,7 +17,9 @@ export class VectorRenderer {
   public height = 600;
   public options: RenderOptions = {
     enableGlow: true,
-    glowBlur: 6,
+    glowBlur: 16,
+    glowIntensity: 1.0,
+    dualStrokeBloom: true,
     bloomPasses: 1,
     lineWidthScale: 1,
   };
@@ -34,13 +38,18 @@ export class VectorRenderer {
   }
 
   public setGlowIntensity(intensity: number): void {
+    this.options.glowIntensity = intensity;
     if (intensity <= 0.01) {
       this.options.enableGlow = false;
       this.options.glowBlur = 0;
     } else {
       this.options.enableGlow = true;
-      this.options.glowBlur = Math.round(8 * intensity);
+      this.options.glowBlur = Math.round(18 * intensity);
     }
+  }
+
+  public setDualStrokeBloom(enabled: boolean): void {
+    this.options.dualStrokeBloom = enabled;
   }
 
   public resize(): void {
@@ -111,17 +120,24 @@ export class VectorRenderer {
       this.ctx.fill();
     }
 
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+
+    // 1. Outer Saturated Neon Aura Pass
     if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 6;
+      this.ctx.shadowBlur = this.options.glowBlur || 16;
       this.ctx.shadowColor = glowColor;
     } else {
       this.ctx.shadowBlur = 0;
     }
 
+    const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
+    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
+      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
+      : lineWidth * this.options.lineWidthScale!;
+
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
+    this.ctx.lineWidth = auraWidth;
 
     this.ctx.beginPath();
     this.ctx.moveTo(points[0].x, points[0].y);
@@ -130,6 +146,22 @@ export class VectorRenderer {
     }
     this.ctx.closePath();
     this.ctx.stroke();
+
+    // 2. White-Hot Searing Core Pass (Geometry Wars Aesthetic)
+    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
+      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
+      this.ctx.shadowColor = '#ffffff';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        this.ctx.lineTo(points[i].x, points[i].y);
+      }
+      this.ctx.closePath();
+      this.ctx.stroke();
+    }
 
     this.ctx.shadowBlur = 0;
     this.ctx.shadowColor = 'transparent';
@@ -167,6 +199,7 @@ export class VectorRenderer {
     filled = false,
     fillColor = 'rgba(0, 0, 0, 0.4)'
   ): void {
+    this.ctx.save();
     if (filled) {
       this.ctx.beginPath();
       this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -175,20 +208,37 @@ export class VectorRenderer {
     }
 
     if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 6;
+      this.ctx.shadowBlur = this.options.glowBlur || 16;
       this.ctx.shadowColor = glowColor;
     } else {
       this.ctx.shadowBlur = 0;
     }
 
+    const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
+    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
+      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
+      : lineWidth * this.options.lineWidthScale!;
+
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.lineWidth = auraWidth;
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     this.ctx.stroke();
 
+    // White-hot core
+    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
+      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
+      this.ctx.shadowColor = '#ffffff';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
+      this.ctx.beginPath();
+      this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      this.ctx.stroke();
+    }
+
     this.ctx.shadowBlur = 0;
     this.ctx.shadowColor = 'transparent';
+    this.ctx.restore();
   }
 
   /**
@@ -204,21 +254,38 @@ export class VectorRenderer {
     glowColor = color,
     lineWidth = 2
   ): void {
+    this.ctx.save();
     if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 6;
+      this.ctx.shadowBlur = this.options.glowBlur || 16;
       this.ctx.shadowColor = glowColor;
     } else {
       this.ctx.shadowBlur = 0;
     }
 
+    const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
+    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
+      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
+      : lineWidth * this.options.lineWidthScale!;
+
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.lineWidth = auraWidth;
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, radius, startAngle, endAngle);
     this.ctx.stroke();
 
+    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
+      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
+      this.ctx.shadowColor = '#ffffff';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
+      this.ctx.beginPath();
+      this.ctx.arc(cx, cy, radius, startAngle, endAngle);
+      this.ctx.stroke();
+    }
+
     this.ctx.shadowBlur = 0;
     this.ctx.shadowColor = 'transparent';
+    this.ctx.restore();
   }
 
   /**
@@ -233,23 +300,41 @@ export class VectorRenderer {
     glowColor = color,
     lineWidth = 2
   ): void {
+    this.ctx.save();
     if (this.options.enableGlow) {
-      this.ctx.shadowBlur = this.options.glowBlur || 6;
+      this.ctx.shadowBlur = this.options.glowBlur || 16;
       this.ctx.shadowColor = glowColor;
     } else {
       this.ctx.shadowBlur = 0;
     }
 
+    const intensity = this.options.glowIntensity !== undefined ? this.options.glowIntensity : 1.0;
+    const auraWidth = this.options.dualStrokeBloom && this.options.enableGlow
+      ? (lineWidth + 2.0 * intensity) * this.options.lineWidthScale!
+      : lineWidth * this.options.lineWidthScale!;
+
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth * this.options.lineWidthScale!;
+    this.ctx.lineWidth = auraWidth;
     this.ctx.lineCap = 'round';
     this.ctx.beginPath();
     this.ctx.moveTo(x1, y1);
     this.ctx.lineTo(x2, y2);
     this.ctx.stroke();
 
+    if (this.options.dualStrokeBloom && this.options.enableGlow && intensity > 0.1) {
+      this.ctx.shadowBlur = Math.round((this.options.glowBlur || 16) * 0.45);
+      this.ctx.shadowColor = '#ffffff';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = Math.max(1.0, lineWidth * 0.65);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.stroke();
+    }
+
     this.ctx.shadowBlur = 0;
     this.ctx.shadowColor = 'transparent';
+    this.ctx.restore();
   }
 
   /**

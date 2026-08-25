@@ -169,6 +169,10 @@ export class Wormhole {
 
     // 1. Deep Cosmic Cauldron Vortex Streams (Graceful, Powerful Gravitational Inflow)
     ctx.save();
+    if (renderer.options.enableGlow) {
+      ctx.shadowBlur = renderer.options.glowBlur || 16;
+      ctx.shadowColor = this.glowColor;
+    }
     for (let arm = 0; arm < 6; arm++) {
       const baseAngle = arm * (Math.PI / 3) + time * 1.2;
       ctx.beginPath();
@@ -184,9 +188,10 @@ export class Wormhole {
       const isMajor = arm % 2 === 0;
       ctx.strokeStyle = isMajor ? this.color : '#ffffff';
       ctx.lineWidth = isMajor ? 2.0 : 1.2;
-      ctx.globalAlpha = isMajor ? 0.6 : 0.35;
+      ctx.globalAlpha = isMajor ? 0.75 : 0.45;
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
     ctx.restore();
 
     // 2. Central Pitch-Black Event Horizon Void Shadow
@@ -197,18 +202,27 @@ export class Wormhole {
     ctx.fill();
 
     // Razor-Sharp Scorching Photon Sphere Boundary
+    if (renderer.options.enableGlow) {
+      ctx.shadowBlur = Math.round((renderer.options.glowBlur || 16) * 0.6);
+      ctx.shadowColor = '#ffffff';
+    }
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2.0;
     ctx.beginPath();
     ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
     ctx.stroke();
 
+    if (renderer.options.enableGlow) {
+      ctx.shadowBlur = renderer.options.glowBlur || 16;
+      ctx.shadowColor = this.glowColor;
+    }
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = 1.2;
-    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 1.4;
+    ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.ellipse(0, 0, 25, 18, 0, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // 3. Tight Event-Horizon Powerup Harvest Damage Indicator Arc
     const dmgRatio = Math.min(1.0, this.damageTaken / this.damageThreshold);
