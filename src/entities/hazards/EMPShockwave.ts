@@ -45,11 +45,11 @@ export class EMPShockwave implements Hazard {
       return false;
     }
 
-    // Check hit with player
+    // Check hit with player (Any player inside the expanding shockwave disc)
     const dist = Math.hypot(player.x - this.x, player.y - this.y);
-    if (Math.abs(dist - this.radius) < 25 && !player.isUnderEMP) {
+    if (dist <= this.radius && !player.isUnderEMP) {
       player.isUnderEMP = true;
-      player.empTime = 3.0; // 3 seconds control inversion
+      player.empTime = 5.0; // 5.0 seconds duration
       player.empType = Math.floor(Math.random() * 3);
       particles.createExplosion(player.x, player.y, '#ffffff', 16);
       sound.playSpecial(1);

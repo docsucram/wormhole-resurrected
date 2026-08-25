@@ -142,7 +142,7 @@ export class InputManager {
     return 'None';
   }
 
-  public getState(isUnderEMP = false, empType = 0): InputState {
+  public getState(): InputState {
     // 1. Keyboard Inputs
     const isActionDown = (action: InputAction): boolean => {
       const codes = this.bindings[action] || [];
@@ -197,34 +197,6 @@ export class InputManager {
 
       // Special Ability (Button Y [btn 3] or Left Trigger [LT / btn 6])
       if (btn(3) || btn(6)) tertiaryFire = true;
-    }
-
-    // EMP confusion logic from legacy PlayerSprite.java behave()
-    if (isUnderEMP) {
-      const origLeft = left;
-      left = right;
-      right = origLeft;
-
-      switch (empType) {
-        case 0: {
-          const origUp = up;
-          up = fire;
-          fire = origUp;
-          break;
-        }
-        case 1: {
-          secondaryFire = fire;
-          break;
-        }
-        case 2: {
-          const origFire = fire;
-          fire = left;
-          left = up;
-          up = right;
-          right = origFire;
-          break;
-        }
-      }
     }
 
     return {

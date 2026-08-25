@@ -3017,7 +3017,7 @@ class WormholeGame {
     this.hazardManager.arenaBound = wallHalfW;
     this.simulatedRealm.arenaBound = wallHalfW;
 
-    const inputState = this.input.getState(this.player.isUnderEMP, this.player.empType);
+    const inputState = this.input.getState();
 
     if (this.isMatchWaitingForPilots || this.gameState.phase === 'COUNTDOWN' || this.gameState.phase === 'ROUND_OVER' || this.gameState.phase === 'MATCH_OVER') {
       inputState.fire = false;
