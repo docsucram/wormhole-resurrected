@@ -2124,6 +2124,22 @@
           </div>
         </div>
 
+        <!-- Particle Duration & Velocity Slider (0x to 10x) -->
+        <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: #ffffff;">PARTICLE LIFESPAN & TRAIL SCALE</div>
+              <div style="font-size: 10px; color: #94a3b8;">Controls muzzle discharge, spark duration, and travel speed (0x to 10x)</div>
+            </div>
+            <span id="opt-particle-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">1.0x</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 9px; font-weight: 800; color: #64748b;">0x</span>
+            <input type="range" id="opt-particle-slider" min="0" max="10.0" step="0.5" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+            <span style="font-size: 9px; font-weight: 800; color: #64748b;">10x</span>
+          </div>
+        </div>
+
         <!-- Dual-Stroke Geometry Wars Bloom Toggle -->
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
           <div>

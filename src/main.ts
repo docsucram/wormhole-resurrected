@@ -206,6 +206,11 @@ class WormholeGame {
     const savedSparkShards = localStorage.getItem('wh_opt_spark_shards');
     this.particles.enableSparkShards = savedSparkShards !== null ? savedSparkShards === 'true' : true;
 
+    // Apply persisted Particle lifespan & trail duration scale (0x to 10x)
+    const savedParticleScale = localStorage.getItem('wh_opt_particle_scale');
+    const initialParticleScale = savedParticleScale !== null ? parseFloat(savedParticleScale) : 1.0;
+    this.particles.durationScale = initialParticleScale;
+
     // Initialize 8-Player Arena Roster with Slot 0 as Local Player
     this.initTableRoster();
 
@@ -2354,6 +2359,26 @@ class WormholeGame {
         }
         this.applyGlowIntensity(val);
         try { localStorage.setItem('wh_opt_glow', val.toString()); } catch {}
+      };
+    }
+
+    // Particle Lifespan & Trail Duration Slider (Persistent, 0x to 10x)
+    const particleSlider = document.getElementById('opt-particle-slider') as HTMLInputElement | null;
+    const particleVal = document.getElementById('opt-particle-val');
+    const savedParticleScale = localStorage.getItem('wh_opt_particle_scale');
+    const initialParticleScale = savedParticleScale !== null ? parseFloat(savedParticleScale) : 1.0;
+    if (particleSlider) {
+      particleSlider.value = initialParticleScale.toString();
+      if (particleVal) {
+        particleVal.innerText = `${initialParticleScale.toFixed(1)}x`;
+      }
+      particleSlider.oninput = () => {
+        const val = parseFloat(particleSlider.value);
+        if (particleVal) {
+          particleVal.innerText = `${val.toFixed(1)}x`;
+        }
+        this.particles.durationScale = val;
+        try { localStorage.setItem('wh_opt_particle_scale', val.toString()); } catch {}
       };
     }
 

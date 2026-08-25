@@ -296,8 +296,9 @@ export class SparkShard implements Particle {
   public life: number;
   public maxLife: number;
   public color: string;
+  public friction: number;
 
-  constructor(x: number, y: number, color = '#ffaa00', vx?: number, vy?: number) {
+  constructor(x: number, y: number, color = '#ffaa00', vx?: number, vy?: number, life = 0.35, friction = 0.98) {
     this.x = x;
     this.y = y;
     if (vx !== undefined && vy !== undefined) {
@@ -310,9 +311,10 @@ export class SparkShard implements Particle {
       this.vy = Math.sin(dir) * speed;
     }
     this.length = 6 + Math.random() * 8;
-    this.maxLife = 0.30 + Math.random() * 0.20;
+    this.maxLife = life;
     this.life = this.maxLife;
     this.color = color;
+    this.friction = friction;
   }
 
   public update(dt: number): boolean {
@@ -321,8 +323,8 @@ export class SparkShard implements Particle {
 
     this.x += this.vx * dt * 60;
     this.y += this.vy * dt * 60;
-    this.vx *= 0.96;
-    this.vy *= 0.96;
+    this.vx *= this.friction;
+    this.vy *= this.friction;
     return true;
   }
 
@@ -358,38 +360,98 @@ export class SparkShard implements Particle {
 export class ParticleSystem {
   public particles: Particle[] = [];
   public enableSparkShards = true;
+  public durationScale = 1.0; // 0.0x to 10.0x scale (default 1.0x)
+
+  public get maxCapacity(): number {
+    return Math.min(2500, Math.floor(240 * Math.max(1, this.durationScale)));
+  }
 
   public add(p: Particle): void {
-    if (this.particles.length < 240) {
+    if (this.durationScale <= 0.01) return;
+    if (this.particles.length < this.maxCapacity) {
       this.particles.push(p);
     }
   }
 
+  public createMuzzleSparks(x: number, y: number, angle: number, color = '#00e5ff'): void {
+    if (this.durationScale <= 0.01) return;
+    const speedMult = 1.0 + 0.35 * Math.max(0, this.durationScale - 1.0);
+    const friction = Math.min(0.995, 0.97 + 0.0025 * this.durationScale);
+    for (let i = 0; i < 3; i++) {
+      const spread = (Math.random() - 0.5) * 0.55;
+      const spd = (6.0 + Math.random() * 5.0) * speedMult;
+      const vx = Math.cos(angle + spread) * spd;
+      const vy = Math.sin(angle + spread) * spd;
+      const baseLife = (0.22 + Math.random() * 0.18) * this.durationScale;
+      this.add(new SparkShard(x, y, color, vx, vy, baseLife, friction));
+    }
+  }
+
   public createThrust(x: number, y: number, vx: number, vy: number, color?: string): void {
-    this.add(new ThrustParticle(x, y, vx, vy, color));
+    if (this.durationScale <= 0.01) return;
+    const speedMult = 1.0 + 0.30 * Math.max(0, this.durationScale - 1.0);
+    const friction = Math.min(0.995, 0.97 + 0.0025 * this.durationScale);
+
+    const tp = new ThrustParticle(x, y, vx * speedMult, vy * speedMult, color);
+    tp.maxLife *= this.durationScale;
+    tp.life = tp.maxLife;
+    this.add(tp);
+
     if (this.enableSparkShards && Math.random() < 0.35) {
-      this.add(new SparkShard(x, y, color || '#ffaa00', vx * 1.5 + (Math.random() - 0.5) * 1.2, vy * 1.5 + (Math.random() - 0.5) * 1.2));
+      const baseLife = (0.30 + Math.random() * 0.20) * this.durationScale;
+      const shard = new SparkShard(
+        x,
+        y,
+        color || '#ffaa00',
+        (vx * 1.5 + (Math.random() - 0.5) * 1.2) * speedMult,
+        (vy * 1.5 + (Math.random() - 0.5) * 1.2) * speedMult,
+        baseLife,
+        friction
+      );
+      this.add(shard);
     }
   }
 
   public createExplosion(x: number, y: number, color = '#ffaa00', shrapnelCount = 8): void {
-    this.add(new Explosion(x, y, color));
+    if (this.durationScale <= 0.01) return;
+    const speedMult = 1.0 + 0.30 * Math.max(0, this.durationScale - 1.0);
+    const friction = Math.min(0.995, 0.97 + 0.0025 * this.durationScale);
+
+    const exp = new Explosion(x, y, color);
+    exp.maxLife *= Math.min(2.0, this.durationScale);
+    exp.life = exp.maxLife;
+    this.add(exp);
+
     const count = Math.min(shrapnelCount, 8);
     for (let i = 0; i < count; i++) {
+      const baseLife = (0.35 + Math.random() * 0.25) * this.durationScale;
       if (this.enableSparkShards && Math.random() < 0.6) {
-        this.add(new SparkShard(x, y, color));
+        const shard = new SparkShard(x, y, color, undefined, undefined, baseLife, friction);
+        shard.vx *= speedMult;
+        shard.vy *= speedMult;
+        this.add(shard);
       } else {
-        this.add(new Shrapnel(x, y, color));
+        const shrapnel = new Shrapnel(x, y, color);
+        shrapnel.vx *= speedMult;
+        shrapnel.vy *= speedMult;
+        shrapnel.maxLife = baseLife;
+        shrapnel.life = baseLife;
+        this.add(shrapnel);
       }
     }
   }
 
   public createWormholeImplosion(x: number, y: number, color = '#00e5ff'): void {
+    if (this.durationScale <= 0.01) return;
+    const speedMult = 1.0 + 0.30 * Math.max(0, this.durationScale - 1.0);
+    const friction = Math.min(0.995, 0.97 + 0.0025 * this.durationScale);
+
     this.add(new WormholeImplosion(x, y, color));
     for (let i = 0; i < 12; i++) {
       const angle = (i * Math.PI * 2) / 12;
-      const speed = 3.5 + Math.random() * 3.0;
-      this.add(new Shrapnel(x, y, color, Math.cos(angle) * speed, Math.sin(angle) * speed));
+      const speed = (3.5 + Math.random() * 3.0) * speedMult;
+      const baseLife = (0.35 + Math.random() * 0.25) * this.durationScale;
+      this.add(new SparkShard(x, y, color, Math.cos(angle) * speed, Math.sin(angle) * speed, baseLife, friction));
     }
   }
 

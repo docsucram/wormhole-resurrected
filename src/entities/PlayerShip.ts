@@ -256,10 +256,10 @@ export class PlayerShip {
 
     // Secondary offensive powerup fire (Key F / Bot Secondary)
     if (effSecondary && this.powerupInventory.length > 0 && this.shotCooldown <= 0) {
-      this.firePowerupShot(bullets, sound);
+      this.firePowerupShot(bullets, sound, particles);
     } else if (effFire && this.shotCooldown <= 0 && !this.isAttractorActive) {
       // Primary laser fire
-      this.firePrimary(bullets, sound);
+      this.firePrimary(bullets, sound, particles);
     }
 
     // Tertiary Special Ability trigger (Key R / D)
@@ -271,7 +271,7 @@ export class PlayerShip {
     this.updateTurrets(dt, targets, bullets);
   }
 
-  private firePrimary(bullets: Bullet[], sound: SoundEngine): void {
+  private firePrimary(bullets: Bullet[], sound: SoundEngine, particles?: ParticleSystem): void {
     this.shotCooldown = 0.14;
     const speed = 14.0;
     const color = (PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary;
@@ -283,6 +283,10 @@ export class PlayerShip {
     const noseY = this.y + sin * 16;
     const shipVx = this.vx * 0.25;
     const shipVy = this.vy * 0.25;
+
+    if (particles) {
+      particles.createMuzzleSparks(noseX, noseY, this.angle, color);
+    }
 
     if (this.bulletLevel === 0) {
       // Level 0: Single center laser (10 dmg)
@@ -380,7 +384,7 @@ export class PlayerShip {
     sound.playLaser(this.bulletLevel);
   }
 
-  private firePowerupShot(bullets: Bullet[], sound: SoundEngine): void {
+  private firePowerupShot(bullets: Bullet[], sound: SoundEngine, particles?: ParticleSystem): void {
     if (this.powerupInventory.length === 0) return;
     this.shotCooldown = 0.25;
 
@@ -390,6 +394,10 @@ export class PlayerShip {
     const sin = Math.sin(this.angle);
     const noseX = this.x + cos * 20;
     const noseY = this.y + sin * 20;
+
+    if (particles) {
+      particles.createMuzzleSparks(noseX, noseY, this.angle, '#ff00ff');
+    }
 
     // Creates a glowing powerup container projectile (transfers hazard on entering enemy wormhole)
     const pBullet = new Bullet(
