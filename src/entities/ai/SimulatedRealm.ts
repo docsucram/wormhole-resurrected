@@ -338,6 +338,7 @@ export class SimulatedRealm {
 
         if (
           realm.botShip.isAlive &&
+          !pup.isInvulnerable &&
           Collision.testCircleCircle(
             realm.botShip.x,
             realm.botShip.y,

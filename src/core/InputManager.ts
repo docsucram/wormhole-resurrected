@@ -24,7 +24,7 @@ const DEFAULT_BINDINGS: KeyBindings = {
   right: ['ArrowRight', 'KeyD', 'Numpad6'],
   fire: ['Space', 'Numpad0'],
   secondaryFire: ['KeyF', 'Numpad3', 'KeyE'],
-  tertiaryFire: ['KeyC', 'KeyV', 'KeyR', 'ShiftLeft', 'ShiftRight'],
+  tertiaryFire: ['KeyR', 'KeyC', 'KeyV', 'ShiftLeft', 'ShiftRight'],
 };
 
 export class InputManager {

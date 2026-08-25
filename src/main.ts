@@ -3183,6 +3183,7 @@ class WormholeGame {
         // Authentic physical collision pickup matching original Java ship polygon reach (54px)
         if (
           this.player.isAlive &&
+          !pup.isInvulnerable &&
           Collision.testCircleCircle(
             this.player.x,
             this.player.y,

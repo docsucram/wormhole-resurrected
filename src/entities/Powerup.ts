@@ -91,7 +91,7 @@ export class Powerup {
     this.life -= dt;
     this.cycle += dt * 60;
 
-    if (this.cycle > 20) {
+    if (this.cycle > 27) {
       this.isInvulnerable = false;
     }
 
