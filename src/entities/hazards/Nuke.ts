@@ -177,18 +177,18 @@ export class Nuke implements Hazard {
         'center'
       );
     } else {
-      // Expanding nuclear shockwave rings
-      const alpha = Math.max(0, 1 - this.blastRadius / 1000);
+      // Expanding nuclear shockwave rings (keep high visibility across full arena)
+      const alpha = Math.max(0.45, 1 - (this.blastRadius / 1100) * 0.55);
       renderer.ctx.globalAlpha = alpha;
 
-      // Outer blast boundary
-      renderer.drawGlowCircle(0, 0, this.blastRadius, '#ffffff', this.color, 3);
-      // Inner hollow boundary (safe eye inner edge)
-      if (this.blastRadius > 50) {
-        renderer.drawGlowCircle(0, 0, this.blastRadius - 50, this.color, this.color, 1.5);
+      // Outer blast boundary (bright, thick high-energy shockwave ring)
+      renderer.drawGlowCircle(0, 0, this.blastRadius, '#ffffff', '#ff0033', 3.5);
+      // Secondary trailing shockwave ring
+      if (this.blastRadius > 40) {
+        renderer.drawGlowCircle(0, 0, this.blastRadius - 40, '#ffaa00', '#ff0033', 2);
       }
       // Safe core eye indicator
-      renderer.drawGlowCircle(0, 0, 75, 'rgba(0, 255, 204, 0.5)', '#00ffcc', 1);
+      renderer.drawGlowCircle(0, 0, 75, 'rgba(0, 255, 204, 0.6)', '#00ffcc', 1.5);
     }
 
     renderer.ctx.restore();

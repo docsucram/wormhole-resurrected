@@ -246,6 +246,16 @@ export class SimulatedRealm {
     );
   }
 
+  public handleParticipantElimination(slot: number): void {
+    // Detonate/remove the eliminated participant's wormhole across all simulated bot realms
+    for (const realm of this.botRealms.values()) {
+      const deadWh = realm.wormholes.find((w) => w.slot === slot);
+      if (deadWh) {
+        deadWh.killSelf(realm.particles, this.silentSound);
+      }
+    }
+  }
+
   public update(dt: number, _sound?: SoundEngine, isRoundActive = true): void {
     const sound = this.silentSound;
     const boundX = this.arenaBound;
@@ -545,9 +555,11 @@ export class SimulatedRealm {
     ctx.strokeRect(-half, -half, half * 2, half * 2);
 
     if (realm) {
-      // Wormholes
+      // Wormholes (only active living wormholes)
       for (const wh of (realm.wormholes || [realm.wormholeToPlayer1])) {
-        wh.draw(renderer);
+        if (wh.isAlive) {
+          wh.draw(renderer);
+        }
       }
 
       // Hazards

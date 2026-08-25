@@ -117,9 +117,19 @@ export class HangarView {
     const barAgil = document.getElementById(`${this.uiPrefix}bar-agil`);
     if (barAgil) barAgil.style.width = `${agilPct}%`;
 
-    // Special Ability
-    const specialNames = ['NONE', 'TURTLE CANNON', 'SHAPESHIFTER', 'HEAT SEEKER MISSILES', 'ATTRACTOR / REPULSER'];
+    // Special Ability - hide badge completely if ship has none
+    const specialNames = ['', 'TURTLE CANNON', 'SHAPESHIFTER', 'HEAT SEEKER MISSILES', 'ATTRACTOR / REPULSER'];
     const specEl = document.getElementById(`${this.uiPrefix}special-name`) || document.getElementById(`${this.uiPrefix}ship-special`);
-    if (specEl) specEl.innerText = specialNames[cfg.specialType] || 'NONE';
+    const specRow = document.getElementById(`${this.uiPrefix}special-row`);
+    if (specEl) {
+      if (cfg.specialType === 0) {
+        specEl.style.display = 'none';
+        if (specRow) specRow.style.display = 'none';
+      } else {
+        specEl.style.display = 'inline-block';
+        if (specRow) specRow.style.display = 'flex';
+        specEl.innerText = specialNames[cfg.specialType] || '';
+      }
+    }
   }
 }

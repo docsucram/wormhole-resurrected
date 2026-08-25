@@ -1628,11 +1628,12 @@ class WormholeGame {
       this.tablePlayers[botSlot]!.isAlive = false;
     }
 
-    // Destroy eliminated bot's wormhole with detonation
+    // Destroy eliminated bot's wormhole with detonation in player's arena & all bot realms
     const botWh = this.wormholes.find((w) => w.slot === botSlot);
     if (botWh) {
       botWh.killSelf(this.particles, this.sound);
     }
+    this.simulatedRealm.handleParticipantElimination(botSlot);
 
     this.updateTableRosterUI();
 
