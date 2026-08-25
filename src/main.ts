@@ -2412,19 +2412,6 @@ class WormholeGame {
       };
     }
 
-    // Linear Spark Shards & Debris Toggle (Persistent)
-    const chkSparkShards = document.getElementById('chk-opt-spark-shards') as HTMLInputElement | null;
-    const savedSparkShards = localStorage.getItem('wh_opt_spark_shards');
-    if (chkSparkShards) {
-      if (savedSparkShards !== null) {
-        chkSparkShards.checked = savedSparkShards === 'true';
-      }
-      chkSparkShards.onchange = () => {
-        this.particles.enableSparkShards = chkSparkShards.checked;
-        try { localStorage.setItem('wh_opt_spark_shards', chkSparkShards.checked.toString()); } catch {}
-      };
-    }
-
     // Stick Deadzone Slider (Persistent)
     const deadzoneSlider = document.getElementById('opt-stick-deadzone') as HTMLInputElement | null;
     const deadzoneVal = document.getElementById('opt-deadzone-val');

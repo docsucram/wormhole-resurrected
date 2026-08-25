@@ -56,14 +56,22 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: linear-gradient(
-          rgba(18, 16, 16, 0) 50%,
-          rgba(0, 0, 0, 0.25) 50%
-        );
-        background-size: 100% 4px;
+        background: 
+          repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.45) 0px,
+            rgba(0, 0, 0, 0.45) 1.5px,
+            transparent 1.5px,
+            transparent 4px
+          ),
+          radial-gradient(
+            circle at center,
+            transparent 60%,
+            rgba(0, 0, 0, 0.45) 100%
+          );
         pointer-events: none;
-        z-index: 2;
-        opacity: 0.4;
+        z-index: 6;
+        opacity: 0.9;
       }
 
       /* ------------------------------------------------------------- */
@@ -2140,11 +2148,11 @@
           </div>
         </div>
 
-        <!-- Dual-Stroke Geometry Wars Bloom Toggle -->
+        <!-- White-Hot Core Toggle -->
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
           <div>
-            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">GEOMETRY WARS BLOOM (WHITE-HOT CORE)</div>
-            <div style="font-size: 10px; color: #94a3b8;">Dual-pass vector stroke with scorching white center beam</div>
+            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">WHITE-HOT CORE</div>
+            <div style="font-size: 10px; color: #94a3b8;">Dual-pass vector stroke with luminous center sheen</div>
           </div>
           <input type="checkbox" id="chk-opt-dual-bloom" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
         </div>
@@ -2156,15 +2164,6 @@
             <div style="font-size: 10px; color: #94a3b8;">Subtle glowing geometric grid in arena space</div>
           </div>
           <input type="checkbox" id="chk-opt-vector-grid" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
-        </div>
-
-        <!-- Linear Spark Shards & Additive Debris Toggle -->
-        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-          <div>
-            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">LINEAR SPARK SHARDS & DEBRIS</div>
-            <div style="font-size: 10px; color: #94a3b8;">Fast-moving oriented vector needles on explosions & thrust</div>
-          </div>
-          <input type="checkbox" id="chk-opt-spark-shards" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">

@@ -116,6 +116,17 @@ export class SimulatedRealm {
     const controller = new BotController(difficulty);
     const wh = new Wormhole('PLAYER 1', 0, 0, this.orbitDistance, true);
     const hazards = new HazardManager(this.arenaBound);
+    hazards.onWarpHazard = (hazardType: number, targetSlot: number) => {
+      if (targetSlot === 0) {
+        if (this.onSendHazardToPlayer1) this.onSendHazardToPlayer1(hazardType, slot);
+      } else {
+        const destRealm = this.botRealms.get(targetSlot);
+        if (destRealm) {
+          const destWh = destRealm.wormholes.find((w) => w.slot === slot) || destRealm.wormholes[0];
+          destRealm.hazardManager.spawnHazard(hazardType, destWh, destRealm.botShip, destRealm.missiles);
+        }
+      }
+    };
     const particles = new NullParticleSystem();
 
     const instance: BotRealmInstance = {
