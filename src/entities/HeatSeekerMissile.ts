@@ -7,11 +7,11 @@ export class HeatSeekerMissile {
   public vx = 0;
   public vy = 0;
   public angle = 0; // in radians
-  public maxSpeed = 7.5;
-  public thrust = 0.25;
+  public maxSpeed = 6.2; // Calibrated below Wing top speed (7.0) to allow maneuvering/outrunning
+  public thrust = 0.22;
   public turnSpeed = (12 * Math.PI) / 180; // 12 deg per frame (authentic slingshot overshoot)
-  public damage = 12;
-  public life = 5.5;
+  public damage = 10; // Exactly matching legacy HeatSeekerMissile.java (10 HP)
+  public life = 4.5;
   public isAlive = true;
   public color = '#00ffff';
   public radius = 10;

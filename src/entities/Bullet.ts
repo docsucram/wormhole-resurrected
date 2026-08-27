@@ -9,7 +9,7 @@ export class Bullet {
   public size: number;
   public color: string;
   public glowColor: string;
-  public life = 1.6; // ~100 frames
+  public life = 1.5; // ~90 frames
   public ownerSlot: number;
   public isAlive = true;
   public isPowerup = false;
