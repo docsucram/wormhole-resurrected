@@ -59,6 +59,8 @@ export class BotController {
   private launchCooldown = 0;
   private targetWormholeIndex = 0;
   private totalTime = 0;
+  private inventoryHoldTimer = 0;
+  private lastInventoryCount = 0;
   private currentInput: InputState = {
     up: false,
     left: false,
@@ -100,6 +102,18 @@ export class BotController {
     if (this.launchCooldown > 0) {
       this.launchCooldown -= dt;
     }
+
+    // Track inventory changes & hold timer
+    const currentInvCount = botShip.powerupInventory.length;
+    if (currentInvCount > this.lastInventoryCount) {
+      // Just collected a new offensive hazard! Reset 8s timer
+      this.inventoryHoldTimer = 0;
+    } else if (currentInvCount >= 3) {
+      this.inventoryHoldTimer += dt;
+    } else {
+      this.inventoryHoldTimer = 0;
+    }
+    this.lastInventoryCount = currentInvCount;
 
     // Clean up dead hazards from reaction tracking
     for (const [h] of this.seenHazardTimestamps) {
@@ -160,6 +174,52 @@ export class BotController {
     return false;
   }
 
+  /**
+   * Checks if an obstacle (like a giant Inflator or Asteroid) blocks the direct flight path.
+   * If blocked, returns a tangent detour angle around the obstacle.
+   */
+  private findClearNavigationAngle(
+    botShip: PlayerShip,
+    targetX: number,
+    targetY: number,
+    hazards: Hazard[]
+  ): number {
+    const dx = targetX - botShip.x;
+    const dy = targetY - botShip.y;
+    const targetDist = Math.hypot(dx, dy);
+    const directAngle = Math.atan2(dy, dx);
+    if (targetDist < 30) return directAngle;
+
+    const travelDirX = dx / targetDist;
+    const travelDirY = dy / targetDist;
+
+    for (const h of hazards) {
+      if (!h.isAlive || h.powerupType === 16) continue;
+      const toHazX = h.x - botShip.x;
+      const toHazY = h.y - botShip.y;
+      const hazDist = Math.hypot(toHazX, toHazY);
+
+      if (hazDist > targetDist + 50) continue;
+
+      // Project hazard onto travel vector
+      const projection = toHazX * travelDirX + toHazY * travelDirY;
+
+      if (projection > 0 && projection < targetDist) {
+        // Perpendicular distance from hazard to travel line
+        const perpDist = Math.abs(toHazX * travelDirY - toHazY * travelDirX);
+        const requiredClearance = h.radius + 38;
+
+        if (perpDist < requiredClearance) {
+          // Obstacle blocks flight corridor! Calculate tangent detour
+          const hazAngle = Math.atan2(toHazY, toHazX);
+          const side = (toHazX * travelDirY - toHazY * travelDirX) >= 0 ? -1 : 1;
+          return hazAngle + (side * (Math.PI / 2.3));
+        }
+      }
+    }
+    return directAngle;
+  }
+
   private decideStrategy(
     botShip: PlayerShip,
     wormholes: Wormhole[],
@@ -193,6 +253,23 @@ export class BotController {
           this.currentInput.up = true;
           return;
         }
+      }
+    }
+
+    // 2.5 EMERGENCY: Evade lethal collision with giant hazards (Inflators, Asteroids, Puds)
+    for (const h of hazards) {
+      if (!h.isAlive || h.powerupType === 16) continue;
+      const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
+      const safeDist = h.radius + (this.difficulty === 'hard' ? 55 : 40);
+      if (dist < safeDist) {
+        // Immediate escape vector directly away from hazard body
+        this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
+        this.currentInput.up = true;
+        // Fire into the hazard while backing away to pop or shrink it
+        if (!this.isPowerupInFiringLine(botShip, powerups, this.targetAngle, dist)) {
+          this.currentInput.fire = true;
+        }
+        return;
       }
     }
 
@@ -261,11 +338,10 @@ export class BotController {
       }
 
       if (bestPup) {
-        const dx = bestPup.x - botShip.x;
-        const dy = bestPup.y - botShip.y;
-        const dist = Math.hypot(dx, dy);
+        const dist = Math.hypot(bestPup.x - botShip.x, bestPup.y - botShip.y);
 
-        this.targetAngle = Math.atan2(dy, dx);
+        // Path around any obstacle hazards blocking the way to the powerup
+        this.targetAngle = this.findClearNavigationAngle(botShip, bestPup.x, bestPup.y, hazards);
 
         // Retro Braking: If bot has retros and is close, release thrust to stop drifting past it
         const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
@@ -341,40 +417,65 @@ export class BotController {
       }
     }
 
-    // 6. LAUNCH STORED HAZARD: Transmit offensive hazards into opponent wormholes
-    if (botShip.powerupInventory.length > 0 && wormholes.length > 0 && this.launchCooldown <= 0) {
-      const whIndex = this.targetWormholeIndex % wormholes.length;
-      const wh = wormholes[whIndex];
-      const dx = wh.x - botShip.x;
-      const dy = wh.y - botShip.y;
-      const dist = Math.hypot(dx, dy);
+    // 6. LAUNCH STORED HAZARDS: Stockpile and burst launch into opponent wormholes
+    const invCount = botShip.powerupInventory.length;
+    let shouldLaunch = false;
 
-      this.targetAngle = Math.atan2(dy, dx);
-      let angleDiff = this.targetAngle - botShip.angle;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-
-      if (dist > 200) {
-        this.currentInput.up = true;
+    if (invCount > 0 && wormholes.length > 0 && this.launchCooldown <= 0) {
+      if (this.difficulty === 'hard') {
+        // Hard AI aims to stockpile 5 items, but launches if 3+ held for 8 seconds, or if full (5), or no powerups left in arena
+        if (invCount >= 5) {
+          shouldLaunch = true;
+        } else if (invCount >= 3 && this.inventoryHoldTimer >= 8.0) {
+          shouldLaunch = true;
+        } else if (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 10.0) {
+          shouldLaunch = true;
+        }
+      } else if (this.difficulty === 'medium') {
+        if (invCount >= 3 || (invCount >= 2 && this.inventoryHoldTimer >= 6.0) || (invCount >= 1 && validPowerups.length === 0)) {
+          shouldLaunch = true;
+        }
+      } else {
+        // Easy AI launches as soon as it has an item
+        shouldLaunch = true;
       }
 
-      if (Math.abs(angleDiff) < 0.22 && dist < 390) {
-        this.currentInput.secondaryFire = true;
-        this.currentInput.fire = false;
-        this.launchCooldown = cfg.launchCooldownTime;
-        this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
+      if (shouldLaunch) {
+        const whIndex = this.targetWormholeIndex % wormholes.length;
+        const wh = wormholes[whIndex];
+        const directAngle = this.findClearNavigationAngle(botShip, wh.x, wh.y, hazards);
+        const dist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
+
+        this.targetAngle = directAngle;
+        let angleDiff = this.targetAngle - botShip.angle;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        if (dist > 200) {
+          this.currentInput.up = true;
+        }
+
+        if (Math.abs(angleDiff) < 0.25 && dist < 400) {
+          this.currentInput.secondaryFire = true;
+          this.currentInput.fire = false;
+          // Rapid volley fire rate for stockpiled barrage
+          this.launchCooldown = this.difficulty === 'hard' ? 0.35 : this.difficulty === 'medium' ? 0.50 : 1.2;
+          if (invCount <= 1) {
+            this.launchCooldown = cfg.launchCooldownTime;
+            this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
+            this.inventoryHoldTimer = 0;
+          }
+        }
+        return;
       }
-      return;
     }
 
     // 7. ATTACK ORBITAL WORMHOLE: Shoot primary lasers to spawn fresh powerups
     if (wormholes.length > 0) {
       const wh = wormholes[this.targetWormholeIndex % wormholes.length] || wormholes[0];
-      const dx = wh.x - botShip.x;
-      const dy = wh.y - botShip.y;
-      const dist = Math.hypot(dx, dy);
+      const dist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
 
-      this.targetAngle = Math.atan2(dy, dx);
+      this.targetAngle = this.findClearNavigationAngle(botShip, wh.x, wh.y, hazards);
       let angleDiff = this.targetAngle - botShip.angle;
       while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
       while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
