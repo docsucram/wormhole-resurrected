@@ -3833,6 +3833,11 @@ class WormholeGame {
       const mobScore = document.getElementById('mob-score-display');
       if (mobScore) mobScore.innerText = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
 
+      const btnTouchSpecial = document.getElementById('btn-touch-special');
+      if (btnTouchSpecial) {
+        btnTouchSpecial.style.display = this.player.specialType > 0 ? 'flex' : 'none';
+      }
+
       for (let i = 0; i < 5; i++) {
         const mSlot = document.getElementById(`mob-slot-${i}`);
         if (!mSlot) continue;

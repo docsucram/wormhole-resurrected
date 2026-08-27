@@ -15,8 +15,8 @@
       :root {
         --neon-cyan: #00e5ff;
         --neon-cyan-glow: rgba(0, 229, 255, 0.4);
-        --neon-magenta: #ff007f;
-        --neon-magenta-glow: rgba(255, 0, 127, 0.4);
+        --neon-magenta: #c040ff;
+        --neon-magenta-glow: rgba(192, 64, 255, 0.45);
         --neon-green: #00ff88;
         --neon-amber: #ffaa00;
         --hud-yellow: #ffff00;
@@ -2990,18 +2990,20 @@
 
       <!-- Right Screen Action Pads -->
       <div class="mob-touch-actions">
-        <button class="touch-btn special-btn" id="btn-touch-special" title="Special Ability [R]">
-          <span>✨</span>
-          <span class="touch-sub-label">SPEC</span>
-        </button>
         <button class="touch-btn launch-btn" id="btn-touch-launch" title="Launch Stored Hazard [F]">
-          <span>⚡</span>
-          <span class="touch-sub-label">ITEM</span>
+          <span style="font-size: 16px;">⚡</span>
+          <span class="touch-sub-label">LAUNCH</span>
         </button>
-        <button class="touch-btn fire-btn" id="btn-touch-fire" title="Primary Laser [SPACE]">
-          <span>🔥</span>
-          <span class="touch-sub-label">FIRE</span>
-        </button>
+        <div class="mob-fire-column" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <button class="touch-btn special-btn" id="btn-touch-special" title="Special Ability [R]" style="display: none; width: 54px; height: 54px; font-size: 13px;">
+            <span>✨</span>
+            <span class="touch-sub-label">SPEC</span>
+          </button>
+          <button class="touch-btn fire-btn" id="btn-touch-fire" title="Primary Pulse Cannon [SPACE]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: block; margin-bottom: 2px;"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" stroke-width="2"/><line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="2"/><line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            <span class="touch-sub-label">FIRE</span>
+          </button>
+        </div>
       </div>
     </div>
 
