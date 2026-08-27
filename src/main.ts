@@ -82,7 +82,7 @@ class WormholeGame {
   public playerName = 'BrightNomad';
   public totalMatchWins = 0;
   private localClientId = Math.random().toString(36).substring(2, 9);
-  public playerPilotMode: 'human' | 'easy' | 'medium' | 'hard' = 'human';
+  public playerPilotMode: 'human' | BotDifficulty = 'human';
   private playerBotController: BotController | null = null;
 
   // 8-Player Match Roster & Multi-Opponent PiP

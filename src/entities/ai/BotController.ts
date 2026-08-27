@@ -288,6 +288,24 @@ export class BotController {
       }
     }
 
+    // 2.4 EMERGENCY: Evade Imminent Nuke Blast Wave
+    if (this.difficulty === 'hard' || this.difficulty === 'insane') {
+      for (const h of hazards) {
+        if (!h.isAlive || h.powerupType !== 14) continue;
+        const nukeObj = h as unknown as { countdown?: number };
+        if (nukeObj.countdown !== undefined && nukeObj.countdown <= 3.2) {
+          const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
+          if (dist < 460) {
+            // Immediate escape vector directly away from detonating nuclear core
+            this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
+            this.currentInput.up = true;
+            this.currentInput.fire = false;
+            return;
+          }
+        }
+      }
+    }
+
     // 2.5 EMERGENCY: Evade lethal collision with giant hazards (Inflators, Asteroids, Mines, Puds)
     for (const h of hazards) {
       if (!h.isAlive || h.powerupType === 16) continue;
@@ -381,25 +399,41 @@ export class BotController {
     // to extract a flood of powerups rather than chasing down individual ones (unless needing emergency HP).
     const validPowerups = powerups.filter((p) => p.isAlive);
     const isApexAi = this.difficulty === 'hard' || this.difficulty === 'insane';
-    const needsUrgentHealth = (botShip.health / (botShip.maxHealth || 200)) < 0.50;
+    const isLowHealth = botShip.health < botShip.maxHealth * 0.50;
+    const hasHealthPowerup = validPowerups.some((p) => p.type === 5);
+    const needsUrgentHealth = isLowHealth && hasHealthPowerup;
     const preferShootingWormhole = isApexAi && validPowerups.length < 6 && !needsUrgentHealth && wormholes.length > 0;
 
     if (!this.isUnloadingBarrage && !preferShootingWormhole && validPowerups.length > 0) {
       let bestPup: Powerup | null = null;
       let bestScore = -Infinity;
+      const activeThreatCount = hazards.filter((h) => h.isAlive && h.powerupType !== 16).length;
 
       for (const pup of validPowerups) {
         const dist = Math.hypot(pup.x - botShip.x, pup.y - botShip.y);
         if (dist > cfg.powerupPerceptionRadius) continue;
+
+        // Rule: DO NOT go for health (+HP, type 5) if already at full health!
+        if (pup.type === 5 && botShip.health >= botShip.maxHealth) {
+          continue;
+        }
+
+        // Rule: DO NOT go for ZAP (type 4) if there are no enemies/hazards in the arena!
+        if (pup.type === 4 && activeThreatCount === 0) {
+          continue;
+        }
 
         let score = 500 - dist;
 
         // Urgent health / defensive pickups when damaged
         const healthPct = botShip.health / (botShip.maxHealth || 200);
         if (healthPct < 0.60) {
-          if (pup.type === 5) score += 400; // +HP
+          if (pup.type === 5) {
+            // Insane AI focuses aggressively on health when low
+            score += this.difficulty === 'insane' ? 2500 : 450;
+          }
           if (pup.type === 3) score += 300; // SHIELD
-          if (pup.type === 4) score += 350; // ZAP
+          if (pup.type === 4 && activeThreatCount > 0) score += 350; // ZAP
         }
 
         // Essential ship upgrades
