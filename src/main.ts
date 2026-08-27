@@ -139,11 +139,21 @@ class WormholeGame {
   // Mobile device adaptation flag
   public isMobile = false;
 
+  private checkIsMobile(): boolean {
+    const isMobileUA = /Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
+    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isCoarseAndSmall = window.matchMedia && window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
+    return Boolean(isMobileUA || isIPadOS || isCoarseAndSmall);
+  }
+
   constructor() {
-    this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 900;
+    this.isMobile = this.checkIsMobile();
     if (this.isMobile) {
       document.body.classList.add('is-mobile');
       this.zoom = 1.35;
+    } else {
+      document.body.classList.remove('is-mobile');
+      this.zoom = 1.65;
     }
 
     const savedCallsign = localStorage.getItem('wh_callsign');
@@ -1303,7 +1313,16 @@ class WormholeGame {
     } else {
       deck.classList.add('hidden');
       document.body.classList.add('in-arena');
-      hud.style.display = this.isMobile ? 'none' : 'grid';
+      this.isMobile = this.checkIsMobile();
+      if (this.isMobile) {
+        document.body.classList.add('is-mobile');
+        hud.style.display = 'none';
+        this.zoom = 1.35;
+      } else {
+        document.body.classList.remove('is-mobile');
+        hud.style.display = 'grid';
+        this.zoom = 1.65;
+      }
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
       this.resetArenaForNewRound();
@@ -3021,7 +3040,7 @@ class WormholeGame {
 
   private setupEventListeners(): void {
     window.addEventListener('resize', () => {
-      this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 900;
+      this.isMobile = this.checkIsMobile();
       if (this.isMobile) {
         document.body.classList.add('is-mobile');
         this.zoom = 1.35;
