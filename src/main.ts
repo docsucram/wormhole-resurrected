@@ -859,9 +859,19 @@ class WormholeGame {
     if (filtered.length === 0) {
       listEl.innerHTML = `
         <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
-          NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong style="color: var(--neon-cyan);">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
+          NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
         </div>
       `;
+      const emptyHostBtn = listEl.querySelector('.btn-host-from-empty') as HTMLElement;
+      if (emptyHostBtn) {
+        emptyHostBtn.onclick = () => {
+          const createModal = document.getElementById('create-match-modal');
+          if (createModal) {
+            createModal.classList.add('active');
+            createModal.style.display = 'block';
+          }
+        };
+      }
       return;
     }
 
@@ -2020,6 +2030,7 @@ class WormholeGame {
       { id: 'btn-solo-diff-easy', diff: 'easy' },
       { id: 'btn-solo-diff-med', diff: 'medium' },
       { id: 'btn-solo-diff-hard', diff: 'hard' },
+      { id: 'btn-solo-diff-insane', diff: 'insane' },
     ];
 
     diffButtons.forEach(({ id, diff }) => {
@@ -2030,6 +2041,18 @@ class WormholeGame {
           diffButtons.forEach((b) => document.getElementById(b.id)?.classList.remove('active'));
           btn.classList.add('active');
         };
+      }
+    });
+
+    // Delegated click handler for empty matches '+ HOST NEW MATCH' link
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('btn-host-from-empty')) {
+        const createModal = document.getElementById('create-match-modal');
+        if (createModal) {
+          createModal.classList.add('active');
+          createModal.style.display = 'block';
+        }
       }
     });
 

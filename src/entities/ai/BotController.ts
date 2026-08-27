@@ -5,7 +5,7 @@ import { Bullet } from '../Bullet';
 import { Hazard } from '../hazards/Hazard';
 import { InputState } from '../../core/InputManager';
 
-export type BotDifficulty = 'easy' | 'medium' | 'hard';
+export type BotDifficulty = 'easy' | 'medium' | 'hard' | 'insane';
 
 interface DifficultyConfig {
   thinkInterval: number;
@@ -47,6 +47,16 @@ const DIFFICULTY_CONFIGS: Record<BotDifficulty, DifficultyConfig> = {
     powerupPerceptionRadius: 520,
     hazardEngagementRadius: 480,
     launchCooldownTime: 1.8,
+    specialAbilityChance: 1.0,
+  },
+  insane: {
+    thinkInterval: 0.016, // 60 FPS frame-perfect thinking
+    reactionDelay: 0.02,  // Superhuman near-instant reflex
+    aimErrorRad: 0.005,   // Pinpoint rail-lock accuracy
+    deadZone: 0.012,      // Ultra-crisp steering responsiveness
+    powerupPerceptionRadius: 750,
+    hazardEngagementRadius: 550,
+    launchCooldownTime: 1.0,
     specialAbilityChance: 1.0,
   },
 };
@@ -122,8 +132,8 @@ export class BotController {
     // Manage continuous barrage state: once triggered, keep firing until 0 held
     if (currentInvCount === 0) {
       this.isUnloadingBarrage = false;
-    } else if (this.difficulty === 'hard') {
-      if (currentInvCount >= 5 || (currentInvCount >= 3 && this.inventoryHoldTimer >= 8.0) || (currentInvCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0)) {
+    } else if (this.difficulty === 'hard' || this.difficulty === 'insane') {
+      if (currentInvCount >= 5 || (currentInvCount >= 3 && this.inventoryHoldTimer >= 6.0) || (currentInvCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 6.0)) {
         this.isUnloadingBarrage = true;
       }
     } else if (this.difficulty === 'medium') {
@@ -282,7 +292,7 @@ export class BotController {
     for (const h of hazards) {
       if (!h.isAlive || h.powerupType === 16) continue;
       const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-      const safeDist = h.radius + (h.powerupType === 10 ? 80 : (this.difficulty === 'hard' ? 55 : 40));
+      const safeDist = h.radius + (h.powerupType === 10 ? 85 : (this.difficulty === 'insane' ? 70 : this.difficulty === 'hard' ? 55 : 40));
       if (dist < safeDist) {
         // Immediate escape vector directly away from hazard body
         this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
@@ -367,12 +377,12 @@ export class BotController {
     }
 
     // 4. POWERUP HARVESTING VS WORMHOLE SHOOTING
-    // Hard AI Rule: If there are fewer than 6 powerups in the arena, Hard AI prioritizes shooting the opponent wormhole
+    // Hard & Insane AI Rule: If there are fewer than 6 powerups in the arena, prioritize shooting the opponent wormhole
     // to extract a flood of powerups rather than chasing down individual ones (unless needing emergency HP).
     const validPowerups = powerups.filter((p) => p.isAlive);
-    const isHardAi = this.difficulty === 'hard';
+    const isApexAi = this.difficulty === 'hard' || this.difficulty === 'insane';
     const needsUrgentHealth = (botShip.health / (botShip.maxHealth || 200)) < 0.50;
-    const preferShootingWormhole = isHardAi && validPowerups.length < 6 && !needsUrgentHealth && wormholes.length > 0;
+    const preferShootingWormhole = isApexAi && validPowerups.length < 6 && !needsUrgentHealth && wormholes.length > 0;
 
     if (!this.isUnloadingBarrage && !preferShootingWormhole && validPowerups.length > 0) {
       let bestPup: Powerup | null = null;
@@ -412,8 +422,8 @@ export class BotController {
         const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
 
         // Calculate trajectory intercept point for moving powerups
-        const leadWeight = this.difficulty === 'hard' ? 1.0 : this.difficulty === 'medium' ? 0.6 : 0.0;
-        const leadFrames = Math.min(rawDist / Math.max(currentSpeed, 4.5), 35.0) * leadWeight;
+        const leadWeight = this.difficulty === 'insane' ? 1.4 : this.difficulty === 'hard' ? 1.0 : this.difficulty === 'medium' ? 0.6 : 0.0;
+        const leadFrames = Math.min(rawDist / Math.max(currentSpeed, 4.5), 38.0) * leadWeight;
         const targetX = bestPup.x + (bestPup.vx || 0) * leadFrames;
         const targetY = bestPup.y + (bestPup.vy || 0) * leadFrames;
 
@@ -503,7 +513,9 @@ export class BotController {
 
     if (invCount > 0 && wormholes.length > 0) {
       if (!shouldLaunch && this.launchCooldown <= 0) {
-        if (this.difficulty === 'hard') {
+        if (this.difficulty === 'insane') {
+          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 5.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 5.0);
+        } else if (this.difficulty === 'hard') {
           shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 8.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0);
         } else if (this.difficulty === 'medium') {
           shouldLaunch = invCount >= 3 || (invCount >= 2 && this.inventoryHoldTimer >= 6.0) || (invCount >= 1 && validPowerups.length === 0);
@@ -533,7 +545,7 @@ export class BotController {
             this.currentInput.secondaryFire = true;
             this.currentInput.fire = false;
             // Rapid-fire sequence to empty all powerups down to 0
-            this.launchCooldown = this.difficulty === 'hard' ? 0.25 : this.difficulty === 'medium' ? 0.45 : 0.9;
+            this.launchCooldown = this.difficulty === 'insane' ? 0.16 : this.difficulty === 'hard' ? 0.25 : this.difficulty === 'medium' ? 0.45 : 0.9;
             if (invCount <= 1) {
               this.launchCooldown = cfg.launchCooldownTime;
               this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;

@@ -2195,7 +2195,7 @@
             <!-- Scrollable Live Match List -->
             <div class="matches-list-scroll" id="lobby-matches-list">
               <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
-                NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong style="color: var(--neon-cyan);">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
+                NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
               </div>
             </div>
 
@@ -2269,6 +2269,7 @@
               <option value="easy">FILL SLOTS: NOVICE (EASY AI)</option>
               <option value="medium">FILL SLOTS: PILOT (MED AI)</option>
               <option value="hard">FILL SLOTS: ACE (HARD AI)</option>
+              <option value="insane">FILL SLOTS: CYBORG (INSANE AI)</option>
             </select>
           </div>
 
@@ -2313,6 +2314,14 @@
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">VETERAN</span>
           </div>
           <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Rapid mine clearance, rapid powerup combos, and lethal predictive fire.</p>
+        </button>
+
+        <button class="solo-diff-card" data-diff="insane" id="btn-solo-diff-insane">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="color: #bd53ed; font-size: 13px; font-family: 'Orbitron', sans-serif;">🟣 CYBORG (INSANE)</strong>
+            <span style="font-size: 9px; color: #bd53ed; font-family: 'Orbitron', sans-serif; font-weight: 800;">APEX COMBAT</span>
+          </div>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Superhuman reflex, predictive trajectory intercepts, and relentless barrage bursts.</p>
         </button>
       </div>
 
@@ -2589,6 +2598,7 @@
             <option value="easy">Novice</option>
             <option value="medium" selected>Pilot (Med)</option>
             <option value="hard">Ace (Hard)</option>
+            <option value="insane">Cyborg (Insane)</option>
           </select>
           <button class="action-btn" id="btn-pause-add-bot" style="padding: 4px 10px; font-size: 10px; border-color: #00ff88; color: #00ff88; font-weight: 900;">+ BOT</button>
         </div>
@@ -2891,6 +2901,7 @@
             <option value="easy">Novice</option>
             <option value="medium" selected>Medium</option>
             <option value="hard">Ace</option>
+            <option value="insane">Cyborg (Insane)</option>
           </select>
           <button class="arena-btn btn-add-cpu" id="btn-add-cpu">+ BOT</button>
         </div>
