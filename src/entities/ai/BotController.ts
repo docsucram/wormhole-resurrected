@@ -400,7 +400,7 @@ export class BotController {
       }
 
       if (targetHazard) {
-        const bulletSpeed = 15.0;
+        const bulletSpeed = 10.0;
         const timeToHit = minThreatDist / (bulletSpeed * 60);
         const hazObj = targetHazard as unknown as { vx?: number; vy?: number };
         const leadX = targetHazard.x + (hazObj.vx || 0) * timeToHit * 60;

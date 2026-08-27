@@ -275,7 +275,7 @@ export class PlayerShip {
 
   private firePrimary(bullets: Bullet[], sound: SoundEngine, particles?: ParticleSystem): void {
     this.shotCooldown = 0.14;
-    const speed = 15.0;
+    const speed = 10.0; // Exactly matching legacy PlayerSprite.java:439 (10.0 px/tick)
     const color = (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary;
     const glow = (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).glow;
 
@@ -532,8 +532,8 @@ export class PlayerShip {
           const worldX = this.x + (turret.x * cos - turret.y * sin);
           const worldY = this.y + (turret.x * sin + turret.y * cos);
 
-          const bvx = Math.cos(turret.angle) * 15.0;
-          const bvy = Math.sin(turret.angle) * 15.0;
+          const bvx = Math.cos(turret.angle) * 10.0;
+          const bvy = Math.sin(turret.angle) * 10.0;
           bullets.push(
             new Bullet(worldX, worldY, bvx, bvy, 10, 4, '#ffffff', (PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary, this.slot)
           );

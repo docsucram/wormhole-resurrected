@@ -9,7 +9,7 @@ export class Bullet {
   public size: number;
   public color: string;
   public glowColor: string;
-  public life = 1.5; // ~90 frames
+  public life = 1.67; // Exactly matching legacy BulletSprite.java (m_lifespan = 100 cycles)
   public ownerSlot: number;
   public isAlive = true;
   public isPowerup = false;
