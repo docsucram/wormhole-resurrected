@@ -920,11 +920,31 @@ class WormholeGame {
     });
   }
 
+  public resetPilotModeToHuman(): void {
+    this.playerPilotMode = 'human';
+    this.playerBotController = null;
+    const pilotSelect = document.getElementById('spawner-pilot-select') as HTMLSelectElement | null;
+    if (pilotSelect) {
+      pilotSelect.value = 'human';
+    }
+  }
+
   public joinLobbyMatch(match: LobbyMatch): void {
+    this.resetPilotModeToHuman();
     this.currentMatchConfig = match;
     this.currentArenaSize = match.size;
     Powerup.powerupRule = match.powerupRule;
     Powerup.allPowerupsAllowed = match.powerupRule === 'EXTENDED';
+
+    // Enforce match ship restriction on local player if currently selecting an extended ship
+    if (match.shipRestriction === 'STANDARD' && this.selectedShipIndex > 2) {
+      this.selectedShipIndex = 0;
+      this.player.setShip(0);
+      this.hangarView.setShip(0);
+      this.modalHangarView.setShip(0);
+      this.syncShipSelectionUI(0);
+    }
+
     const sizeCfg = GAME_CONSTANTS.SIZES[this.currentArenaSize as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
     this.arenaRing.setDimensions(sizeCfg.orbitDistance, sizeCfg.boardWidth, sizeCfg.boardHeight);
     this.hazardManager.arenaBound = sizeCfg.boardWidth / 2;
@@ -1044,7 +1064,8 @@ class WormholeGame {
     const diffTag = difficulty === 'hard' ? 'HARD AI' : difficulty === 'easy' ? 'EASY AI' : 'MED AI';
     const botNames = ['Vector', 'Nova', 'Centurion', 'Viper', 'Aegis', 'Titan', 'Spectre'];
     const botName = `${botNames[(emptySlot - 1) % botNames.length]} [${diffTag}]`;
-    const botShipId = (emptySlot - 1) % 8;
+    const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
+    const botShipId = isRestrictedToClassic ? (emptySlot - 1) % 3 : (emptySlot - 1) % 8;
     const botShip = ShipCatalog.get(botShipId);
 
     this.tablePlayers[emptySlot] = {
@@ -1244,7 +1265,8 @@ class WormholeGame {
       deck.classList.remove('hidden');
       hud.style.display = 'none';
 
-      // 2. Clean up active match hosting state
+      // 2. Clean up active match hosting state and reset pilot control mode to human
+      this.resetPilotModeToHuman();
       this.isMatchWaitingForPilots = false;
       this.gameState.phase = 'PLAYING';
       this.simulatedRealm.clearAllBots();
@@ -2935,6 +2957,12 @@ class WormholeGame {
   }
 
   private selectShip(index: number): void {
+    const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
+    if (isRestrictedToClassic && index > 2) {
+      this.showAlert('SHIP RESTRICTION: MATCH IS SET TO STANDARD SHIPS ONLY');
+      return;
+    }
+
     this.selectedShipIndex = index;
     this.player.setShip(index);
     this.player.onDeath = () => this.handlePlayerElimination();
