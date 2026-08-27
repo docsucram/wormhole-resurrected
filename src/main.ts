@@ -2251,6 +2251,16 @@ class WormholeGame {
       if (matchSound) matchSound.innerText = muted ? '🔇' : '🔊';
     };
 
+    // Fullscreen Toggle in Lobby & Pause Menu
+    const btnFsLobby = document.getElementById('btn-fullscreen-toggle');
+    if (btnFsLobby) {
+      btnFsLobby.onclick = () => this.toggleFullscreen();
+    }
+    const btnFsPause = document.getElementById('btn-pause-fullscreen');
+    if (btnFsPause) {
+      btnFsPause.onclick = () => this.toggleFullscreen();
+    }
+
     // Pause Menu Handlers
     document.getElementById('btn-pause-resume')!.onclick = () => {
       document.getElementById('pause-modal')?.classList.remove('active');
@@ -3091,21 +3101,17 @@ class WormholeGame {
       };
     }
 
+    const btnMobFs = document.getElementById('btn-mob-fullscreen');
+    if (btnMobFs) {
+      btnMobFs.onclick = () => this.toggleFullscreen();
+    }
+
     const btnPauseStart = document.getElementById('btn-pause-start-match');
     if (btnPauseStart) {
       btnPauseStart.onclick = () => {
         document.getElementById('pause-modal')?.classList.remove('active');
         const startBtn = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
         if (startBtn) startBtn.click();
-      };
-    }
-
-    const btnPauseLeave = document.getElementById('btn-pause-leave-match');
-    if (btnPauseLeave) {
-      btnPauseLeave.onclick = () => {
-        document.getElementById('pause-modal')?.classList.remove('active');
-        const leaveBtn = document.getElementById('btn-match-leave') || document.getElementById('btn-table-leave');
-        if (leaveBtn) leaveBtn.click();
       };
     }
 
@@ -3161,6 +3167,41 @@ class WormholeGame {
       mobChatInput.onkeydown = (e) => {
         if (e.key === 'Enter') sendMobChat();
       };
+    }
+  }
+
+  public toggleFullscreen(): void {
+    const doc = document as any;
+    const docEl = document.documentElement as any;
+
+    const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+    if (!isFullscreen) {
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+      // Attempt orientation lock to landscape on supported devices
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          (screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      } catch {}
+    } else {
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen().catch(() => {});
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen();
+      }
     }
   }
 

@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#020612" />
     <title>Wormhole: Resurrected // Classic Tactical Table Combat</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -2073,6 +2077,7 @@
             <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual" style="font-size: 16px; padding: 6px 13px; line-height: 1;">📖</button>
             <button class="btn-util" id="btn-menu-options" title="Options & Keybindings" style="font-size: 16px; padding: 6px 13px; line-height: 1;">⚙</button>
             <button class="btn-util" id="btn-menu-sound" title="Toggle Sound" style="font-size: 16px; padding: 6px 13px; line-height: 1;">🔊</button>
+            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen" style="font-size: 16px; padding: 6px 13px; line-height: 1;">⛶</button>
           </div>
         </div>
 
@@ -2469,6 +2474,7 @@
 
         <button class="action-btn" id="btn-pause-options">⚙ CONTROLS & OPTIONS</button>
         <button class="action-btn" id="btn-pause-sound">SOUND: ON</button>
+        <button class="action-btn" id="btn-pause-fullscreen">⛶ TOGGLE FULLSCREEN</button>
         <button class="action-btn" id="btn-pause-title" style="border-color: #ff3344; color: #ff3344; font-weight: 900;">RETURN TO LOBBY</button>
       </div>
     </div>
@@ -2825,6 +2831,7 @@
       <!-- Top-Right Score & Pause Button -->
       <div class="mob-hud-top-right">
         <div class="mob-score-box" id="mob-score-display">0 - 0</div>
+        <button class="mob-btn-pause" id="btn-mob-fullscreen" title="Toggle Fullscreen" style="font-size: 15px;">⛶</button>
         <button class="mob-btn-pause" id="btn-mobile-pause" title="Tactical Pause">⚙</button>
       </div>
 
