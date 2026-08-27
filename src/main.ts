@@ -3156,7 +3156,7 @@ class WormholeGame {
         e.preventDefault();
         const isHidden = mobChatDrawer.style.display === 'none' || !mobChatDrawer.style.display;
         mobChatDrawer.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden && mobChatInput) mobChatInput.focus();
+        // Do NOT auto-focus to prevent unprompted keyboard popups on mobile
       };
       btnMobChatToggle.onclick = toggleDrawer;
       btnMobChatToggle.onpointerdown = toggleDrawer;
@@ -3167,6 +3167,17 @@ class WormholeGame {
       mobChatDrawer.ontouchstart = (e) => e.stopPropagation();
     }
 
+    // Tapping elsewhere on screen closes the mobile chat drawer
+    window.addEventListener('pointerdown', (e) => {
+      if (!this.isMobile || !mobChatDrawer || mobChatDrawer.style.display === 'none') return;
+      const target = e.target as HTMLElement | null;
+      if (target && (mobChatDrawer.contains(target) || btnMobChatToggle?.contains(target))) {
+        return;
+      }
+      mobChatDrawer.style.display = 'none';
+      if (mobChatInput) mobChatInput.blur();
+    });
+
     const sendMobChat = (e?: Event) => {
       if (e) {
         e.stopPropagation();
@@ -3176,6 +3187,7 @@ class WormholeGame {
       const msg = mobChatInput.value.trim();
       mobChatInput.value = '';
       if (mobChatDrawer) mobChatDrawer.style.display = 'none';
+      if (mobChatInput) mobChatInput.blur();
       const myColor = this.getPlayerColor(this.player.slot);
       this.addChatLog(`${this.playerName}: ${msg}`, 'player', myColor);
 
