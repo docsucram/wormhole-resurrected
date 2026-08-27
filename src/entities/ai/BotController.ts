@@ -323,6 +323,58 @@ export class BotController {
       }
     }
 
+    // 2.6 PREDICTIVE RAMMING ANTICIPATION & DEFENSIVE EVASION (Insane & Hard AI)
+    // Projects forward flight trajectory 20-30 frames to detect impending collisions with Mines, Inflators, Puds, and Asteroids.
+    // Uses rapid pulse fire to pop the threat and tangent thrust bursts to divert around it.
+    if (this.difficulty === 'insane' || this.difficulty === 'hard') {
+      const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
+      const lookAheadDist = Math.max(100, currentSpeed * 24);
+
+      for (const h of hazards) {
+        if (!h.isAlive || h.powerupType === 16) continue;
+        const toHazX = h.x - botShip.x;
+        const toHazY = h.y - botShip.y;
+        const hazDist = Math.hypot(toHazX, toHazY);
+
+        if (hazDist > lookAheadDist + h.radius + 40) continue;
+
+        // Project hazard onto velocity vector
+        const travelDirX = currentSpeed > 0.5 ? botShip.vx / currentSpeed : Math.cos(botShip.angle);
+        const travelDirY = currentSpeed > 0.5 ? botShip.vy / currentSpeed : Math.sin(botShip.angle);
+        const projection = toHazX * travelDirX + toHazY * travelDirY;
+
+        if (projection > 0 && projection < lookAheadDist) {
+          const perpDist = Math.abs(toHazX * travelDirY - toHazY * travelDirX);
+          const collisionMargin = h.radius + (this.difficulty === 'insane' ? 38 : 28);
+
+          if (perpDist < collisionMargin) {
+            // Imminent impact trajectory detected!
+            const hazAngle = Math.atan2(toHazY, toHazX);
+            const side = (toHazX * travelDirY - toHazY * travelDirX) >= 0 ? -1 : 1;
+
+            // 1. Evasive steering & thrust burst: veer tangent to hazard
+            this.targetAngle = hazAngle + (side * (Math.PI / 2.1));
+            this.currentInput.up = true;
+
+            // 2. Retro braking if drifting dangerously fast right at it
+            if (botShip.hasRetros && hazDist < h.radius + 60 && currentSpeed > 2.0) {
+              this.currentInput.up = false;
+            }
+
+            // 3. Defensive weapon blast: if ship is aimed near the obstacle, fire pulse cannons to pop it before impact!
+            let aimDiff = hazAngle - botShip.angle;
+            while (aimDiff < -Math.PI) aimDiff += Math.PI * 2;
+            while (aimDiff > Math.PI) aimDiff -= Math.PI * 2;
+
+            if (Math.abs(aimDiff) < 0.45 && !this.isPowerupInFiringLine(botShip, powerups, botShip.angle, hazDist)) {
+              this.currentInput.fire = true;
+            }
+            return;
+          }
+        }
+      }
+    }
+
     // 3. HIGH PRIORITY COMBAT THREAT: Active Inflator Suppression & Destruction
     // Inflators (Type 10) expand continuously and will overwhelm the arena if left unchecked.
     // Lock on, maintain safe standoff distance (160px - 240px), and pump sustained laser fire until destroyed!
@@ -477,7 +529,7 @@ export class BotController {
       }
     }
 
-    // 5. DEFEND AGAINST HOSTILE HAZARDS & CLEAR MINEFIELDS
+    // 5. DEFEND AGAINST HOSTILE HAZARDS & CLEAR MINEFIELDS / MINELAYERS
     if (hazards.length > 0) {
       let targetHazard: Hazard | null = null;
       let minThreatDist = Infinity;
@@ -485,13 +537,16 @@ export class BotController {
       for (const h of hazards) {
         if (!h.isAlive || h.powerupType === 16) continue;
 
-        // Mines (Type 8) have high clearance priority if nearby
         const isMine = h.powerupType === 8;
-        const maxRange = isMine ? 240 : cfg.hazardEngagementRadius;
+        const isMineLayer = h.powerupType === 11;
+        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+
+        // Expanded engagement range for MineLayers (crucial to eliminate before arena gets flooded) and Mines
+        const maxRange = isMineLayer && isApex ? 480 : isMine ? (isApex ? 320 : 240) : cfg.hazardEngagementRadius;
 
         // Human-like Target Acquisition Reaction Delay
         const firstSeen = this.seenHazardTimestamps.get(h) ?? this.totalTime;
-        if (this.totalTime - firstSeen < (isMine ? cfg.reactionDelay * 0.5 : cfg.reactionDelay)) {
+        if (this.totalTime - firstSeen < ((isMine || isMineLayer) ? cfg.reactionDelay * 0.4 : cfg.reactionDelay)) {
           continue; // Has not reacted to this newly emerged hazard yet!
         }
 
@@ -504,15 +559,18 @@ export class BotController {
         }
 
         const d = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-        if (d < maxRange && d < minThreatDist) {
-          minThreatDist = d;
+        // Weighted threat distance: MineLayers and Mines are prioritized heavily
+        const threatScore = isMineLayer ? d * 0.45 : isMine ? d * 0.65 : d;
+        if (d < maxRange && threatScore < minThreatDist) {
+          minThreatDist = threatScore;
           targetHazard = h;
         }
       }
 
       if (targetHazard) {
+        const actualDist = Math.hypot(targetHazard.x - botShip.x, targetHazard.y - botShip.y);
         const bulletSpeed = 10.0;
-        const timeToHit = minThreatDist / (bulletSpeed * 60);
+        const timeToHit = actualDist / (bulletSpeed * 60);
         const hazObj = targetHazard as unknown as { vx?: number; vy?: number };
         const leadX = targetHazard.x + (hazObj.vx || 0) * timeToHit * 60;
         const leadY = targetHazard.y + (hazObj.vy || 0) * timeToHit * 60;
@@ -527,13 +585,13 @@ export class BotController {
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        if (minThreatDist > 160) {
+        if (actualDist > 160) {
           this.currentInput.up = true;
         }
 
         // Fire if aligned and NO powerups are in line-of-fire
-        if (Math.abs(angleDiff) < 0.35 && minThreatDist < cfg.hazardEngagementRadius) {
-          if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, minThreatDist)) {
+        if (Math.abs(angleDiff) < 0.35 && actualDist < cfg.hazardEngagementRadius) {
+          if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, actualDist)) {
             this.currentInput.fire = true;
           }
         }
