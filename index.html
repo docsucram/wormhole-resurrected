@@ -1680,6 +1680,13 @@
         }
       }
 
+      #pause-modal {
+        z-index: 999999 !important;
+      }
+      #options-modal {
+        z-index: 9999999 !important;
+      }
+
       #mobile-hud-root,
       #mobile-touch-root {
         display: none !important;
@@ -1697,7 +1704,7 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        z-index: 20;
+        z-index: 30;
       }
 
       body.in-arena.is-mobile #mobile-touch-root {
@@ -1890,31 +1897,36 @@
         position: fixed;
         bottom: 16px;
         left: 16px;
-        pointer-events: auto;
-        width: 40px;
-        height: 40px;
+        pointer-events: auto !important;
+        z-index: 50 !important;
+        width: 42px;
+        height: 42px;
         border-radius: 50%;
-        background: rgba(4, 16, 36, 0.8);
+        background: rgba(4, 16, 36, 0.9);
         border: 1.5px solid var(--neon-cyan);
         color: var(--neon-cyan);
-        font-size: 16px;
+        font-size: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+        cursor: pointer;
+        touch-action: manipulation;
       }
       .mob-chat-drawer {
         position: fixed;
-        bottom: 64px;
+        bottom: 66px;
         left: 16px;
-        pointer-events: auto;
+        pointer-events: auto !important;
+        z-index: 55 !important;
         display: none;
         gap: 6px;
-        background: rgba(4, 12, 28, 0.9);
+        background: rgba(4, 12, 28, 0.95);
         border: 1px solid var(--neon-cyan);
         border-radius: 8px;
         padding: 6px 10px;
         box-shadow: 0 0 18px rgba(0, 229, 255, 0.4);
+        touch-action: manipulation;
       }
 
       /* Mobile Touch Action Pads */
@@ -2056,10 +2068,6 @@
         <!-- Top Lobby Navigation Bar -->
         <div class="lobby-nav-bar">
           <div class="pilot-tag-box">
-            <div class="online-pill">
-              <div class="pulse-dot"></div>
-              <span id="lobby-online-count">1 PILOT IN LOUNGE</span>
-            </div>
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="input-label" style="font-size: 10px;">CALLSIGN:</span>
               <input type="text" class="styled-input" id="input-callsign" value="Ghost-404" maxlength="12" style="width: 120px; padding: 5px 8px; font-size: 11px;" />
@@ -2085,7 +2093,12 @@
         <div class="dashboard-grid-2col">
           <!-- Col 1: Pilots in Lounge & Lobby Comms Chat -->
           <div class="lobby-comms-panel">
-            <div class="section-title" style="font-size: 11px;">PILOTS IN LOUNGE</div>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+              <div class="online-pill">
+                <div class="pulse-dot"></div>
+                <span id="lobby-online-count">1 PILOT IN LOUNGE</span>
+              </div>
+            </div>
             <div class="pilots-list-box" id="lobby-pilots-list">
               <div class="pilot-row self">
                 <span id="lobby-self-name">Ghost-404 (YOU)</span>

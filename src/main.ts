@@ -3151,14 +3151,27 @@ class WormholeGame {
     const btnMobChatSend = document.getElementById('btn-mob-chat-send');
 
     if (btnMobChatToggle && mobChatDrawer) {
-      btnMobChatToggle.onclick = () => {
+      const toggleDrawer = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
         const isHidden = mobChatDrawer.style.display === 'none' || !mobChatDrawer.style.display;
         mobChatDrawer.style.display = isHidden ? 'flex' : 'none';
         if (isHidden && mobChatInput) mobChatInput.focus();
       };
+      btnMobChatToggle.onclick = toggleDrawer;
+      btnMobChatToggle.onpointerdown = toggleDrawer;
     }
 
-    const sendMobChat = () => {
+    if (mobChatDrawer) {
+      mobChatDrawer.onpointerdown = (e) => e.stopPropagation();
+      mobChatDrawer.ontouchstart = (e) => e.stopPropagation();
+    }
+
+    const sendMobChat = (e?: Event) => {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
       if (!mobChatInput || !mobChatInput.value.trim()) return;
       const msg = mobChatInput.value.trim();
       mobChatInput.value = '';
