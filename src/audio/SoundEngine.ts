@@ -386,22 +386,22 @@ export class SoundEngine {
   public playCountdownBeep(isHighPitch = false): void {
     if (this.isMuted || !this.initCtx() || !this.ctx || !this.masterGain) return;
 
-    const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(isHighPitch ? 880 : 440, now);
+    osc.frequency.setValueAtTime(isHighPitch ? 880 : 440, this.ctx.currentTime);
 
+    const now = this.ctx.currentTime;
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.15, now + 0.003);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isHighPitch ? 0.28 : 0.14));
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isHighPitch ? 0.25 : 0.12));
 
     osc.connect(gain);
     gain.connect(this.masterGain);
 
     osc.start(now);
-    osc.stop(now + (isHighPitch ? 0.28 : 0.14));
+    osc.stop(now + (isHighPitch ? 0.25 : 0.12));
 
     osc.onended = () => {
       try {
@@ -409,6 +409,10 @@ export class SoundEngine {
         gain.disconnect();
       } catch {}
     };
+  }
+
+  public playClick(): void {
+    this.playCountdownBeep(true);
   }
 
   /**

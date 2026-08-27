@@ -1643,6 +1643,381 @@
         from { opacity: 0.7; transform: translateX(-50%) scale(0.98); }
         to { opacity: 1; transform: translateX(-50%) scale(1.02); }
       }
+      /* ==========================================================================
+         MOBILE & TOUCH RESPONSIVE STYLES
+         ========================================================================== */
+      #mobile-hud-root {
+        display: none;
+      }
+      #mobile-touch-root {
+        display: none;
+      }
+      #mobile-orientation-prompt {
+        display: none;
+      }
+
+      body.is-mobile #mobile-orientation-prompt {
+        display: none;
+      }
+      @media (max-width: 900px) and (orientation: portrait) {
+        body.is-mobile #mobile-orientation-prompt {
+          display: flex;
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 16, 0.96);
+          z-index: 99999999;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 24px;
+          color: var(--neon-cyan);
+          font-family: 'Orbitron', sans-serif;
+        }
+      }
+
+      body.is-mobile .arena-top-hud,
+      body.is-mobile .arena-dock-left,
+      body.is-mobile .arena-dock-right,
+      body.is-mobile #spawner-modal {
+        display: none !important;
+      }
+
+      body.is-mobile #mobile-hud-root {
+        display: block;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      body.is-mobile #mobile-touch-root {
+        display: block;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      /* Mobile Top-Left Status Cluster */
+      .mob-hud-top-left {
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: rgba(4, 12, 28, 0.7);
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        border-radius: 8px;
+        padding: 6px 10px;
+        backdrop-filter: blur(6px);
+      }
+      .mob-hud-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        color: #ffffff;
+      }
+      .mob-hud-hp-track {
+        width: 130px;
+        height: 7px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 3px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+      }
+      .mob-hud-hp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff88, #00e5ff);
+        transition: width 0.15s ease-out;
+      }
+      .mob-hud-icons-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 2px;
+      }
+      .mob-hud-badge {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 9px;
+        font-weight: 900;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: rgba(0, 229, 255, 0.15);
+        border: 1px solid rgba(0, 229, 255, 0.4);
+        color: var(--neon-cyan);
+      }
+      .mob-hud-badge.retros-on {
+        background: rgba(0, 255, 136, 0.2);
+        border-color: #00ff88;
+        color: #00ff88;
+      }
+      .mob-hud-slots {
+        display: flex;
+        gap: 3px;
+      }
+      .mob-pup-slot {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .mob-pup-slot.active {
+        background: #ff00ff;
+        border-color: #ff00ff;
+        box-shadow: 0 0 6px #ff00ff;
+      }
+
+      /* Mobile Top-Right Score & Pause */
+      .mob-hud-top-right {
+        position: fixed;
+        top: 10px;
+        right: 12px;
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .mob-score-box {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+        background: rgba(4, 12, 28, 0.7);
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        border-radius: 8px;
+        padding: 5px 12px;
+        color: #ffffff;
+        backdrop-filter: blur(6px);
+      }
+      .mob-btn-pause {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(4, 12, 28, 0.85);
+        border: 1.5px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+      }
+
+      /* Mobile Mini Roster Pill Strip */
+      .mob-roster-strip {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        pointer-events: none;
+      }
+      .mob-roster-pill {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(4, 12, 28, 0.65);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        border-radius: 12px;
+        padding: 2px 7px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 9px;
+        color: #e2e8f0;
+      }
+      .mob-roster-hp {
+        width: 28px;
+        height: 4px;
+        background: #000;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .mob-roster-hp-fill {
+        height: 100%;
+        background: #00ff88;
+      }
+
+      /* Twitch-Style Floating Comms */
+      .mob-floating-comms {
+        position: fixed;
+        left: 12px;
+        top: 85px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        pointer-events: none;
+        max-width: 260px;
+      }
+      .twitch-chat-item {
+        background: rgba(4, 12, 28, 0.75);
+        border-left: 2px solid var(--neon-cyan);
+        padding: 4px 8px;
+        border-radius: 0 4px 4px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        color: #e2e8f0;
+        animation: twitchFade 4s forwards ease-out;
+        backdrop-filter: blur(4px);
+        pointer-events: none;
+        max-width: 260px;
+        word-break: break-word;
+      }
+      @keyframes twitchFade {
+        0% { opacity: 0; transform: translateX(-10px); }
+        10% { opacity: 1; transform: translateX(0); }
+        75% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-5px); }
+      }
+
+      /* Floating Chat Trigger Button & Drawer */
+      .mob-chat-trigger {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        pointer-events: auto;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(4, 16, 36, 0.8);
+        border: 1.5px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+      }
+      .mob-chat-drawer {
+        position: fixed;
+        bottom: 64px;
+        left: 16px;
+        pointer-events: auto;
+        display: none;
+        gap: 6px;
+        background: rgba(4, 12, 28, 0.9);
+        border: 1px solid var(--neon-cyan);
+        border-radius: 8px;
+        padding: 6px 10px;
+        box-shadow: 0 0 18px rgba(0, 229, 255, 0.4);
+      }
+
+      /* Mobile Touch Action Pads */
+      .mob-touch-steer-zone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 50vw;
+        height: 100vh;
+        pointer-events: auto;
+        touch-action: none;
+      }
+
+      #touch-stick-base {
+        position: fixed;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(0, 229, 255, 0.4);
+        background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, rgba(4, 16, 36, 0.4) 100%);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+      }
+      #touch-stick-nub {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--neon-cyan);
+        box-shadow: 0 0 14px var(--neon-cyan);
+        transform: translate(-50%, -50%);
+      }
+
+      .mob-touch-actions {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        pointer-events: auto;
+        touch-action: none;
+      }
+      .touch-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(4, 16, 36, 0.75);
+        border: 2px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+        box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+        user-select: none;
+        touch-action: none;
+        -webkit-user-select: none;
+        cursor: pointer;
+        transition: transform 0.05s ease-out, background 0.05s ease-out;
+      }
+      .touch-btn.touch-active {
+        transform: scale(0.92);
+        background: var(--neon-cyan);
+        color: #030816;
+        box-shadow: 0 0 24px var(--neon-cyan);
+      }
+      .touch-btn.fire-btn {
+        width: 74px;
+        height: 74px;
+        border-color: #00ff88;
+        color: #00ff88;
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+      }
+      .touch-btn.fire-btn.touch-active {
+        background: #00ff88;
+        color: #030816;
+        box-shadow: 0 0 28px #00ff88;
+      }
+      .touch-btn.launch-btn {
+        border-color: #ff00ff;
+        color: #ff00ff;
+        box-shadow: 0 0 14px rgba(255, 0, 255, 0.35);
+      }
+      .touch-btn.launch-btn.touch-active {
+        background: #ff00ff;
+        color: #030816;
+        box-shadow: 0 0 24px #ff00ff;
+      }
+      .touch-btn.special-btn {
+        border-color: #ffaa00;
+        color: #ffaa00;
+        box-shadow: 0 0 14px rgba(255, 170, 0, 0.35);
+      }
+      .touch-btn.special-btn.touch-active {
+        background: #ffaa00;
+        color: #030816;
+        box-shadow: 0 0 24px #ffaa00;
+      }
+      .touch-sub-label {
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
     </style>
   </head>
   <body>
@@ -2073,8 +2448,25 @@
     <!-- Pause Menu Modal -->
     <div id="pause-modal">
       <div style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 14px;">TACTICAL PAUSE</div>
-      <div style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto;">
-        <button class="action-btn" id="btn-pause-resume">RESUME FLIGHT</button>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 260px; margin: 0 auto;">
+        <button class="action-btn" id="btn-pause-resume" style="border-color: #00ff88; color: #00ff88; font-weight: 900;">RESUME FLIGHT</button>
+        
+        <!-- Mobile & In-Game Match Controls -->
+        <div style="display: flex; gap: 6px; margin: 2px 0;">
+          <button class="action-btn" id="btn-pause-start-match" style="flex: 1; padding: 7px 4px; font-size: 10px; border-color: var(--neon-cyan); color: var(--neon-cyan);">START MATCH</button>
+          <button class="action-btn" id="btn-pause-leave-match" style="flex: 1; padding: 7px 4px; font-size: 10px; border-color: #ff55aa; color: #ff55aa;">LEAVE MATCH</button>
+        </div>
+
+        <!-- Add Bot Section -->
+        <div style="display: flex; gap: 6px; margin: 2px 0; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
+          <select class="styled-select" id="pause-bot-diff" style="flex: 1; font-size: 10px; padding: 4px 6px;">
+            <option value="easy">Novice</option>
+            <option value="medium" selected>Pilot (Med)</option>
+            <option value="hard">Ace (Hard)</option>
+          </select>
+          <button class="action-btn" id="btn-pause-add-bot" style="padding: 4px 10px; font-size: 10px; border-color: #00ff88; color: #00ff88; font-weight: 900;">+ BOT</button>
+        </div>
+
         <button class="action-btn" id="btn-pause-options">⚙ CONTROLS & OPTIONS</button>
         <button class="action-btn" id="btn-pause-sound">SOUND: ON</button>
         <button class="action-btn" id="btn-pause-title" style="border-color: #ff3344; color: #ff3344;">QUIT TO MAIN MENU</button>
@@ -2404,6 +2796,82 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Streamlined Mobile In-Game HUD -->
+    <div id="mobile-hud-root">
+      <!-- Top-Left Telemetry Cluster -->
+      <div class="mob-hud-top-left">
+        <div class="mob-hud-name-row">
+          <span id="mob-callsign" style="color: var(--neon-cyan);">Ghost-404</span>
+          <span id="mob-ship-name" style="font-size: 9px; color: #94a3b8;">TANK</span>
+        </div>
+        <div class="mob-hud-hp-track">
+          <div class="mob-hud-hp-fill" id="mob-hp-fill" style="width: 100%;"></div>
+        </div>
+        <div class="mob-hud-icons-row">
+          <span class="mob-hud-badge" id="mob-hud-gun">G1</span>
+          <span class="mob-hud-badge" id="mob-hud-retros">RETRO</span>
+          <div class="mob-hud-slots">
+            <div class="mob-pup-slot" id="mob-slot-0"></div>
+            <div class="mob-pup-slot" id="mob-slot-1"></div>
+            <div class="mob-pup-slot" id="mob-slot-2"></div>
+            <div class="mob-pup-slot" id="mob-slot-3"></div>
+            <div class="mob-pup-slot" id="mob-slot-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top-Right Score & Pause Button -->
+      <div class="mob-hud-top-right">
+        <div class="mob-score-box" id="mob-score-display">0 - 0</div>
+        <button class="mob-btn-pause" id="btn-mobile-pause" title="Tactical Pause">⚙</button>
+      </div>
+
+      <!-- Mini Roster Strip -->
+      <div class="mob-roster-strip" id="mob-roster-strip"></div>
+
+      <!-- Twitch-Style Floating Comms Stream -->
+      <div class="mob-floating-comms" id="mob-floating-comms"></div>
+
+      <!-- Floating Chat Drawer Trigger -->
+      <button class="mob-chat-trigger" id="btn-mob-chat-toggle" title="Open Comms">💬</button>
+      <div class="mob-chat-drawer" id="mob-chat-drawer">
+        <input type="text" class="styled-input" id="mob-chat-input" placeholder="Type transmission..." maxlength="50" style="width: 180px; font-size: 11px; padding: 4px 8px;" />
+        <button class="action-btn" id="btn-mob-chat-send" style="padding: 4px 10px; font-size: 10px;">SEND</button>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Controls & Virtual Stick -->
+    <div id="mobile-touch-root">
+      <!-- Left Screen Steering & Thrust Zone -->
+      <div class="mob-touch-steer-zone" id="mob-steer-zone"></div>
+      <div id="touch-stick-base">
+        <div id="touch-stick-nub"></div>
+      </div>
+
+      <!-- Right Screen Action Pads -->
+      <div class="mob-touch-actions">
+        <button class="touch-btn special-btn" id="btn-touch-special" title="Special Ability [R]">
+          <span>✨</span>
+          <span class="touch-sub-label">SPEC</span>
+        </button>
+        <button class="touch-btn launch-btn" id="btn-touch-launch" title="Launch Stored Hazard [F]">
+          <span>⚡</span>
+          <span class="touch-sub-label">ITEM</span>
+        </button>
+        <button class="touch-btn fire-btn" id="btn-touch-fire" title="Primary Laser [SPACE]">
+          <span>🔥</span>
+          <span class="touch-sub-label">FIRE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Portrait Orientation Warning Prompt -->
+    <div id="mobile-orientation-prompt">
+      <div style="font-size: 40px; margin-bottom: 16px; animation: pulseAlert 1s infinite alternate;">📱 ⟲</div>
+      <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; color: var(--neon-cyan); margin-bottom: 8px;">ROTATE DEVICE TO LANDSCAPE</div>
+      <div style="font-size: 11px; color: #88bbdd; letter-spacing: 1px;">COMBAT SYSTEMS REQUIRE HORIZONTAL VIEWPORT</div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

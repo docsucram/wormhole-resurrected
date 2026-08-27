@@ -199,6 +199,14 @@ export class InputManager {
       if (btn(3) || btn(6)) tertiaryFire = true;
     }
 
+    // 3. Mobile Touch Controls
+    up = up || this.touchState.up;
+    left = left || this.touchState.left;
+    right = right || this.touchState.right;
+    fire = fire || this.touchState.fire;
+    secondaryFire = secondaryFire || this.touchState.secondaryFire;
+    tertiaryFire = tertiaryFire || this.touchState.tertiaryFire;
+
     return {
       up,
       left,
@@ -207,6 +215,143 @@ export class InputManager {
       secondaryFire,
       tertiaryFire,
     };
+  }
+
+  public touchState: InputState = {
+    up: false,
+    left: false,
+    right: false,
+    fire: false,
+    secondaryFire: false,
+    tertiaryFire: false,
+  };
+
+  public setTouchAction(action: InputAction, active: boolean): void {
+    this.touchState[action] = active;
+  }
+
+  public bindTouchButton(elementId: string, action: InputAction): void {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    const startHandler = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setTouchAction(action, true);
+      el.classList.add('touch-active');
+    };
+
+    const endHandler = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setTouchAction(action, false);
+      el.classList.remove('touch-active');
+    };
+
+    el.addEventListener('touchstart', startHandler, { passive: false });
+    el.addEventListener('touchend', endHandler, { passive: false });
+    el.addEventListener('touchcancel', endHandler, { passive: false });
+    el.addEventListener('mousedown', startHandler);
+    el.addEventListener('mouseup', endHandler);
+    el.addEventListener('mouseleave', endHandler);
+  }
+
+  public setupTouchSteerZone(
+    zoneEl: HTMLElement,
+    getShipAngle: () => number
+  ): void {
+    let activeTouchId: number | null = null;
+    let originX = 0;
+    let originY = 0;
+    const stickNub = document.getElementById('touch-stick-nub');
+    const stickBase = document.getElementById('touch-stick-base');
+
+    const handleMove = (clientX: number, clientY: number) => {
+      const dx = clientX - originX;
+      const dy = clientY - originY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist < 12) {
+        this.touchState.left = false;
+        this.touchState.right = false;
+        this.touchState.up = false;
+        if (stickNub) {
+          stickNub.style.transform = 'translate(-50%, -50%)';
+        }
+        return;
+      }
+
+      // Visual nub positioning (clamped to 38px radius)
+      if (stickNub) {
+        const clampedDist = Math.min(dist, 38);
+        const nx = (dx / dist) * clampedDist;
+        const ny = (dy / dist) * clampedDist;
+        stickNub.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+      }
+
+      const targetAngle = Math.atan2(dy, dx);
+      const shipAngle = getShipAngle();
+
+      let diff = targetAngle - shipAngle;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+
+      this.touchState.left = diff < -0.12;
+      this.touchState.right = diff > 0.12;
+      this.touchState.up = dist > 22;
+    };
+
+    zoneEl.addEventListener(
+      'touchstart',
+      (e: TouchEvent) => {
+        if (activeTouchId !== null) return;
+        const t = e.changedTouches[0];
+        activeTouchId = t.identifier;
+        originX = t.clientX;
+        originY = t.clientY;
+
+        if (stickBase && stickNub) {
+          stickBase.style.display = 'block';
+          stickBase.style.left = `${originX}px`;
+          stickBase.style.top = `${originY}px`;
+          stickNub.style.transform = 'translate(-50%, -50%)';
+        }
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    zoneEl.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === activeTouchId) {
+            handleMove(t.clientX, t.clientY);
+            e.preventDefault();
+            break;
+          }
+        }
+      },
+      { passive: false }
+    );
+
+    const resetTouch = (e: TouchEvent) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          activeTouchId = null;
+          this.touchState.left = false;
+          this.touchState.right = false;
+          this.touchState.up = false;
+          if (stickBase) stickBase.style.display = 'none';
+          e.preventDefault();
+          break;
+        }
+      }
+    };
+
+    zoneEl.addEventListener('touchend', resetTouch, { passive: false });
+    zoneEl.addEventListener('touchcancel', resetTouch, { passive: false });
   }
 
   public isDown(code: string): boolean {

@@ -136,7 +136,16 @@ class WormholeGame {
   private lastTime = 0;
   private roundStartTime = 0;
 
+  // Mobile device adaptation flag
+  public isMobile = false;
+
   constructor() {
+    this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 900;
+    if (this.isMobile) {
+      document.body.classList.add('is-mobile');
+      this.zoom = 1.35;
+    }
+
     const savedCallsign = localStorage.getItem('wh_callsign');
     this.playerName = savedCallsign || WormholeGame.generateRandomCallsign();
     if (!savedCallsign) {
@@ -1314,17 +1323,32 @@ class WormholeGame {
 
   private addChatLog(text: string, type: 'system' | 'player' | 'bot' = 'system', customColor?: string): void {
     const chatLog = document.getElementById('match-chat-log') || document.getElementById('table-chat-log');
-    if (!chatLog) return;
-
-    const div = document.createElement('div');
-    div.className = `chat-msg ${type}`;
-    if (customColor) {
-      div.style.color = customColor;
-      div.style.textShadow = `0 0 6px ${customColor}88`;
+    if (chatLog) {
+      const div = document.createElement('div');
+      div.className = `chat-msg ${type}`;
+      if (customColor) {
+        div.style.color = customColor;
+        div.style.textShadow = `0 0 6px ${customColor}88`;
+      }
+      div.innerText = text;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
     }
-    div.innerText = text;
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
+
+    // Floating Twitch-style comms on mobile
+    const mobFloating = document.getElementById('mob-floating-comms');
+    if (mobFloating && this.isMobile) {
+      const mobItem = document.createElement('div');
+      mobItem.className = 'twitch-chat-item';
+      if (customColor) {
+        mobItem.style.borderLeftColor = customColor;
+      }
+      mobItem.innerText = text;
+      mobFloating.appendChild(mobItem);
+      setTimeout(() => {
+        mobItem.remove();
+      }, 4000);
+    }
   }
 
   private triggerBotJoinChat(botName: string, botSlot = 1): void {
@@ -2985,9 +3009,19 @@ class WormholeGame {
 
   private setupEventListeners(): void {
     window.addEventListener('resize', () => {
+      this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 900;
+      if (this.isMobile) {
+        document.body.classList.add('is-mobile');
+        this.zoom = 1.35;
+      } else {
+        document.body.classList.remove('is-mobile');
+        this.zoom = 1.65;
+      }
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
     });
+
+    this.setupMobileControls();
 
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement;
@@ -3033,6 +3067,99 @@ class WormholeGame {
         this.handlePlayerElimination();
       }
     });
+  }
+
+  private setupMobileControls(): void {
+    const steerZone = document.getElementById('mob-steer-zone');
+    if (steerZone) {
+      this.input.setupTouchSteerZone(steerZone, () => this.player.angle);
+    }
+    this.input.bindTouchButton('btn-touch-fire', 'fire');
+    this.input.bindTouchButton('btn-touch-launch', 'secondaryFire');
+    this.input.bindTouchButton('btn-touch-special', 'tertiaryFire');
+
+    const btnMobilePause = document.getElementById('btn-mobile-pause');
+    if (btnMobilePause) {
+      btnMobilePause.onclick = () => {
+        const pauseModal = document.getElementById('pause-modal');
+        if (pauseModal) {
+          pauseModal.classList.add('active');
+          this.sound.playClick();
+        }
+      };
+    }
+
+    const btnPauseStart = document.getElementById('btn-pause-start-match');
+    if (btnPauseStart) {
+      btnPauseStart.onclick = () => {
+        document.getElementById('pause-modal')?.classList.remove('active');
+        const startBtn = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
+        if (startBtn) startBtn.click();
+      };
+    }
+
+    const btnPauseLeave = document.getElementById('btn-pause-leave-match');
+    if (btnPauseLeave) {
+      btnPauseLeave.onclick = () => {
+        document.getElementById('pause-modal')?.classList.remove('active');
+        const leaveBtn = document.getElementById('btn-match-leave') || document.getElementById('btn-table-leave');
+        if (leaveBtn) leaveBtn.click();
+      };
+    }
+
+    const btnPauseAddBot = document.getElementById('btn-pause-add-bot');
+    const pauseBotDiff = document.getElementById('pause-bot-diff') as HTMLSelectElement | null;
+    if (btnPauseAddBot && pauseBotDiff) {
+      btnPauseAddBot.onclick = () => {
+        const diff = (pauseBotDiff.value || 'medium') as BotDifficulty;
+        this.addBotToTable(diff);
+        this.sound.playClick();
+      };
+    }
+
+    // Mobile Chat Drawer
+    const btnMobChatToggle = document.getElementById('btn-mob-chat-toggle');
+    const mobChatDrawer = document.getElementById('mob-chat-drawer');
+    const mobChatInput = document.getElementById('mob-chat-input') as HTMLInputElement | null;
+    const btnMobChatSend = document.getElementById('btn-mob-chat-send');
+
+    if (btnMobChatToggle && mobChatDrawer) {
+      btnMobChatToggle.onclick = () => {
+        const isHidden = mobChatDrawer.style.display === 'none' || !mobChatDrawer.style.display;
+        mobChatDrawer.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden && mobChatInput) mobChatInput.focus();
+      };
+    }
+
+    const sendMobChat = () => {
+      if (!mobChatInput || !mobChatInput.value.trim()) return;
+      const msg = mobChatInput.value.trim();
+      mobChatInput.value = '';
+      if (mobChatDrawer) mobChatDrawer.style.display = 'none';
+      const myColor = this.getPlayerColor(this.player.slot);
+      this.addChatLog(`${this.playerName}: ${msg}`, 'player', myColor);
+
+      if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+        this.sendLanPacket({
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'CHAT_MSG',
+            senderName: this.playerName,
+            senderSlot: this.player.slot,
+            message: msg,
+          },
+        });
+      }
+    };
+
+    if (btnMobChatSend) btnMobChatSend.onclick = sendMobChat;
+    if (mobChatInput) {
+      mobChatInput.onkeydown = (e) => {
+        if (e.key === 'Enter') sendMobChat();
+      };
+    }
   }
 
   private update(dt: number): void {
@@ -3539,6 +3666,59 @@ class WormholeGame {
         slotEl.innerHTML = '';
       }
     }
+
+    // 5. Update Streamlined Mobile HUD
+    if (this.isMobile) {
+      const mobHpFill = document.getElementById('mob-hp-fill');
+      if (mobHpFill) mobHpFill.style.width = `${hpRatio * 100}%`;
+      const mobCallsign = document.getElementById('mob-callsign');
+      if (mobCallsign) mobCallsign.innerText = this.playerName;
+      const mobShipName = document.getElementById('mob-ship-name');
+      if (mobShipName) mobShipName.innerText = this.player.compiled.config.name.toUpperCase();
+
+      const mobGun = document.getElementById('mob-hud-gun');
+      if (mobGun) mobGun.innerText = `G${this.player.bulletLevel + 1}`;
+
+      const mobRetros = document.getElementById('mob-hud-retros');
+      if (mobRetros) {
+        mobRetros.className = this.player.hasRetros ? 'mob-hud-badge retros-on' : 'mob-hud-badge';
+      }
+
+      const mobScore = document.getElementById('mob-score-display');
+      if (mobScore) mobScore.innerText = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+
+      for (let i = 0; i < 5; i++) {
+        const mSlot = document.getElementById(`mob-slot-${i}`);
+        if (!mSlot) continue;
+        if (i < inv.length) {
+          const type = inv[i];
+          const info = badgeInfo[type] || { col: '#ff00ff' };
+          mSlot.className = 'mob-pup-slot active';
+          mSlot.style.backgroundColor = info.col;
+          mSlot.style.borderColor = info.col;
+        } else {
+          mSlot.className = 'mob-pup-slot';
+          mSlot.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+          mSlot.style.borderColor = 'rgba(0, 229, 255, 0.3)';
+        }
+      }
+
+      // Update mobile mini roster strip
+      const mobRosterStrip = document.getElementById('mob-roster-strip');
+      if (mobRosterStrip) {
+        let html = '';
+        for (const p of this.tablePlayers) {
+          if (!p) continue;
+          const ratio = Math.max(0, Math.min(1, p.health / p.maxHealth));
+          html += `
+            <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}">
+              <span>${p.name || 'PILOT'}</span>
+              <div class="mob-roster-hp"><div class="mob-roster-hp-fill" style="width: ${ratio * 100}%; background: ${p.isAlive ? '#00ff88' : '#ff3344'};"></div></div>
+            </div>`;
+        }
+        mobRosterStrip.innerHTML = html;
+      }
+    }
   }
 
   private render(dt: number): void {
@@ -3603,8 +3783,8 @@ class WormholeGame {
 
     this.renderer.endFrame();
 
-    // Render PiP Opponent View (Throttled to 20 FPS for massive performance boost)
-    if (this.inArena && this.pipRenderer) {
+    // Render PiP Opponent View (Throttled to 20 FPS, skipped on mobile)
+    if (this.inArena && this.pipRenderer && !this.isMobile) {
       this.pipThrottleTimer += dt;
       if (this.pipThrottleTimer >= 0.05) {
         this.pipThrottleTimer = 0;
