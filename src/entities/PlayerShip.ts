@@ -194,12 +194,13 @@ export class PlayerShip {
       this.angle += this.rotateSpeed * frameScale;
     }
 
-    this.isThrusting = effUp && !this.isAttractorActive;
+    const throttle = input.throttle !== undefined ? input.throttle : 1.0;
+    this.isThrusting = effUp && !this.isAttractorActive && throttle > 0.05;
     if (this.isThrusting) {
       this.thrustCount++;
-      // Accelerate forward
-      const ax = Math.cos(this.angle) * this.thrust * frameScale;
-      const ay = Math.sin(this.angle) * this.thrust * frameScale;
+      // Accelerate forward with analog throttle
+      const ax = Math.cos(this.angle) * this.thrust * frameScale * throttle;
+      const ay = Math.sin(this.angle) * this.thrust * frameScale * throttle;
       this.vx += ax;
       this.vy += ay;
 

@@ -1399,7 +1399,7 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
       }
 
-      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal {
+      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal, #solo-difficulty-modal {
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
@@ -1570,13 +1570,34 @@
         gap: 8px;
       }
 
-      #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active {
+      #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
         display: block !important;
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
         animation: modalPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      .solo-diff-card {
+        background: rgba(4, 12, 28, 0.75);
+        border: 1.5px solid rgba(0, 229, 255, 0.25);
+        border-radius: 8px;
+        padding: 9px 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: block;
+        width: 100%;
+      }
+      .solo-diff-card:hover {
+        border-color: var(--neon-cyan);
+        background: rgba(0, 229, 255, 0.1);
+      }
+      .solo-diff-card.active {
+        border-color: #00ff88 !important;
+        background: rgba(0, 255, 136, 0.14) !important;
+        box-shadow: 0 0 14px rgba(0, 255, 136, 0.3);
       }
 
       #spawner-modal.active {
@@ -1720,8 +1741,8 @@
         display: none !important;
       }
       body.is-mobile .header-logo {
-        font-size: 18px !important;
-        letter-spacing: 3px !important;
+        font-size: 24px !important;
+        letter-spacing: 4px !important;
       }
       body.is-mobile .main-card {
         padding: 8px 12px !important;
@@ -2130,9 +2151,6 @@
             <button class="btn-singleplayer" id="btn-main-engage" style="white-space: nowrap;">
               <span>⚡</span> SOLO
             </button>
-            <button class="btn-host" id="btn-create-host" style="white-space: nowrap;">
-              <span>+</span> HOST MATCH
-            </button>
             <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual" style="font-size: 16px; padding: 6px 13px; line-height: 1;">📖</button>
             <button class="btn-util" id="btn-menu-options" title="Options & Keybindings" style="font-size: 16px; padding: 6px 13px; line-height: 1;">⚙</button>
             <button class="btn-util" id="btn-menu-sound" title="Toggle Sound" style="font-size: 16px; padding: 6px 13px; line-height: 1;">🔊</button>
@@ -2181,9 +2199,16 @@
 
             <!-- Scrollable Live Match List -->
             <div class="matches-list-scroll" id="lobby-matches-list">
-              <div style="text-align: center; padding: 60px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
+              <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
                 NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong style="color: var(--neon-cyan);">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
               </div>
+            </div>
+
+            <!-- Host Match Action Bar at bottom of matches panel -->
+            <div style="margin-top: auto; padding-top: 6px; border-top: 1px solid rgba(0, 229, 255, 0.15); display: flex; justify-content: flex-end;">
+              <button class="btn-host" id="btn-create-host" style="width: 100%; justify-content: center; padding: 7px 12px; font-size: 11px; white-space: nowrap;">
+                <span>+</span> HOST NEW MATCH
+              </button>
             </div>
           </div>
         </div>
@@ -2262,6 +2287,43 @@
       <div style="display: flex; gap: 10px; justify-content: center; margin-top: 18px;">
         <button class="action-btn" id="btn-create-match-confirm" style="padding: 10px 24px; border-color: #00e5ff; color: #00e5ff; font-weight: 900;">CREATE & ENGAGE MATCH</button>
         <button class="action-btn" id="btn-create-match-cancel" style="padding: 10px 18px; border-color: #88bbdd; color: #88bbdd;">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Solo Practice AI Difficulty Modal -->
+    <div id="solo-difficulty-modal">
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SOLO PRACTICE SIMULATION</div>
+      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SELECT ENEMY AI COMBAT DIRECTIVE:</div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto 16px auto;">
+        <button class="solo-diff-card" data-diff="easy" id="btn-solo-diff-easy">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="color: #00ff88; font-size: 13px; font-family: 'Orbitron', sans-serif;">🟢 NOVICE (EASY)</strong>
+            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">TRAINING</span>
+          </div>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Standard evasion, relaxed aim, and steady wormhole dispatching.</p>
+        </button>
+
+        <button class="solo-diff-card active" data-diff="medium" id="btn-solo-diff-med">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="color: var(--neon-cyan); font-size: 13px; font-family: 'Orbitron', sans-serif;">🔵 PILOT (MEDIUM)</strong>
+            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">STANDARD</span>
+          </div>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Target leading, proactive hazard launching, and smart positioning.</p>
+        </button>
+
+        <button class="solo-diff-card" data-diff="hard" id="btn-solo-diff-hard">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="color: var(--neon-magenta); font-size: 13px; font-family: 'Orbitron', sans-serif;">🔴 ACE (HARD)</strong>
+            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">VETERAN</span>
+          </div>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Rapid mine clearance, rapid powerup combos, and lethal predictive fire.</p>
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button class="action-btn" id="btn-solo-confirm" style="border-color: #00ff88; color: #00ff88; font-weight: 900; padding: 8px 22px;">ENGAGE SIMULATION</button>
+        <button class="action-btn" id="btn-solo-cancel" style="border-color: #ff3344; color: #ff3344; padding: 8px 18px;">CANCEL</button>
       </div>
     </div>
 
@@ -2582,17 +2644,35 @@
           <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game</p>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
           <span style="font-size: 11px; font-weight: 800; color: #cbd5e1;">STICK DEADZONE:</span>
           <div style="display: flex; align-items: center; gap: 8px;">
             <input type="range" id="opt-stick-deadzone" min="0.05" max="0.5" step="0.05" value="0.25" style="accent-color: var(--neon-cyan); width: 100px;" />
             <span id="opt-deadzone-val" style="font-size: 11px; font-weight: 800; color: var(--neon-cyan); width: 32px;">25%</span>
           </div>
         </div>
+
+        <!-- Mobile Touch Analog Thrust Option -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-top: 10px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">ANALOG TOUCH THRUST</div>
+            <div style="font-size: 10px; color: #94a3b8;">Scale acceleration by touch drag distance on mobile</div>
+          </div>
+          <input type="checkbox" id="chk-opt-analog-thrust" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
+        </div>
       </div>
 
       <!-- Tab 3: Graphics & Display -->
       <div class="opt-tab-pane" id="opt-tab-display" style="display: none; text-align: left; max-height: 48vh; overflow-y: auto; padding-right: 6px;">
+        <!-- Top Item: FPS Counter -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">FPS & PERFORMANCE COUNTER</div>
+            <div style="font-size: 10px; color: #94a3b8;">Displays real-time frame rate in the top-left corner</div>
+          </div>
+          <input type="checkbox" id="chk-opt-fps" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
+        </div>
+
         <!-- Neon Vector Glow Slider -->
         <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
@@ -2643,14 +2723,7 @@
           <input type="checkbox" id="chk-opt-vector-grid" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-          <div>
-            <div style="font-size: 12px; font-weight: 800; color: #ffffff;">FPS & PERFORMANCE COUNTER</div>
-            <div style="font-size: 10px; color: #94a3b8;">Displays real-time frame rate in the top-left corner</div>
-          </div>
-          <input type="checkbox" id="chk-opt-fps" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
-        </div>
-
+        <!-- Retro Scanlines Toggle -->
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
           <div>
             <div style="font-size: 12px; font-weight: 800; color: #ffffff;">RETRO SCANLINE FILTER</div>

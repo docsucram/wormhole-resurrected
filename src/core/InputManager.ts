@@ -5,6 +5,7 @@ export interface InputState {
   fire: boolean;
   secondaryFire: boolean;
   tertiaryFire: boolean;
+  throttle?: number;
 }
 
 export type InputAction = 'up' | 'left' | 'right' | 'fire' | 'secondaryFire' | 'tertiaryFire';
@@ -32,6 +33,7 @@ export class InputManager {
   public bindings: KeyBindings = { ...DEFAULT_BINDINGS };
   public gamepadIndex: number | null = null;
   public deadzone = 0.25;
+  public enableAnalogThrust = true;
 
   constructor() {
     this.loadSettings();
@@ -48,6 +50,10 @@ export class InputManager {
       const savedDz = localStorage.getItem('wh_deadzone');
       if (savedDz !== null) {
         this.deadzone = parseFloat(savedDz);
+      }
+      const savedAnalog = localStorage.getItem('wh_opt_analog_thrust');
+      if (savedAnalog !== null) {
+        this.enableAnalogThrust = savedAnalog === 'true';
       }
     } catch {
       this.bindings = { ...DEFAULT_BINDINGS };
@@ -207,6 +213,11 @@ export class InputManager {
     secondaryFire = secondaryFire || this.touchState.secondaryFire;
     tertiaryFire = tertiaryFire || this.touchState.tertiaryFire;
 
+    let throttle = 1.0;
+    if (this.touchState.up && this.touchState.throttle !== undefined) {
+      throttle = this.touchState.throttle;
+    }
+
     return {
       up,
       left,
@@ -214,6 +225,7 @@ export class InputManager {
       fire,
       secondaryFire,
       tertiaryFire,
+      throttle,
     };
   }
 
@@ -224,6 +236,7 @@ export class InputManager {
     fire: false,
     secondaryFire: false,
     tertiaryFire: false,
+    throttle: 1.0,
   };
 
   public setTouchAction(action: InputAction, active: boolean): void {
@@ -271,10 +284,11 @@ export class InputManager {
       const dy = clientY - originY;
       const dist = Math.hypot(dx, dy);
 
-      if (dist < 12) {
+      if (dist < 10) {
         this.touchState.left = false;
         this.touchState.right = false;
         this.touchState.up = false;
+        this.touchState.throttle = 0;
         if (stickNub) {
           stickNub.style.transform = 'translate(-50%, -50%)';
         }
@@ -298,7 +312,15 @@ export class InputManager {
 
       this.touchState.left = diff < -0.12;
       this.touchState.right = diff > 0.12;
-      this.touchState.up = dist > 22;
+
+      if (this.enableAnalogThrust) {
+        const analogThrottle = Math.max(0, Math.min(1.0, (dist - 10) / 30));
+        this.touchState.throttle = analogThrottle;
+        this.touchState.up = analogThrottle > 0.05;
+      } else {
+        this.touchState.throttle = 1.0;
+        this.touchState.up = dist > 20;
+      }
     };
 
     zoneEl.addEventListener(

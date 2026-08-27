@@ -1999,23 +1999,63 @@ class WormholeGame {
       };
     }
 
-    // Solo Practice Button (Quick 1v1 Launch with 1 Bot)
+    // Solo Practice Button (Opens AI Combat Directive Difficulty Picker)
+    const soloModal = document.getElementById('solo-difficulty-modal');
+    let selectedSoloDiff: BotDifficulty = 'medium';
+
     document.getElementById('btn-main-engage')!.onclick = () => {
-      this.joinLobbyMatch({
-        id: 'match-practice',
-        name: 'Solo Practice Simulation',
-        hostName: 'System AI',
-        isPasswordProtected: false,
-        size: 'MEDIUM',
-        targetWins: 5,
-        powerupRule: 'STANDARD',
-        shipRestriction: 'STANDARD',
-        botDifficulty: 'medium',
-        maxPlayers: 2,
-        currentPlayers: 2,
-        status: 'WAITING',
-      });
+      if (soloModal) {
+        soloModal.classList.add('active');
+        soloModal.style.display = 'block';
+      }
     };
+
+    const diffButtons: { id: string; diff: BotDifficulty }[] = [
+      { id: 'btn-solo-diff-easy', diff: 'easy' },
+      { id: 'btn-solo-diff-med', diff: 'medium' },
+      { id: 'btn-solo-diff-hard', diff: 'hard' },
+    ];
+
+    diffButtons.forEach(({ id, diff }) => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.onclick = () => {
+          selectedSoloDiff = diff;
+          diffButtons.forEach((b) => document.getElementById(b.id)?.classList.remove('active'));
+          btn.classList.add('active');
+        };
+      }
+    });
+
+    const btnSoloCancel = document.getElementById('btn-solo-cancel');
+    if (btnSoloCancel && soloModal) {
+      btnSoloCancel.onclick = () => {
+        soloModal.classList.remove('active');
+        soloModal.style.display = 'none';
+      };
+    }
+
+    const btnSoloConfirm = document.getElementById('btn-solo-confirm');
+    if (btnSoloConfirm && soloModal) {
+      btnSoloConfirm.onclick = () => {
+        soloModal.classList.remove('active');
+        soloModal.style.display = 'none';
+        this.joinLobbyMatch({
+          id: 'match-practice',
+          name: 'Solo Practice Simulation',
+          hostName: 'System AI',
+          isPasswordProtected: false,
+          size: 'MEDIUM',
+          targetWins: 5,
+          powerupRule: 'STANDARD',
+          shipRestriction: 'STANDARD',
+          botDifficulty: selectedSoloDiff,
+          maxPlayers: 2,
+          currentPlayers: 2,
+          status: 'WAITING',
+        });
+      };
+    }
 
     // Host New Match Modal Triggers
     const createModal = document.getElementById('create-match-modal');
@@ -2422,6 +2462,16 @@ class WormholeGame {
       chkFps.onchange = () => {
         fpsCounterEl.style.display = chkFps.checked ? 'block' : 'none';
         try { localStorage.setItem('wh_opt_fps', chkFps.checked.toString()); } catch {}
+      };
+    }
+
+    // Analog Touch Thrust Option (Persistent)
+    const chkAnalogThrust = document.getElementById('chk-opt-analog-thrust') as HTMLInputElement | null;
+    if (chkAnalogThrust) {
+      chkAnalogThrust.checked = this.input.enableAnalogThrust;
+      chkAnalogThrust.onchange = () => {
+        this.input.enableAnalogThrust = chkAnalogThrust.checked;
+        try { localStorage.setItem('wh_opt_analog_thrust', chkAnalogThrust.checked.toString()); } catch {}
       };
     }
 
@@ -3796,6 +3846,7 @@ class WormholeGame {
         let html = '';
         for (const p of this.tablePlayers) {
           if (!p) continue;
+          if (p.slot === this.player.slot || p.isLocal) continue; // Filter out local player (already displayed in top-left cluster)
           const ratio = Math.max(0, Math.min(1, p.health / p.maxHealth));
           html += `
             <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}">
