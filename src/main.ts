@@ -169,6 +169,12 @@ class WormholeGame {
     const pipCanvas = document.getElementById('pip-canvas') as HTMLCanvasElement;
     if (pipCanvas) {
       this.pipRenderer = new VectorRenderer(pipCanvas, { enableGlow: false });
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => {
+          if (this.pipRenderer) this.pipRenderer.resize();
+        });
+        ro.observe(pipCanvas);
+      }
     }
 
     const initialSize = GAME_CONSTANTS.SIZES.MEDIUM;
@@ -3005,9 +3011,12 @@ class WormholeGame {
         card.dataset.slot = i.toString();
         card.style.setProperty('--slot-color', p.color);
         const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
+        const pilotTypeIcon = p.isBot
+          ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
+          : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
         card.innerHTML = `
           <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;">${p.isBot ? '🤖 ' : ''}${p.name}</span>
+            <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}</span>
             <div style="display: flex; align-items: center; gap: 4px;">
               <span class="roster-player-stats">W: ${p.wins}</span>
               ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${i}" title="Remove Bot" style="background: rgba(255, 0, 80, 0.25); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">✕</button>` : ''}
@@ -3921,11 +3930,15 @@ class WormholeGame {
 
     this.renderer.endFrame();
 
-    // Render PiP Opponent View (Throttled to 20 FPS, skipped on mobile)
+    // Render PiP Opponent View (Throttled to 30 FPS, skipped on mobile)
     if (this.inArena && this.pipRenderer && !this.isMobile) {
       this.pipThrottleTimer += dt;
-      if (this.pipThrottleTimer >= 0.05) {
+      if (this.pipThrottleTimer >= 0.033) {
         this.pipThrottleTimer = 0;
+        const rect = this.pipRenderer.canvas.getBoundingClientRect();
+        if (rect.width > 0 && (Math.abs(this.pipRenderer.width - rect.width) > 1 || Math.abs(this.pipRenderer.height - rect.height) > 1)) {
+          this.pipRenderer.resize();
+        }
         this.pipRenderer.beginFrame('#020612');
         const pipW = this.pipRenderer.width;
         const pipH = this.pipRenderer.height;

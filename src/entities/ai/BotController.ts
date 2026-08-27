@@ -216,7 +216,8 @@ export class BotController {
           // Obstacle blocks flight corridor! Calculate tangent detour
           const hazAngle = Math.atan2(toHazY, toHazX);
           const side = (toHazX * travelDirY - toHazY * travelDirX) >= 0 ? -1 : 1;
-          return hazAngle + (side * (Math.PI / 2.3));
+          const clearanceAngle = h.powerupType === 10 ? (Math.PI / 2.0) : (Math.PI / 2.3);
+          return hazAngle + (side * clearanceAngle);
         }
       }
     }
@@ -263,7 +264,7 @@ export class BotController {
     for (const h of hazards) {
       if (!h.isAlive || h.powerupType === 16) continue;
       const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-      const safeDist = h.radius + (this.difficulty === 'hard' ? 55 : 40);
+      const safeDist = h.radius + (h.powerupType === 10 ? 80 : (this.difficulty === 'hard' ? 55 : 40));
       if (dist < safeDist) {
         // Immediate escape vector directly away from hazard body
         this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
@@ -276,7 +277,49 @@ export class BotController {
       }
     }
 
-    // 3. TACTICAL SPECIAL ABILITY ACTIVATION (tertiaryFire)
+    // 3. HIGH PRIORITY COMBAT THREAT: Active Inflator Suppression & Destruction
+    // Inflators (Type 10) expand continuously and will overwhelm the arena if left unchecked.
+    // Lock on, maintain safe standoff distance (160px - 240px), and pump sustained laser fire until destroyed!
+    const activeInflator = hazards.find(
+      (h) => h.isAlive && h.powerupType === 10 && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 480
+    );
+
+    if (activeInflator) {
+      const infDist = Math.hypot(activeInflator.x - botShip.x, activeInflator.y - botShip.y);
+      const toInfAngle = Math.atan2(activeInflator.y - botShip.y, activeInflator.x - botShip.x);
+
+      // Add difficulty-calibrated aim precision
+      const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * (cfg.aimErrorRad * 0.35);
+      this.targetAngle = toInfAngle + jitter;
+
+      let angleDiff = this.targetAngle - botShip.angle;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+      // Safe standoff distance kiting: keep 160-240px distance
+      const minSafeDistance = Math.max(160, activeInflator.radius + 75);
+      if (infDist < minSafeDistance) {
+        // Too close to expanding inflator! Back away while keeping distance
+        this.targetAngle = Math.atan2(botShip.y - activeInflator.y, botShip.x - activeInflator.x);
+        this.currentInput.up = true;
+      } else if (infDist > minSafeDistance + 60) {
+        // Approach into optimal laser range
+        this.currentInput.up = true;
+      } else {
+        // In sweet spot range: maintain steady firing stance
+        this.currentInput.up = false;
+      }
+
+      // Continuously fire pulse cannons into the inflator until it is completely popped
+      if (Math.abs(angleDiff) < 0.45) {
+        if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, infDist)) {
+          this.currentInput.fire = true;
+        }
+      }
+      return;
+    }
+
+    // 4. TACTICAL SPECIAL ABILITY ACTIVATION (tertiaryFire)
     if (botShip.specialCooldown <= 0 && Math.random() < cfg.specialAbilityChance) {
       // Turtle (1): Turtle Cannon defensive blast when swarmed or low HP
       if (botShip.specialType === 1) {
