@@ -206,7 +206,7 @@
         grid-template-columns: 320px 1fr;
         gap: 16px;
       }
-      @media (max-width: 860px) {
+      @media (max-width: 860px) and (orientation: portrait) {
         .dashboard-grid-2col {
           grid-template-columns: 1fr;
         }
@@ -1713,6 +1713,57 @@
         inset: 0;
         pointer-events: none;
         z-index: 25;
+      }
+
+      /* Mobile / Compact Landscape Lobby Layout (Zero Scroll) */
+      body.is-mobile .header-subtitle {
+        display: none !important;
+      }
+      body.is-mobile .header-logo {
+        font-size: 18px !important;
+        letter-spacing: 3px !important;
+      }
+      body.is-mobile .main-card {
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        max-height: 98vh !important;
+        height: 98vh !important;
+        overflow: hidden !important;
+      }
+      body.is-mobile .lobby-nav-bar {
+        padding: 4px 10px !important;
+        gap: 6px !important;
+      }
+      body.is-mobile .dashboard-grid-2col {
+        grid-template-columns: 240px 1fr !important;
+        gap: 8px !important;
+        flex: 1;
+        min-height: 0;
+      }
+      body.is-mobile .lobby-comms-panel,
+      body.is-mobile .matches-browser-panel {
+        height: 100% !important;
+        min-height: 0 !important;
+        padding: 8px !important;
+        gap: 6px !important;
+      }
+      body.is-mobile .pilots-list-box {
+        max-height: 60px !important;
+      }
+      body.is-mobile .lobby-chat-box {
+        padding: 4px 6px !important;
+        flex: 1;
+        min-height: 0;
+      }
+      body.is-mobile .matches-list-scroll {
+        max-height: calc(100% - 32px) !important;
+        flex: 1;
+        min-height: 0;
+      }
+      body.is-mobile .btn-singleplayer,
+      body.is-mobile .btn-host {
+        padding: 5px 8px !important;
+        font-size: 10px !important;
       }
 
       /* Mobile Top-Left Status Cluster */
