@@ -1676,6 +1676,11 @@
         }
       }
 
+      #mobile-hud-root,
+      #mobile-touch-root {
+        display: none !important;
+      }
+
       body.is-mobile .arena-top-hud,
       body.is-mobile .arena-dock-left,
       body.is-mobile .arena-dock-right,
@@ -1683,16 +1688,16 @@
         display: none !important;
       }
 
-      body.is-mobile #mobile-hud-root {
-        display: block;
+      body.in-arena.is-mobile #mobile-hud-root {
+        display: block !important;
         position: fixed;
         inset: 0;
         pointer-events: none;
         z-index: 20;
       }
 
-      body.is-mobile #mobile-touch-root {
-        display: block;
+      body.in-arena.is-mobile #mobile-touch-root {
+        display: block !important;
         position: fixed;
         inset: 0;
         pointer-events: none;
@@ -2021,9 +2026,9 @@
     </style>
   </head>
   <body>
-    <!-- Top-Left High-Precision FPS Monitor -->
-    <div id="fps-counter" style="position: fixed; top: 12px; left: 14px; z-index: 9999999; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 900; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.6); pointer-events: none; letter-spacing: 1px; background: rgba(2, 8, 20, 0.8); padding: 4px 9px; border-radius: 4px; border: 1px solid rgba(0, 255, 136, 0.35); box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);">
-      FPS: 60
+    <!-- Top-Left Compact FPS Badge -->
+    <div id="fps-counter" style="position: fixed; top: 12px; left: 14px; z-index: 9999999; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 900; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.6); pointer-events: none; background: rgba(2, 8, 20, 0.7); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 255, 136, 0.35); box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);">
+      60
     </div>
 
     <div id="canvas-container">

@@ -1273,6 +1273,7 @@ class WormholeGame {
     if (active) {
       deck.classList.remove('hidden');
       hud.style.display = 'none';
+      document.body.classList.remove('in-arena');
 
       // 2. Clean up active match hosting state and reset pilot control mode to human
       this.resetPilotModeToHuman();
@@ -1301,7 +1302,8 @@ class WormholeGame {
       this.renderLobbyMatches();
     } else {
       deck.classList.add('hidden');
-      hud.style.display = 'grid';
+      document.body.classList.add('in-arena');
+      hud.style.display = this.isMobile ? 'none' : 'grid';
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
       this.resetArenaForNewRound();
@@ -3819,10 +3821,6 @@ class WormholeGame {
     this.fpsTimer += dt;
     if (this.fpsTimer >= 0.25) {
       this.currentFps = Math.round(this.frameCount / this.fpsTimer);
-      const avgExecMs = this.frameCount > 0 ? (this.totalFrameExecTime / this.frameCount).toFixed(1) : '0.0';
-      const objCount = (this.hazardManager?.hazards?.length || 0) + (this.bullets?.length || 0) + (this.missiles?.length || 0) + (this.powerups?.length || 0);
-      const particleCount = this.particles?.particles?.length || 0;
-
       this.frameCount = 0;
       this.fpsTimer = 0;
       this.totalFrameExecTime = 0;
@@ -3831,7 +3829,7 @@ class WormholeGame {
         this.fpsElement = document.getElementById('fps-counter');
       }
       if (this.fpsElement) {
-        this.fpsElement.innerText = `FPS: ${this.currentFps} | ${avgExecMs}ms | OBJ: ${objCount} | PT: ${particleCount}`;
+        this.fpsElement.innerText = `${this.currentFps}`;
         if (this.currentFps >= 55) {
           this.fpsElement.style.color = '#00ff88';
           this.fpsElement.style.borderColor = 'rgba(0, 255, 136, 0.4)';
