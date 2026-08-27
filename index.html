@@ -196,11 +196,16 @@
         flex-wrap: wrap;
       }
 
-      /* 3-Column Command Hub Grid */
-      .dashboard-grid-3col {
+      /* 2-Column Command Hub Grid */
+      .dashboard-grid-2col {
         display: grid;
-        grid-template-columns: 250px 1fr 400px;
-        gap: 14px;
+        grid-template-columns: 320px 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .dashboard-grid-2col {
+          grid-template-columns: 1fr;
+        }
       }
 
       /* Left Column: Pilots & Lobby Comms */
@@ -212,7 +217,7 @@
         border: 1px solid rgba(0, 229, 255, 0.25);
         border-radius: 10px;
         padding: 12px;
-        height: 420px;
+        height: 440px;
       }
 
       .pilots-list-box {
@@ -281,7 +286,7 @@
         gap: 4px;
       }
 
-      /* Center Column: Live Matches Browser */
+      /* Right Column: Live Matches Browser */
       .matches-browser-panel {
         display: flex;
         flex-direction: column;
@@ -290,7 +295,7 @@
         border: 1px solid rgba(0, 229, 255, 0.25);
         border-radius: 10px;
         padding: 12px;
-        height: 420px;
+        height: 440px;
       }
 
       .matches-browser-header {
@@ -1390,7 +1395,7 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
       }
 
-      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #spawner-modal, #create-match-modal, #options-modal {
+      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal {
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
@@ -1406,6 +1411,30 @@
         pointer-events: auto;
         min-width: 340px;
         max-width: 620px;
+        contain: content;
+      }
+
+      /* In-Game Hazards Spawner docked neatly to the left to avoid blocking center gameplay */
+      #spawner-modal {
+        position: fixed !important;
+        top: 50% !important;
+        left: 24px !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translateY(-50%) !important;
+        background: rgba(7, 14, 28, 0.96);
+        border: 2px solid #ffaa00;
+        box-shadow: 0 0 25px rgba(255, 170, 0, 0.35), 0 8px 30px rgba(0, 0, 0, 0.85);
+        padding: 16px 18px;
+        border-radius: 12px;
+        text-align: center;
+        display: none;
+        z-index: 99999 !important;
+        pointer-events: auto;
+        width: 320px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
         contain: content;
       }
 
@@ -1537,13 +1566,29 @@
         gap: 8px;
       }
 
-      #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #spawner-modal.active, #create-match-modal.active, #options-modal.active {
+      #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active {
         display: block !important;
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
         animation: modalPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      #spawner-modal.active {
+        display: block !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 24px !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translateY(-50%) !important;
+        animation: spawnerPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      @keyframes spawnerPop {
+        from { opacity: 0; transform: translateY(-50%) scale(0.9); }
+        to { opacity: 1; transform: translateY(-50%) scale(1.0); }
       }
 
       @keyframes modalPop {
@@ -1651,8 +1696,8 @@
           </div>
         </div>
 
-        <!-- 3-Column Command Hub Grid -->
-        <div class="dashboard-grid-3col">
+        <!-- 2-Column Command Hub Grid -->
+        <div class="dashboard-grid-2col">
           <!-- Col 1: Pilots in Lounge & Lobby Comms Chat -->
           <div class="lobby-comms-panel">
             <div class="section-title" style="font-size: 11px;">PILOTS IN LOUNGE</div>
@@ -1687,60 +1732,8 @@
 
             <!-- Scrollable Live Match List -->
             <div class="matches-list-scroll" id="lobby-matches-list">
-              <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
+              <div style="text-align: center; padding: 60px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
                 NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong style="color: var(--neon-cyan);">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
-              </div>
-            </div>
-          </div>
-
-          <!-- Col 3: Ship Selection Grid & Hologram Specs -->
-          <div class="right-col" style="height: 420px; overflow-y: auto;">
-            <div class="section-title" style="font-size: 11px;">FIGHTER FLEET HANGAR</div>
-
-            <!-- 4x2 Ship Selection Grid -->
-            <div class="ship-grid-4x2" id="hangar-ship-bar"></div>
-
-            <!-- Pilot Laser / Realm Color Palette -->
-            <div style="background: rgba(4, 9, 22, 0.7); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #88bbdd; letter-spacing: 1px;">PILOT COLOR:</span>
-              <div class="color-palette-bar" id="hangar-color-bar"></div>
-            </div>
-
-            <!-- Selected Ship Detail Card -->
-            <div class="ship-detail-card">
-              <div class="hologram-box">
-                <canvas id="hangar-canvas"></canvas>
-              </div>
-
-              <div class="ship-info-box">
-                <div>
-                  <div class="detail-title" id="hangar-ship-name">The Tank</div>
-                  <div class="detail-desc" id="hangar-ship-desc">
-                    The Tank is the ultimate in destructive capabilities. Formidable armor & heavy gun systems right off the bat.
-                  </div>
-                </div>
-
-                <div class="stat-list">
-                  <div class="stat-item">
-                    <span class="stat-item-label">ARMOR / HULL:</span>
-                    <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-hp" style="width: 80%;"></div></div>
-                  </div>
-
-                  <div class="stat-item">
-                    <span class="stat-item-label">MAX SPEED:</span>
-                    <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-speed" style="width: 65%;"></div></div>
-                  </div>
-
-                  <div class="stat-item">
-                    <span class="stat-item-label">TURN AGILITY:</span>
-                    <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-agil" style="width: 60%;"></div></div>
-                  </div>
-
-                  <div class="stat-item" id="hangar-special-row" style="margin-top: 4px; display: none;">
-                    <span class="stat-item-label">SPECIAL:</span>
-                    <span class="stat-special-val" id="hangar-special-name">NONE</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1975,39 +1968,56 @@
         </div>
       </div>
 
-      <!-- Tab 5: Fighter Fleet -->
+      <!-- Tab 5: Fighter Fleet Interactive Hologram Showcase -->
       <div class="manual-tab-pane" id="tab-fleet">
-        <div class="manual-card">
-          <div class="manual-card-title">1. THE TANK (HEAVY ASSAULT)</div>
-          <p>Formidable 280 HP hull and heavy starting weapon systems. Built for direct dogfighting.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">2. THE WING (BALANCED INTERCEPTOR)</div>
-          <p>Balanced agility and armor (240 HP). Smaller target profile with responsive handling.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">3. THE SQUID (LIGHT AGILITY RACER)</div>
-          <p>Hyper-fast thrusters and extreme turn rate (200 HP). Designed for rapid powerup harvesting.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">4. THE RABBIT (TRACKING CANNON CORVETTE)</div>
-          <p>Sacrifices armor (180 HP) for automated dual tracking cannons that lock onto nearby targets.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">5. THE TURTLE (HEAVY SIEGE CANNON)</div>
-          <p>Press <strong style="color: #ffffff;">[C] / [V] / [SHIFT]</strong> to unleash the 360° Turtle Cannon blast, clearing visible targets.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">6. THE FLASH (HYBRID SHAPESHIFTER)</div>
-          <p>Press <strong style="color: #ffffff;">[C] / [V] / [SHIFT]</strong> to transform instantly between Tank (heavy armor) and Squid (hyper speed) modes.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">7. THE HUNTER (MISSILE CORVETTE)</div>
-          <p>Press <strong style="color: #ffffff;">[C] / [V] / [SHIFT]</strong> to deploy an array of 17 circling Piranha homing missiles.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">8. THE FLAGSHIP (COMMAND DREADNOUGHT)</div>
-          <p>Press <strong style="color: #ffffff;">[C] / [V] / [SHIFT]</strong> to activate the A/R Gravity Unit: pulls powerups in and pushes threats away!</p>
+        <!-- 8 Ship Selector Buttons Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" id="manual-ship-bar"></div>
+
+        <!-- Interactive 3D Wireframe Showcase Card -->
+        <div class="ship-detail-card" style="background: rgba(4, 10, 24, 0.9); border: 1.5px solid rgba(0, 229, 255, 0.35); border-radius: 8px; padding: 14px; display: flex; gap: 16px; align-items: stretch;">
+          <!-- 3D Hologram Canvas Box -->
+          <div class="hologram-box" style="width: 145px; height: 145px; flex-shrink: 0; background: rgba(2, 6, 16, 0.85); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="manual-hangar-canvas" style="width: 135px; height: 135px;"></canvas>
+          </div>
+
+          <!-- Specs & Telemetry Box -->
+          <div class="ship-info-box" style="flex: 1; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                <div>
+                  <div class="detail-title" id="manual-ship-name" style="font-size: 15px; color: var(--neon-cyan); font-weight: 900; letter-spacing: 1px;">The Tank</div>
+                  <div class="detail-subtitle" id="manual-ship-sub" style="font-size: 10px; color: #88bbdd; font-family: 'Orbitron', sans-serif;">Heavy Assault Cruiser</div>
+                </div>
+                <div id="manual-ship-unlock" style="font-size: 9px; font-family: 'Orbitron', sans-serif; font-weight: 800; color: #ffaa00; background: rgba(255, 170, 0, 0.12); border: 1px solid rgba(255, 170, 0, 0.4); padding: 2px 7px; border-radius: 4px;">UNLOCKED</div>
+              </div>
+
+              <div class="detail-desc" id="manual-ship-desc" style="font-size: 10.5px; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">
+                The Tank is the ultimate in destructive capabilities. Formidable armor & heavy gun systems right off the bat.
+              </div>
+            </div>
+
+            <div class="stat-list" style="display: flex; flex-direction: column; gap: 4px;">
+              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">ARMOR / HULL:</span>
+                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-hp" style="width: 80%; height: 100%; background: #33ff66;"></div></div>
+              </div>
+
+              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">MAX SPEED:</span>
+                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-speed" style="width: 65%; height: 100%; background: #00e5ff;"></div></div>
+              </div>
+
+              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">TURN AGILITY:</span>
+                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-agil" style="width: 60%; height: 100%; background: #ffaa00;"></div></div>
+              </div>
+
+              <div class="stat-item" id="manual-special-row" style="margin-top: 3px; display: none; align-items: center; gap: 6px; font-size: 10px;">
+                <span class="stat-item-label" style="color: #ff33aa; font-weight: 800;">SPECIAL [R]:</span>
+                <span class="stat-special-val" id="manual-special-name" style="color: #ffffff; font-weight: 700; background: rgba(255, 51, 170, 0.2); border: 1px solid rgba(255, 51, 170, 0.4); padding: 1px 6px; border-radius: 3px;">NONE</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

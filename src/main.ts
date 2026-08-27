@@ -72,7 +72,7 @@ class WormholeGame {
   private hazardManager: HazardManager;
   public gameState: GameStateManager;
   public network: NetworkManager;
-  public hangarView: HangarView;
+  public manualHangarView: HangarView;
   private modalHangarView: HangarView;
 
   public globalRelay: GlobalRelay;
@@ -162,7 +162,7 @@ class WormholeGame {
     this.hazardManager = new HazardManager(initialSize.boardWidth / 2 - 20);
     this.gameState = new GameStateManager(5);
     this.network = new NetworkManager();
-    this.hangarView = new HangarView('hangar-canvas', 'hangar-');
+    this.manualHangarView = new HangarView('manual-hangar-canvas', 'manual-');
     this.modalHangarView = new HangarView('modal-ship-canvas', 'modal-');
 
     // Simulated Bot Realm
@@ -188,7 +188,7 @@ class WormholeGame {
     );
     this.player.onDeath = () => this.handlePlayerElimination();
 
-    this.hangarView.setColor(this.selectedColorIndex);
+    this.manualHangarView.setColor(this.selectedColorIndex);
     this.modalHangarView.setColor(this.selectedColorIndex);
 
     // Apply persisted glow intensity
@@ -200,7 +200,7 @@ class WormholeGame {
     const savedDualBloom = localStorage.getItem('wh_opt_dual_bloom');
     const isDualBloom = savedDualBloom !== null ? savedDualBloom === 'true' : true;
     this.renderer.setDualStrokeBloom(isDualBloom);
-    if ((this.hangarView as any).renderer) (this.hangarView as any).renderer.setDualStrokeBloom(isDualBloom);
+    if ((this.manualHangarView as any).renderer) (this.manualHangarView as any).renderer.setDualStrokeBloom(isDualBloom);
     if ((this.modalHangarView as any).renderer) (this.modalHangarView as any).renderer.setDualStrokeBloom(isDualBloom);
 
     const savedVectorGrid = localStorage.getItem('wh_opt_vector_grid');
@@ -940,7 +940,7 @@ class WormholeGame {
     if (match.shipRestriction === 'STANDARD' && this.selectedShipIndex > 2) {
       this.selectedShipIndex = 0;
       this.player.setShip(0);
-      this.hangarView.setShip(0);
+      this.manualHangarView.setShip(0);
       this.modalHangarView.setShip(0);
       this.syncShipSelectionUI(0);
     }
@@ -1290,12 +1290,9 @@ class WormholeGame {
       // 3. Query LAN to ensure lobby match browser is 100% synchronized
       this.sendLanPacket({ type: 'MATCH_QUERY' });
       this.renderLobbyMatches();
-
-      setTimeout(() => this.hangarView.startPreview(), 50);
     } else {
       deck.classList.add('hidden');
       hud.style.display = 'grid';
-      this.hangarView.stopPreview();
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
       this.resetArenaForNewRound();
@@ -2175,9 +2172,14 @@ class WormholeGame {
     // Flight Manual & Controls Toggle
     document.getElementById('btn-manual-toggle')!.onclick = () => {
       document.getElementById('manual-modal')?.classList.add('active');
+      const activeTab = document.querySelector('.manual-tab-pane.active');
+      if (activeTab && activeTab.id === 'tab-fleet') {
+        setTimeout(() => this.manualHangarView.startPreview(), 30);
+      }
     };
     document.getElementById('btn-close-manual')!.onclick = () => {
       document.getElementById('manual-modal')?.classList.remove('active');
+      this.manualHangarView.stopPreview();
     };
 
     // Manual tab switching
@@ -2191,6 +2193,11 @@ class WormholeGame {
         const tabId = (btn as HTMLElement).dataset.tab;
         if (tabId) {
           document.getElementById(tabId)?.classList.add('active');
+          if (tabId === 'tab-fleet') {
+            setTimeout(() => this.manualHangarView.startPreview(), 30);
+          } else {
+            this.manualHangarView.stopPreview();
+          }
         }
       });
     });
@@ -2305,7 +2312,7 @@ class WormholeGame {
       }
     };
 
-    this.hangarView.updateStatsUI();
+    this.manualHangarView.updateStatsUI();
     this.setupHazardSpawnerModal();
   }
 
@@ -2427,7 +2434,7 @@ class WormholeGame {
       }
       chkDualBloom.onchange = () => {
         this.renderer.setDualStrokeBloom(chkDualBloom.checked);
-        if ((this.hangarView as any).renderer) (this.hangarView as any).renderer.setDualStrokeBloom(chkDualBloom.checked);
+        if ((this.manualHangarView as any).renderer) (this.manualHangarView as any).renderer.setDualStrokeBloom(chkDualBloom.checked);
         if ((this.modalHangarView as any).renderer) (this.modalHangarView as any).renderer.setDualStrokeBloom(chkDualBloom.checked);
         try { localStorage.setItem('wh_opt_dual_bloom', chkDualBloom.checked.toString()); } catch {}
       };
@@ -2658,8 +2665,8 @@ class WormholeGame {
     if (this.pipRenderer) {
       this.pipRenderer.setGlowIntensity(intensity);
     }
-    if (this.hangarView && (this.hangarView as any).renderer) {
-      (this.hangarView as any).renderer.setGlowIntensity(intensity);
+    if (this.manualHangarView && (this.manualHangarView as any).renderer) {
+      (this.manualHangarView as any).renderer.setGlowIntensity(intensity);
     }
     if (this.modalHangarView && (this.modalHangarView as any).renderer) {
       (this.modalHangarView as any).renderer.setGlowIntensity(intensity);
@@ -2717,8 +2724,7 @@ class WormholeGame {
       this.tablePlayers[0].color = PLAYER_COLORS[newColor].primary;
     }
 
-    // 3. Update Hangar 3D preview meshes
-    this.hangarView.setColor(newColor);
+    // 3. Update Staging Hangar 3D preview mesh
     this.modalHangarView.setColor(newColor);
 
     // 4. Update UI color swatches across all screens
@@ -2772,10 +2778,10 @@ class WormholeGame {
   private buildShipGrid(): void {
     this.buildColorSwatches();
 
-    const hangarShipBar = document.getElementById('hangar-ship-bar');
+    const manualShipBar = document.getElementById('manual-ship-bar');
     const modalRoundBar = document.getElementById('modal-round-ship-bar');
     const modalMatchBar = document.getElementById('modal-match-ship-bar');
-    if (hangarShipBar) hangarShipBar.innerHTML = '';
+    if (manualShipBar) manualShipBar.innerHTML = '';
     if (modalRoundBar) modalRoundBar.innerHTML = '';
     if (modalMatchBar) modalMatchBar.innerHTML = '';
 
@@ -2786,21 +2792,18 @@ class WormholeGame {
     ships.forEach((ship, index) => {
       const isUnlocked = ShipCatalog.isShipUnlocked(index, this.totalMatchWins);
 
-      // 1. Dashboard hangar card (free fleet browsing of all 8 classes)
-      if (hangarShipBar) {
-        const btn = document.createElement('div');
-        btn.className = `ship-card-btn ${index === this.selectedShipIndex ? 'active' : ''}`;
-        btn.innerHTML = `
-          <span class="ship-card-name">${ship.config.name}</span>
-          <span class="ship-card-sub">${subLabels[index] || ''}</span>
-        `;
-        btn.onclick = () => {
-          this.selectShip(index);
-          this.hangarView.setShip(index);
-          this.modalHangarView.setShip(index);
-          this.syncShipSelectionUI(index);
+      // 1. Guide Flight Manual Hangar selector (free showcase browsing of all 8 classes)
+      if (manualShipBar) {
+        const mBtn = document.createElement('button');
+        mBtn.className = `modal-ship-btn ${index === this.manualHangarView.selectedShipIndex ? 'active' : ''}`;
+        mBtn.innerText = subLabels[index];
+        mBtn.title = `${ship.config.name} (${ship.config.subtitle || ''})`;
+        mBtn.dataset.shipIndex = index.toString();
+        mBtn.onclick = () => {
+          this.manualHangarView.setShip(index);
+          this.syncShipSelectionUI(this.selectedShipIndex);
         };
-        hangarShipBar.appendChild(btn);
+        manualShipBar.appendChild(mBtn);
       }
 
       // 2. In-Modal selector buttons (strictly filter by match restriction)
@@ -2820,7 +2823,6 @@ class WormholeGame {
           }
           this.selectShip(index);
           this.modalHangarView.setShip(index);
-          this.hangarView.setShip(index);
           this.syncShipSelectionUI(index);
           this.addChatLog(`Switched ship class -> ${ship.config.name}`, 'player');
         };
@@ -2832,11 +2834,13 @@ class WormholeGame {
     });
 
     this.modalHangarView.setShip(this.selectedShipIndex);
+    this.manualHangarView.updateStatsUI();
   }
 
   private syncShipSelectionUI(selectedIndex: number): void {
-    document.querySelectorAll('#hangar-ship-bar .ship-card-btn').forEach((t, i) => {
-      t.classList.toggle('active', i === selectedIndex);
+    document.querySelectorAll('#manual-ship-bar .modal-ship-btn').forEach((btn) => {
+      const idx = parseInt((btn as HTMLElement).dataset.shipIndex || '0', 10);
+      btn.classList.toggle('active', idx === this.manualHangarView.selectedShipIndex);
     });
     document.querySelectorAll('#modal-round-ship-bar .modal-ship-btn, #modal-match-ship-bar .modal-ship-btn').forEach((btn) => {
       const idx = parseInt((btn as HTMLElement).dataset.shipIndex || '0', 10);
@@ -3011,10 +3015,9 @@ class WormholeGame {
         const idx = parseInt(e.key, 10) - 1;
         if (ShipCatalog.isShipUnlocked(idx, this.totalMatchWins)) {
           this.selectShip(idx);
-          this.hangarView.setShip(idx);
-          document.querySelectorAll('#hangar-ship-bar .ship-card-btn').forEach((t, i) => {
-            t.classList.toggle('active', i === idx);
-          });
+          this.manualHangarView.setShip(idx);
+          this.modalHangarView.setShip(idx);
+          this.syncShipSelectionUI(idx);
         }
       } else if (e.key === 'm' || e.key === 'M') {
         this.sound.toggleMute();
@@ -3614,8 +3617,8 @@ class WormholeGame {
     }
 
     // Render active Hangar preview models synchronously in single master rAF frame
-    if (!this.inArena && this.hangarView.isAnimating) {
-      this.hangarView.updateAndRender(dt);
+    if (this.manualHangarView && this.manualHangarView.isAnimating) {
+      this.manualHangarView.updateAndRender(dt);
     }
     if (this.modalHangarView.isAnimating) {
       this.modalHangarView.updateAndRender(dt);

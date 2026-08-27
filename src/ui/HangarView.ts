@@ -69,16 +69,19 @@ export class HangarView {
     const cy = this.renderer.height / 2;
 
     const ship = this.getSelectedShip();
-    const colorProfile = PLAYER_COLORS[this.selectedColorIndex % PLAYER_COLORS.length] || PLAYER_COLORS[0];
+    const isManual = this.uiPrefix === 'manual-';
+    const colorProfile = isManual
+      ? { primary: '#00e5ff', glow: 'rgba(0, 229, 255, 0.7)' }
+      : (PLAYER_COLORS[this.selectedColorIndex % PLAYER_COLORS.length] || PLAYER_COLORS[0]);
     const shipColor = colorProfile.primary;
     const shipGlow = colorProfile.glow;
 
-    // 1. Draw 3D Rotating Ship Mesh in selected player color wireframe
+    // 1. Draw 3D Rotating Ship Mesh
     const poly = ship.visualPoly.clone();
     poly.setAngle(this.rotationAngle);
 
     // Scale calibrated for prominent showcase
-    const scale = this.uiPrefix === 'modal-' ? 2.4 : 3.4;
+    const scale = this.uiPrefix === 'manual-' ? 2.6 : this.uiPrefix === 'modal-' ? 2.4 : 3.4;
     this.renderer.drawRotationalPolygon(
       poly,
       cx,
@@ -100,6 +103,12 @@ export class HangarView {
 
     const nameEl = document.getElementById(`${this.uiPrefix}ship-name`);
     if (nameEl) nameEl.innerText = cfg.name;
+
+    const subEl = document.getElementById(`${this.uiPrefix}ship-sub`);
+    if (subEl) subEl.innerText = cfg.subtitle || '';
+
+    const unlockEl = document.getElementById(`${this.uiPrefix}ship-unlock`);
+    if (unlockEl) unlockEl.innerText = cfg.unlockRequirement || 'UNLOCKED';
 
     // Description
     const descEl = document.getElementById(`${this.uiPrefix}ship-desc`);
