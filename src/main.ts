@@ -2082,7 +2082,9 @@ class WormholeGame {
     if (btnMatchSound) {
       btnMatchSound.onclick = () => {
         const muted = this.sound.toggleMute();
-        btnMatchSound.innerText = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+        btnMatchSound.innerText = muted ? '🔇' : '🔊';
+        const menuSound = document.getElementById('btn-menu-sound');
+        if (menuSound) menuSound.innerText = muted ? '🔇' : '🔊';
       };
     }
 
@@ -2211,7 +2213,9 @@ class WormholeGame {
     // Sound toggle in menu
     document.getElementById('btn-menu-sound')!.onclick = () => {
       const muted = this.sound.toggleMute();
-      document.getElementById('btn-menu-sound')!.innerText = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+      document.getElementById('btn-menu-sound')!.innerText = muted ? '🔇' : '🔊';
+      const matchSound = document.getElementById('btn-match-sound');
+      if (matchSound) matchSound.innerText = muted ? '🔇' : '🔊';
     };
 
     // Pause Menu Handlers
@@ -3084,7 +3088,8 @@ class WormholeGame {
         this.wormholes,
         this.powerups,
         this.bullets,
-        this.hazardManager.hazards
+        this.hazardManager.hazards,
+        this.hazardManager.mines
       );
     }
 

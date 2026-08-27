@@ -84,7 +84,8 @@ export class BotController {
     wormholes: Wormhole[],
     powerups: Powerup[],
     bullets: Bullet[],
-    hazards: Hazard[] = []
+    hazards: Hazard[] = [],
+    mines: Hazard[] = []
   ): InputState {
     if (!this.isEnabled || !botShip.isAlive) {
       return {
@@ -115,6 +116,8 @@ export class BotController {
     }
     this.lastInventoryCount = currentInvCount;
 
+    const allThreats = [...hazards, ...mines];
+
     // Clean up dead hazards from reaction tracking
     for (const [h] of this.seenHazardTimestamps) {
       if (!h.isAlive) {
@@ -123,7 +126,7 @@ export class BotController {
     }
 
     // Track newly emerged hazards
-    for (const h of hazards) {
+    for (const h of allThreats) {
       if (h.isAlive && !this.seenHazardTimestamps.has(h)) {
         this.seenHazardTimestamps.set(h, this.totalTime);
       }
@@ -134,7 +137,7 @@ export class BotController {
     this.thinkTimer -= dt;
     if (this.thinkTimer <= 0) {
       this.thinkTimer = cfg.thinkInterval;
-      this.decideStrategy(botShip, wormholes, powerups, bullets, hazards, cfg);
+      this.decideStrategy(botShip, wormholes, powerups, bullets, allThreats, cfg);
     }
 
     // Smooth steering towards targetAngle
@@ -175,7 +178,7 @@ export class BotController {
   }
 
   /**
-   * Checks if an obstacle (like a giant Inflator or Asteroid) blocks the direct flight path.
+   * Checks if an obstacle (like a giant Inflator, Asteroid, or Mine) blocks the direct flight path.
    * If blocked, returns a tangent detour angle around the obstacle.
    */
   private findClearNavigationAngle(
@@ -256,7 +259,7 @@ export class BotController {
       }
     }
 
-    // 2.5 EMERGENCY: Evade lethal collision with giant hazards (Inflators, Asteroids, Puds)
+    // 2.5 EMERGENCY: Evade lethal collision with giant hazards (Inflators, Asteroids, Mines, Puds)
     for (const h of hazards) {
       if (!h.isAlive || h.powerupType === 16) continue;
       const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
@@ -302,7 +305,7 @@ export class BotController {
       }
     }
 
-    // 4. POWERUP HARVESTING (High Priority! Actively seek nearby & vital drops)
+    // 4. POWERUP HARVESTING (High Priority! Intercept moving powerups with trajectory lead)
     const validPowerups = powerups.filter((p) => p.isAlive);
     if (validPowerups.length > 0) {
       let bestPup: Powerup | null = null;
@@ -338,16 +341,22 @@ export class BotController {
       }
 
       if (bestPup) {
-        const dist = Math.hypot(bestPup.x - botShip.x, bestPup.y - botShip.y);
+        const rawDist = Math.hypot(bestPup.x - botShip.x, bestPup.y - botShip.y);
+        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
 
-        // Path around any obstacle hazards blocking the way to the powerup
-        this.targetAngle = this.findClearNavigationAngle(botShip, bestPup.x, bestPup.y, hazards);
+        // Calculate trajectory intercept point for moving powerups
+        const leadWeight = this.difficulty === 'hard' ? 1.0 : this.difficulty === 'medium' ? 0.6 : 0.0;
+        const leadFrames = Math.min(rawDist / Math.max(currentSpeed, 4.5), 35.0) * leadWeight;
+        const targetX = bestPup.x + (bestPup.vx || 0) * leadFrames;
+        const targetY = bestPup.y + (bestPup.vy || 0) * leadFrames;
+
+        // Path around any obstacle hazards blocking the way to the intercept point
+        this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
 
         // Retro Braking: If bot has retros and is close, release thrust to stop drifting past it
-        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
-        if (botShip.hasRetros && dist < 70 && currentSpeed > 1.8) {
+        if (botShip.hasRetros && rawDist < 70 && currentSpeed > 1.8) {
           this.currentInput.up = false;
-        } else if (dist > 35 || currentSpeed < 2.0) {
+        } else if (rawDist > 35 || currentSpeed < 2.0) {
           this.currentInput.up = true;
         }
 
@@ -357,7 +366,7 @@ export class BotController {
       }
     }
 
-    // 5. DEFEND AGAINST HOSTILE HAZARDS (with realistic perception delay & difficulty aim jitter)
+    // 5. DEFEND AGAINST HOSTILE HAZARDS & CLEAR MINEFIELDS
     if (hazards.length > 0) {
       let targetHazard: Hazard | null = null;
       let minThreatDist = Infinity;
@@ -365,9 +374,13 @@ export class BotController {
       for (const h of hazards) {
         if (!h.isAlive || h.powerupType === 16) continue;
 
+        // Mines (Type 8) have high clearance priority if nearby
+        const isMine = h.powerupType === 8;
+        const maxRange = isMine ? 240 : cfg.hazardEngagementRadius;
+
         // Human-like Target Acquisition Reaction Delay
         const firstSeen = this.seenHazardTimestamps.get(h) ?? this.totalTime;
-        if (this.totalTime - firstSeen < cfg.reactionDelay) {
+        if (this.totalTime - firstSeen < (isMine ? cfg.reactionDelay * 0.5 : cfg.reactionDelay)) {
           continue; // Has not reacted to this newly emerged hazard yet!
         }
 
@@ -380,7 +393,7 @@ export class BotController {
         }
 
         const d = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-        if (d < cfg.hazardEngagementRadius && d < minThreatDist) {
+        if (d < maxRange && d < minThreatDist) {
           minThreatDist = d;
           targetHazard = h;
         }

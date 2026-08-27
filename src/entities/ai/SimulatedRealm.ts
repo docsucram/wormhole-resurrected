@@ -291,7 +291,8 @@ export class SimulatedRealm {
           realm.wormholes,
           realm.powerups,
           realm.bullets,
-          realm.hazardManager.hazards
+          realm.hazardManager.hazards,
+          realm.hazardManager.mines
         );
 
         const botTargets = [
