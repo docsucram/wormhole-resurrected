@@ -859,7 +859,7 @@ class WormholeGame {
     if (filtered.length === 0) {
       listEl.innerHTML = `
         <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
-          NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
+          NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
         </div>
       `;
       const emptyHostBtn = listEl.querySelector('.btn-host-from-empty') as HTMLElement;

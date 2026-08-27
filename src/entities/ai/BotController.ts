@@ -620,19 +620,44 @@ export class BotController {
         this.isUnloadingBarrage = true;
         const whIndex = this.targetWormholeIndex % wormholes.length;
         const wh = wormholes[whIndex];
-        const directAngle = this.findClearNavigationAngle(botShip, wh.x, wh.y, hazards);
-        const dist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
 
-        this.targetAngle = directAngle;
+        // Wormhole orbital velocity & predictive lead calculation
+        const whOrbitAngle = Math.atan2(wh.y, wh.x);
+        const whSpeed = (wh.orbitRadius || 270) * (22.5 * Math.PI / 180) / 60;
+        const whVx = -Math.sin(whOrbitAngle) * whSpeed;
+        const whVy = Math.cos(whOrbitAngle) * whSpeed;
+
+        const rawDist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
+        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+        const bulletSpeed = 10.0;
+        const timeToHitFrames = isApex ? (rawDist / bulletSpeed) : 0;
+
+        const targetX = wh.x + whVx * timeToHitFrames;
+        const targetY = wh.y + whVy * timeToHitFrames;
+
+        this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
         let angleDiff = this.targetAngle - botShip.angle;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        if (dist > 190) {
+        // Pacing & Standoff Distance Control (avoid overshooting)
+        const toWhDirX = (wh.x - botShip.x) / Math.max(1, rawDist);
+        const toWhDirY = (wh.y - botShip.y) / Math.max(1, rawDist);
+        const closingVelocity = (botShip.vx - whVx) * toWhDirX + (botShip.vy - whVy) * toWhDirY;
+
+        if (rawDist > 250) {
           this.currentInput.up = true;
+        } else if (rawDist < 175) {
+          this.currentInput.up = false;
+        } else {
+          if (closingVelocity > 1.2) {
+            this.currentInput.up = false;
+          } else if (closingVelocity < -0.6) {
+            this.currentInput.up = true;
+          }
         }
 
-        if (Math.abs(angleDiff) < 0.28 && dist < 430) {
+        if (Math.abs(angleDiff) < (isApex ? 0.35 : 0.28) && rawDist < 440 && rawDist > 120) {
           if (this.launchCooldown <= 0) {
             this.currentInput.secondaryFire = true;
             this.currentInput.fire = false;
@@ -653,20 +678,49 @@ export class BotController {
     // 7. ATTACK ORBITAL WORMHOLE: Shoot primary lasers to spawn fresh powerups
     if (wormholes.length > 0) {
       const wh = wormholes[this.targetWormholeIndex % wormholes.length] || wormholes[0];
-      const dist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
 
-      this.targetAngle = this.findClearNavigationAngle(botShip, wh.x, wh.y, hazards);
+      // Wormhole orbital velocity & predictive lead calculation
+      const whOrbitAngle = Math.atan2(wh.y, wh.x);
+      const whSpeed = (wh.orbitRadius || 270) * (22.5 * Math.PI / 180) / 60;
+      const whVx = -Math.sin(whOrbitAngle) * whSpeed;
+      const whVy = Math.cos(whOrbitAngle) * whSpeed;
+
+      const rawDist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
+      const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+      const bulletSpeed = 10.0;
+      const timeToHitFrames = isApex ? (rawDist / bulletSpeed) : 0;
+
+      const targetX = wh.x + whVx * timeToHitFrames;
+      const targetY = wh.y + whVy * timeToHitFrames;
+
+      this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
       let angleDiff = this.targetAngle - botShip.angle;
       while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
       while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-      if (dist > 220) {
+      // Smart Standoff Distance & Speed Matching:
+      // Keep ~180px - 250px standoff distance so the ship continuously paces the orbiting wormhole without overshooting
+      const toWhDirX = (wh.x - botShip.x) / Math.max(1, rawDist);
+      const toWhDirY = (wh.y - botShip.y) / Math.max(1, rawDist);
+      const closingVelocity = (botShip.vx - whVx) * toWhDirX + (botShip.vy - whVy) * toWhDirY;
+
+      if (rawDist > 250) {
         this.currentInput.up = true;
+      } else if (rawDist < 175) {
+        // Too close to event horizon: release thrust
+        this.currentInput.up = false;
+      } else {
+        // In sweet spot (175px - 250px): match pace with orbiting wormhole
+        if (closingVelocity > 1.2) {
+          this.currentInput.up = false;
+        } else if (closingVelocity < -0.6) {
+          this.currentInput.up = true;
+        }
       }
 
-      // Fire at wormhole only if safe and aligned
-      if (Math.abs(angleDiff) < 0.28 && dist < 420) {
-        if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, dist)) {
+      // Fire at wormhole continuously if aligned and safe
+      if (Math.abs(angleDiff) < (isApex ? 0.38 : 0.28) && rawDist < 440 && rawDist > 100) {
+        if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, rawDist)) {
           this.currentInput.fire = true;
         }
       }
