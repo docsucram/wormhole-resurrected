@@ -71,6 +71,7 @@ export class BotController {
   };
 
   private targetAngle = 0;
+  private isUnloadingBarrage = false;
   private seenHazardTimestamps: Map<Hazard, number> = new Map();
 
   constructor(difficulty: BotDifficulty = 'medium') {
@@ -106,8 +107,10 @@ export class BotController {
 
     // Track inventory changes & hold timer
     const currentInvCount = botShip.powerupInventory.length;
+    const validPowerups = powerups.filter((p) => p.isAlive);
+
     if (currentInvCount > this.lastInventoryCount) {
-      // Just collected a new offensive hazard! Reset 8s timer
+      // Just collected a new offensive hazard! Reset timer
       this.inventoryHoldTimer = 0;
     } else if (currentInvCount >= 3) {
       this.inventoryHoldTimer += dt;
@@ -115,6 +118,21 @@ export class BotController {
       this.inventoryHoldTimer = 0;
     }
     this.lastInventoryCount = currentInvCount;
+
+    // Manage continuous barrage state: once triggered, keep firing until 0 held
+    if (currentInvCount === 0) {
+      this.isUnloadingBarrage = false;
+    } else if (this.difficulty === 'hard') {
+      if (currentInvCount >= 5 || (currentInvCount >= 3 && this.inventoryHoldTimer >= 8.0) || (currentInvCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0)) {
+        this.isUnloadingBarrage = true;
+      }
+    } else if (this.difficulty === 'medium') {
+      if (currentInvCount >= 3 || (currentInvCount >= 2 && this.inventoryHoldTimer >= 6.0) || (currentInvCount >= 1 && validPowerups.length === 0)) {
+        this.isUnloadingBarrage = true;
+      }
+    } else {
+      this.isUnloadingBarrage = currentInvCount > 0;
+    }
 
     const allThreats = [...hazards, ...mines];
 
@@ -348,9 +366,15 @@ export class BotController {
       }
     }
 
-    // 4. POWERUP HARVESTING (High Priority! Intercept moving powerups with trajectory lead)
+    // 4. POWERUP HARVESTING VS WORMHOLE SHOOTING
+    // Hard AI Rule: If there are fewer than 6 powerups in the arena, Hard AI prioritizes shooting the opponent wormhole
+    // to extract a flood of powerups rather than chasing down individual ones (unless needing emergency HP).
     const validPowerups = powerups.filter((p) => p.isAlive);
-    if (validPowerups.length > 0) {
+    const isHardAi = this.difficulty === 'hard';
+    const needsUrgentHealth = (botShip.health / (botShip.maxHealth || 200)) < 0.50;
+    const preferShootingWormhole = isHardAi && validPowerups.length < 6 && !needsUrgentHealth && wormholes.length > 0;
+
+    if (!this.isUnloadingBarrage && !preferShootingWormhole && validPowerups.length > 0) {
       let bestPup: Powerup | null = null;
       let bestScore = -Infinity;
 
@@ -475,28 +499,21 @@ export class BotController {
 
     // 6. LAUNCH STORED HAZARDS: Stockpile and burst launch into opponent wormholes
     const invCount = botShip.powerupInventory.length;
-    let shouldLaunch = false;
+    let shouldLaunch = this.isUnloadingBarrage;
 
-    if (invCount > 0 && wormholes.length > 0 && this.launchCooldown <= 0) {
-      if (this.difficulty === 'hard') {
-        // Hard AI aims to stockpile 5 items, but launches if 3+ held for 8 seconds, or if full (5), or no powerups left in arena
-        if (invCount >= 5) {
-          shouldLaunch = true;
-        } else if (invCount >= 3 && this.inventoryHoldTimer >= 8.0) {
-          shouldLaunch = true;
-        } else if (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 10.0) {
-          shouldLaunch = true;
-        }
-      } else if (this.difficulty === 'medium') {
-        if (invCount >= 3 || (invCount >= 2 && this.inventoryHoldTimer >= 6.0) || (invCount >= 1 && validPowerups.length === 0)) {
+    if (invCount > 0 && wormholes.length > 0) {
+      if (!shouldLaunch && this.launchCooldown <= 0) {
+        if (this.difficulty === 'hard') {
+          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 8.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0);
+        } else if (this.difficulty === 'medium') {
+          shouldLaunch = invCount >= 3 || (invCount >= 2 && this.inventoryHoldTimer >= 6.0) || (invCount >= 1 && validPowerups.length === 0);
+        } else {
           shouldLaunch = true;
         }
-      } else {
-        // Easy AI launches as soon as it has an item
-        shouldLaunch = true;
       }
 
       if (shouldLaunch) {
+        this.isUnloadingBarrage = true;
         const whIndex = this.targetWormholeIndex % wormholes.length;
         const wh = wormholes[whIndex];
         const directAngle = this.findClearNavigationAngle(botShip, wh.x, wh.y, hazards);
@@ -507,19 +524,22 @@ export class BotController {
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        if (dist > 200) {
+        if (dist > 190) {
           this.currentInput.up = true;
         }
 
-        if (Math.abs(angleDiff) < 0.25 && dist < 400) {
-          this.currentInput.secondaryFire = true;
-          this.currentInput.fire = false;
-          // Rapid volley fire rate for stockpiled barrage
-          this.launchCooldown = this.difficulty === 'hard' ? 0.35 : this.difficulty === 'medium' ? 0.50 : 1.2;
-          if (invCount <= 1) {
-            this.launchCooldown = cfg.launchCooldownTime;
-            this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
-            this.inventoryHoldTimer = 0;
+        if (Math.abs(angleDiff) < 0.28 && dist < 430) {
+          if (this.launchCooldown <= 0) {
+            this.currentInput.secondaryFire = true;
+            this.currentInput.fire = false;
+            // Rapid-fire sequence to empty all powerups down to 0
+            this.launchCooldown = this.difficulty === 'hard' ? 0.25 : this.difficulty === 'medium' ? 0.45 : 0.9;
+            if (invCount <= 1) {
+              this.launchCooldown = cfg.launchCooldownTime;
+              this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
+              this.inventoryHoldTimer = 0;
+              this.isUnloadingBarrage = false;
+            }
           }
         }
         return;

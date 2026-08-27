@@ -933,33 +933,29 @@
         line-height: 1;
         color: #ffffff;
         letter-spacing: 1px;
-        font-variant-numeric: tabular-nums;
+        font-variant-numeric: tabular-nums lining-nums;
         display: flex;
-        align-items: center;
+        align-items: baseline;
         justify-content: flex-end;
         gap: 6px;
       }
 
       .hud-score-num {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 16px;
-        height: 18px;
+        display: inline-block;
+        min-width: 14px;
         line-height: 1;
         text-align: center;
-        font-variant-numeric: tabular-nums;
+        font-variant-numeric: tabular-nums lining-nums;
       }
 
       .hud-score-sep {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 18px;
+        display: inline-block;
         line-height: 1;
         color: #64748b;
         font-weight: 700;
         user-select: none;
+        position: relative;
+        top: -1px;
       }
 
       .hud-score-label {
