@@ -1467,21 +1467,43 @@
       }
 
       #manual-modal {
-        max-width: 860px;
-        width: 94vw;
+        max-width: 940px;
+        width: 95vw;
         max-height: 88vh;
-        padding: 20px 24px;
+        height: 78vh;
+        padding: 16px 20px;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+      }
+
+      .manual-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+
+      .manual-layout {
+        display: flex;
+        gap: 16px;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
       }
 
       .manual-tabs {
         display: flex;
+        flex-direction: column;
         gap: 6px;
-        margin: 10px 0 14px 0;
-        border-bottom: 1px solid rgba(0, 229, 255, 0.25);
-        padding-bottom: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
+        width: 230px;
+        flex-shrink: 0;
+        border-right: 1px solid rgba(0, 229, 255, 0.25);
+        padding-right: 12px;
+        overflow-y: auto;
       }
 
       .manual-tab-btn {
@@ -1490,13 +1512,17 @@
         border-radius: 5px;
         color: #94a3b8;
         font-family: 'Orbitron', sans-serif;
-        font-size: 10px;
+        font-size: 10.5px;
         font-weight: 800;
         letter-spacing: 0.5px;
-        padding: 6px 11px;
+        padding: 9px 12px;
         cursor: pointer;
         transition: all 0.08s ease-out;
         white-space: nowrap;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .guide-badge {
@@ -1525,12 +1551,15 @@
         box-shadow: 0 0 12px var(--neon-cyan-glow);
       }
 
+      .manual-content-pane {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+      }
+
       .manual-tab-pane {
         display: none;
         text-align: left;
-        max-height: 55vh;
-        overflow-y: auto;
-        padding-right: 12px;
         font-size: 14px;
         color: #e2e8f0;
         line-height: 1.6;
@@ -1563,6 +1592,22 @@
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+
+      @media (max-width: 680px) {
+        .manual-layout {
+          flex-direction: column;
+        }
+        .manual-tabs {
+          width: 100%;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          border-right: none;
+          border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+          padding-right: 0;
+          padding-bottom: 8px;
+          overflow-x: auto;
+        }
       }
 
       #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
@@ -2341,230 +2386,235 @@
 
     <!-- Flight Manual Modal -->
     <div id="manual-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1px;">TACTICAL FLIGHT MANUAL & STRATEGY GUIDE</div>
-      
-      <!-- Tab Bar -->
-      <div class="manual-tabs">
-        <button class="manual-tab-btn active" data-tab="tab-controls">🛸 CONTROLS</button>
-        <button class="manual-tab-btn" data-tab="tab-wormholes">🌀 WORMHOLES</button>
-        <button class="manual-tab-btn" data-tab="tab-defensive">🛡 DEFENSIVE UPGRADES</button>
-        <button class="manual-tab-btn" data-tab="tab-offensive">💣 OFFENSIVE HAZARDS</button>
-        <button class="manual-tab-btn" data-tab="tab-fleet">🚀 FIGHTER FLEET</button>
-        <button class="manual-tab-btn" data-tab="tab-strategy">💡 TIPS</button>
+      <div class="manual-modal-header">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;">
+          <span>📖</span> TACTICAL FLIGHT MANUAL & STRATEGY GUIDE
+        </div>
+        <button id="btn-close-manual-top" class="modal-close-btn" title="Close Manual" style="background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
       </div>
 
-      <!-- Tab 1: Controls -->
-      <div class="manual-tab-pane active" id="tab-controls">
-        <div class="manual-card">
-          <div class="manual-card-title">🛸 FLIGHT & PROPULSION</div>
-          <p><strong style="color: #ffffff;">[W] / [▲ UP]:</strong> Main Thrusters. Accelerates your ship forward. Generates a plasma exhaust trail.</p>
-          <p><strong style="color: #ffffff;">[A] / [D] or [◀ / ▶]:</strong> Agility Rotation. Steers ship orientation instantly.</p>
-          <p><strong style="color: #ffffff;">RETROS (BRAKING):</strong> When equipped with Retros, easing off the thruster applies automatic reverse damping to stop drifting.</p>
+      <div class="manual-layout">
+        <!-- Left Side Navigation Sidebar -->
+        <div class="manual-tabs">
+          <button class="manual-tab-btn active" data-tab="tab-overview">📖 OVERVIEW</button>
+          <button class="manual-tab-btn" data-tab="tab-powerups">⚡ POWERUPS</button>
+          <button class="manual-tab-btn" data-tab="tab-defensive">🛡 DEFENSIVE</button>
+          <button class="manual-tab-btn" data-tab="tab-offensive">💣 OFFENSIVE</button>
+          <button class="manual-tab-btn" data-tab="tab-fleet">🚀 FIGHTER FLEET</button>
+          <button class="manual-tab-btn" data-tab="tab-controls">🛸 CONTROLS</button>
+          <button class="manual-tab-btn" data-tab="tab-strategy">💡 TIPS</button>
         </div>
 
-        <div class="manual-card">
-          <div class="manual-card-title">⚔ WEAPONS & COMBAT SYSTEMS</div>
-          <p><strong style="color: #ffffff;">[SPACE]:</strong> Pulse Cannons. Upgradable from single center fire to dual-cannons and wide-angle triple spread.</p>
-          <p><strong style="color: #ffffff;">[F]:</strong> Secondary Powerup Launch. Fires the topmost stored hazard projectile forward into enemy wormholes.</p>
-          <p><strong style="color: #ffffff;">[R] / [SHIFT]:</strong> Class Special Ability. Activates unique ship features (Turtle Cannon, ShapeShift, HeatSeeker array, Attractor/Repulser field).</p>
-          <p><strong style="color: #ffffff;">[ESC]:</strong> Tactical Pause. Opens the in-flight pause menu.</p>
-        </div>
-
-        <div class="manual-card">
-          <div class="manual-card-title">🎮 XBOX / PC CONTROLLER SUPPORT</div>
-          <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship rotation.</p>
-          <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters.</p>
-          <p><strong style="color: #00e5ff;">BUTTON [X] / [RB]:</strong> Primary Pulse Cannons.</p>
-          <p><strong style="color: #ffaa00;">BUTTON [B] / [LB]:</strong> Launch Secondary Stored Hazard [F].</p>
-          <p><strong style="color: #ff33aa;">BUTTON [Y] / [LT]:</strong> Ship Special Ability.</p>
-          <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game.</p>
-        </div>
-      </div>
-
-      <!-- Tab 2: Wormholes -->
-      <div class="manual-tab-pane" id="tab-wormholes">
-        <div class="manual-card">
-          <div class="manual-card-title">🌀 ORBITAL WORMHOLE MECHANICS</div>
-          <p>Each pilot commands an orbital wormhole tethered to their realm. Wormholes continuously revolve along the outer orbit.</p>
-        </div>
-
-        <div class="manual-card">
-          <div class="manual-card-title">⚡ EXTRACTING POWERUPS</div>
-          <p>Continually shoot opponent wormholes with your pulse cannons. Delivering sustained damage destabilizes their event horizon, ejecting fresh powerup capsules into the arena!</p>
-        </div>
-
-        <div class="manual-card">
-          <div class="manual-card-title">🚀 TRANSMITTING HAZARDS</div>
-          <p>Collect offensive powerups, line up your sights, and press <strong style="color: #ffaa00;">[F]</strong> to launch the projectile into the opponent's wormhole. Once absorbed, the hazard warps directly into their arena to attack them!</p>
-          <p><strong style="color: var(--neon-cyan);">GRAVITATIONAL VORTEX:</strong> Projectiles and powerup capsules entering near a wormhole are naturally pulled into the singularity by its gravitational field.</p>
-          <p><strong style="color: #9966ff;">GHOST-PUD PUNTING:</strong> Wandering Ghost-Puds can be shot and punted across the arena with your lasers. Knocking them into an opponent's wormhole warps them to that opponent!</p>
-        </div>
-      </div>
-
-      <!-- Tab 3: Defensive Upgrades -->
-      <div class="manual-tab-pane" id="tab-defensive">
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">GUN</span> GUN UPGRADE</div>
-          <p>Adds twin side pulse lasers and unlocks devastating triple spread fire.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">THRUST</span> THRUST UPGRADE</div>
-          <p>Boosts engine acceleration and increases maximum cruising speed.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">RETROS</span> RETROS (INERTIAL BRAKING)</div>
-          <p>Equips reverse thruster damping for pinpoint drift control and sharp combat turns.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 51, 0.2); border: 1.5px solid #33ff33; color: #33ff33;">SHIELD</span> INVULNERABILITY SHIELD</div>
-          <p>Grants 8 seconds of absolute invincibility. Absorbs heavy collisions, lasers, and nuclear blasts.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">ZAP</span> SCREEN ZAP DISCHARGE</div>
-          <p>Emits an arena-wide electrical discharge that instantly obliterates all enemy hazards and mines.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 170, 0.2); border: 1.5px solid #ff33aa; color: #ff33aa;">+HP</span> EXTRA HEALTH REPAIR</div>
-          <p>Instantly repairs armor and hull damage (+75 HP).</p>
-        </div>
-      </div>
-
-      <!-- Tab 4: Offensive Hazards -->
-      <div class="manual-tab-pane" id="tab-offensive">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 255, 0.2); border: 1.5px solid #00ffff; color: #00ffff;">HS</span> HEAT SEEKER</div>
-            <p>High-velocity tracking missiles that lock onto enemy ship thermal signatures.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 136, 0.2); border: 1.5px solid #00ff88; color: #00ff88;">TURRET</span> WORMHOLE TURRET</div>
-            <p>Heavy perimeter battery defending the wormhole orbit with laser barrages.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">MINES</span> WORMHOLE MINES</div>
-            <p>Deploys a radial starburst of lethal proximity mines around the wormhole.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 204, 0.2); border: 1.5px solid #ff00cc; color: #ff00cc;">UFO</span> UFO INTERCEPTOR</div>
-            <p>Agile high-speed hunter that fires 3-way missile spreads at enemy fighters.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">INFLATOR</span> INFLATOR</div>
-            <p>Expanding cosmic mass that continuously swells and splits into mini-inflators when shot.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 0, 0.2); border: 1.5px solid #ffff00; color: #ffff00;">MINELAYER</span> MINELAYER</div>
-            <p>Patrols the arena dropping dense clusters of explosive proximity mines.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 102, 0, 0.2); border: 1.5px solid #ff6600; color: #ff6600;">GUNSHIP</span> GUNSHIP CORVETTE</div>
-            <p>Heavy assault boat equipped with dual 360-degree automated tracking turrets.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 153, 0.2); border: 1.5px solid #33ff99; color: #33ff99;">SCARAB</span> SCARAB SCAVENGER</div>
-            <p>Agile scavenger that races across space to steal and destroy floating powerups!</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 51, 0.25); border: 1.5px solid #ff0033; color: #ff0033;">NUKE</span> THERMONUCLEAR NUKE</div>
-            <p>Timed thermonuclear bomb. Detonates with a devastating 90 HP arena shockwave.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 255, 0.2); border: 1.5px solid #ff00ff; color: #ff00ff;">CRAWLER</span> WALLCRAWLER SLED</div>
-            <p>Mechanical turret sled that clamps to boundary walls and fires laser volleys.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0;">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">BEAM</span> SWEEPING BEAM</div>
-            <p>Rotating 10-line vector laser array sweeping from the wormhole across the arena.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">EMP</span> EMP SCRAMBLER <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
-            <p>Detonates with an electromagnetic pulse that scrambles ship flight avionics.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(153, 102, 255, 0.2); border: 1.5px solid #9966ff; color: #9966ff;">GHOST</span> GHOST-PUD <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
-            <p>Indestructible wandering entity that reflects weapons fire and can be punted into wormholes.</p>
-          </div>
-          <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-            <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 204, 0, 0.2); border: 1.5px solid #ffcc00; color: #ffcc00;">ARTILLERY</span> HEAVY ARTILLERY <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
-            <p>Armored mobile siege turret launching high-damage explosive mortar shells.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 5: Fighter Fleet Interactive Hologram Showcase -->
-      <div class="manual-tab-pane" id="tab-fleet">
-        <!-- 8 Ship Selector Buttons Grid -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" id="manual-ship-bar"></div>
-
-        <!-- Interactive 3D Wireframe Showcase Card -->
-        <div class="ship-detail-card" style="background: rgba(4, 10, 24, 0.9); border: 1.5px solid rgba(0, 229, 255, 0.35); border-radius: 8px; padding: 14px; display: flex; gap: 16px; align-items: stretch;">
-          <!-- 3D Hologram Canvas Box -->
-          <div class="hologram-box" style="width: 145px; height: 145px; flex-shrink: 0; background: rgba(2, 6, 16, 0.85); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-            <canvas id="manual-hangar-canvas" style="width: 135px; height: 135px;"></canvas>
+        <!-- Right Side Scrollable Content Pane -->
+        <div class="manual-content-pane">
+          <!-- 1. Overview -->
+          <div class="manual-tab-pane active" id="tab-overview">
+            <div class="manual-card">
+              <div class="manual-card-title">📖 OVERVIEW</div>
+              <p>Wormhole Resurrected is a fast paced arcade action game. In this game, you have the chance to select your ship and fly for survival against other internet players. You collect powerups to send at your opponents, while dodging the enemy powerups your opponents are sending at you. You can also destroy enemies sent to your screen with your pulse cannons as well as shoot wormholes to generate more powerups. The last ship or team standing wins.</p>
+              <p style="margin-top: 12px; color: #94a3b8; font-size: 12.5px;">The game is based on Wormhole originally released by Centerfleet (later Centerscore). The game also showed up on Newgrounds after becoming popular. Sadly, on December 31 2002, the game and website were shutdown.</p>
+            </div>
           </div>
 
-          <!-- Specs & Telemetry Box -->
-          <div class="ship-info-box" style="flex: 1; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+          <!-- 2. Getting and Sending Powerups -->
+          <div class="manual-tab-pane" id="tab-powerups">
+            <div class="manual-card">
+              <div class="manual-card-title">⚡ GETTING & SENDING POWERUPS</div>
+              <p>Destroy enemies or continually shoot an opponent’s wormholes to generate powerups.</p>
+              <p style="margin-top: 10px;">Getting powerups is a crucial part of the game. Pilot your ship to collect as many powerups as you can. Each powerup will either upgrade your ship, clear the screen of enemies, or give you an enemy to send at your opponents.</p>
+              <p style="margin-top: 10px;">Once you have collected an Offensive Powerup you can fire it at an opponent's wormhole. If the powerup hits the wormhole, the powerup transforms into an enemy on your opponent's screen.</p>
+              <p style="margin-top: 10px;"><strong style="color: var(--neon-cyan);">INVENTORY CAPACITY:</strong> You can hold up to 5 Offensive powerups at once.</p>
+            </div>
+          </div>
+
+          <!-- 3. Defensive Powerups -->
+          <div class="manual-tab-pane" id="tab-defensive">
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">GUN</span> GUN UPGRADE</div>
+              <p>Adds twin side pulse lasers and unlocks devastating triple spread fire.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">THRUST</span> THRUST UPGRADE</div>
+              <p>Boosts engine acceleration and increases maximum cruising speed.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">RETROS</span> RETROS (INERTIAL BRAKING)</div>
+              <p>Equips reverse thruster damping for pinpoint drift control and sharp combat turns.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 51, 0.2); border: 1.5px solid #33ff33; color: #33ff33;">SHIELD</span> INVULNERABILITY SHIELD</div>
+              <p>Grants 8 seconds of absolute invincibility. Absorbs heavy collisions, lasers, and nuclear blasts.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">ZAP</span> SCREEN ZAP DISCHARGE</div>
+              <p>Emits an arena-wide electrical discharge that instantly obliterates all enemy hazards and mines.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 170, 0.2); border: 1.5px solid #ff33aa; color: #ff33aa;">+HP</span> EXTRA HEALTH REPAIR</div>
+              <p>Instantly repairs armor and hull damage (+75 HP).</p>
+            </div>
+          </div>
+
+          <!-- 4. Offensive Hazards -->
+          <div class="manual-tab-pane" id="tab-offensive">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 255, 0.2); border: 1.5px solid #00ffff; color: #00ffff;">HS</span> HEAT SEEKER</div>
+                <p>High-velocity tracking missiles that lock onto enemy ship thermal signatures.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 136, 0.2); border: 1.5px solid #00ff88; color: #00ff88;">TURRET</span> WORMHOLE TURRET</div>
+                <p>Heavy perimeter battery defending the wormhole orbit with laser barrages.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">MINES</span> WORMHOLE MINES</div>
+                <p>Deploys a radial starburst of lethal proximity mines around the wormhole.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 204, 0.2); border: 1.5px solid #ff00cc; color: #ff00cc;">UFO</span> UFO INTERCEPTOR</div>
+                <p>Agile high-speed hunter that fires 3-way missile spreads at enemy fighters.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">INFLATOR</span> INFLATOR</div>
+                <p>Expanding cosmic mass that continuously swells and splits into mini-inflators when shot.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 0, 0.2); border: 1.5px solid #ffff00; color: #ffff00;">MINELAYER</span> MINELAYER</div>
+                <p>Patrols the arena dropping dense clusters of explosive proximity mines.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 102, 0, 0.2); border: 1.5px solid #ff6600; color: #ff6600;">GUNSHIP</span> GUNSHIP CORVETTE</div>
+                <p>Heavy assault boat equipped with dual 360-degree automated tracking turrets.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 153, 0.2); border: 1.5px solid #33ff99; color: #33ff99;">SCARAB</span> SCARAB SCAVENGER</div>
+                <p>Agile scavenger that races across space to steal and destroy floating powerups!</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 51, 0.25); border: 1.5px solid #ff0033; color: #ff0033;">NUKE</span> THERMONUCLEAR NUKE</div>
+                <p>Timed thermonuclear bomb. Detonates with a devastating 90 HP arena shockwave.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 255, 0.2); border: 1.5px solid #ff00ff; color: #ff00ff;">CRAWLER</span> WALLCRAWLER SLED</div>
+                <p>Mechanical turret sled that clamps to boundary walls and fires laser volleys.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0;">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">BEAM</span> SWEEPING BEAM</div>
+                <p>Rotating 10-line vector laser array sweeping from the wormhole across the arena.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">EMP</span> EMP SCRAMBLER <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <p>Detonates with an electromagnetic pulse that scrambles ship flight avionics.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(153, 102, 255, 0.2); border: 1.5px solid #9966ff; color: #9966ff;">GHOST</span> GHOST-PUD <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <p>Indestructible wandering entity that reflects weapons fire and can be punted into wormholes.</p>
+              </div>
+              <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
+                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 204, 0, 0.2); border: 1.5px solid #ffcc00; color: #ffcc00;">ARTILLERY</span> HEAVY ARTILLERY <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <p>Armored mobile siege turret launching high-damage explosive mortar shells.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Fighter Fleet Interactive Hologram Showcase -->
+          <div class="manual-tab-pane" id="tab-fleet">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" id="manual-ship-bar"></div>
+
+            <div class="ship-detail-card" style="background: rgba(4, 10, 24, 0.9); border: 1.5px solid rgba(0, 229, 255, 0.35); border-radius: 8px; padding: 14px; display: flex; gap: 16px; align-items: stretch;">
+              <div class="hologram-box" style="width: 145px; height: 145px; flex-shrink: 0; background: rgba(2, 6, 16, 0.85); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="manual-hangar-canvas" style="width: 135px; height: 135px;"></canvas>
+              </div>
+
+              <div class="ship-info-box" style="flex: 1; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                  <div class="detail-title" id="manual-ship-name" style="font-size: 15px; color: var(--neon-cyan); font-weight: 900; letter-spacing: 1px;">The Tank</div>
-                  <div class="detail-subtitle" id="manual-ship-sub" style="font-size: 10px; color: #88bbdd; font-family: 'Orbitron', sans-serif;">Heavy Assault Cruiser</div>
-                </div>
-                <div id="manual-ship-unlock" style="font-size: 9px; font-family: 'Orbitron', sans-serif; font-weight: 800; color: #ffaa00; background: rgba(255, 170, 0, 0.12); border: 1px solid rgba(255, 170, 0, 0.4); padding: 2px 7px; border-radius: 4px;">UNLOCKED</div>
-              </div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                    <div>
+                      <div class="detail-title" id="manual-ship-name" style="font-size: 15px; color: var(--neon-cyan); font-weight: 900; letter-spacing: 1px;">The Tank</div>
+                      <div class="detail-subtitle" id="manual-ship-sub" style="font-size: 10px; color: #88bbdd; font-family: 'Orbitron', sans-serif;">Heavy Assault Cruiser</div>
+                    </div>
+                    <div id="manual-ship-unlock" style="font-size: 9px; font-family: 'Orbitron', sans-serif; font-weight: 800; color: #ffaa00; background: rgba(255, 170, 0, 0.12); border: 1px solid rgba(255, 170, 0, 0.4); padding: 2px 7px; border-radius: 4px;">UNLOCKED</div>
+                  </div>
 
-              <div class="detail-desc" id="manual-ship-desc" style="font-size: 10.5px; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">
-                The Tank is the ultimate in destructive capabilities. Formidable armor & heavy gun systems right off the bat.
+                  <div class="detail-desc" id="manual-ship-desc" style="font-size: 10.5px; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">
+                    The Tank is the ultimate in destructive capabilities. Formidable armor & heavy gun systems right off the bat.
+                  </div>
+                </div>
+
+                <div class="stat-list" style="display: flex; flex-direction: column; gap: 4px;">
+                  <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                    <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">ARMOR / HULL:</span>
+                    <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-hp" style="width: 80%; height: 100%; background: #33ff66;"></div></div>
+                  </div>
+
+                  <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                    <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">MAX SPEED:</span>
+                    <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-speed" style="width: 65%; height: 100%; background: #00e5ff;"></div></div>
+                  </div>
+
+                  <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
+                    <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">TURN AGILITY:</span>
+                    <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-agil" style="width: 60%; height: 100%; background: #ffaa00;"></div></div>
+                  </div>
+
+                  <div class="stat-item" id="manual-special-row" style="margin-top: 3px; display: none; align-items: center; gap: 6px; font-size: 10px;">
+                    <span class="stat-item-label" style="color: #ff33aa; font-weight: 800;">SPECIAL [R]:</span>
+                    <span class="stat-special-val" id="manual-special-name" style="color: #ffffff; font-weight: 700; background: rgba(255, 51, 170, 0.2); border: 1px solid rgba(255, 51, 170, 0.4); padding: 1px 6px; border-radius: 3px;">NONE</span>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div class="stat-list" style="display: flex; flex-direction: column; gap: 4px;">
-              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
-                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">ARMOR / HULL:</span>
-                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-hp" style="width: 80%; height: 100%; background: #33ff66;"></div></div>
-              </div>
+          <!-- 6. Default Controls -->
+          <div class="manual-tab-pane" id="tab-controls">
+            <div class="manual-card">
+              <div class="manual-card-title">🛸 FLIGHT & PROPULSION</div>
+              <p><strong style="color: #ffffff;">[W] / [▲ UP]:</strong> Main Thrusters. Accelerates your ship forward. Generates a plasma exhaust trail.</p>
+              <p><strong style="color: #ffffff;">[A] / [D] or [◀ / ▶]:</strong> Agility Rotation. Steers ship orientation instantly.</p>
+              <p><strong style="color: #ffffff;">RETROS (BRAKING):</strong> When equipped with Retros, easing off the thruster applies automatic reverse damping to stop drifting.</p>
+            </div>
 
-              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
-                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">MAX SPEED:</span>
-                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-speed" style="width: 65%; height: 100%; background: #00e5ff;"></div></div>
-              </div>
+            <div class="manual-card">
+              <div class="manual-card-title">⚔ WEAPONS & COMBAT SYSTEMS</div>
+              <p><strong style="color: #ffffff;">[SPACE]:</strong> Pulse Cannons. Upgradable from single center fire to dual-cannons and wide-angle triple spread.</p>
+              <p><strong style="color: #ffffff;">[F]:</strong> Secondary Powerup Launch. Fires the topmost stored hazard projectile forward into enemy wormholes.</p>
+              <p><strong style="color: #ffffff;">[R] / [SHIFT]:</strong> Class Special Ability. Activates unique ship features (Turtle Cannon, ShapeShift, HeatSeeker array, Attractor/Repulser field).</p>
+              <p><strong style="color: #ffffff;">[ESC]:</strong> Tactical Pause. Opens the in-flight pause menu.</p>
+            </div>
 
-              <div class="stat-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 10px;">
-                <span class="stat-item-label" style="color: #94a3b8; font-weight: 700;">TURN AGILITY:</span>
-                <div class="stat-bar-track" style="width: 120px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;"><div class="stat-bar-fill" id="manual-bar-agil" style="width: 60%; height: 100%; background: #ffaa00;"></div></div>
-              </div>
+            <div class="manual-card">
+              <div class="manual-card-title">🎮 XBOX / PC CONTROLLER SUPPORT</div>
+              <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship rotation.</p>
+              <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters.</p>
+              <p><strong style="color: #00e5ff;">BUTTON [X] / [RB]:</strong> Primary Pulse Cannons.</p>
+              <p><strong style="color: #ffaa00;">BUTTON [B] / [LB]:</strong> Launch Secondary Stored Hazard [F].</p>
+              <p><strong style="color: #ff33aa;">BUTTON [Y] / [LT]:</strong> Ship Special Ability.</p>
+              <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game.</p>
+            </div>
+          </div>
 
-              <div class="stat-item" id="manual-special-row" style="margin-top: 3px; display: none; align-items: center; gap: 6px; font-size: 10px;">
-                <span class="stat-item-label" style="color: #ff33aa; font-weight: 800;">SPECIAL [R]:</span>
-                <span class="stat-special-val" id="manual-special-name" style="color: #ffffff; font-weight: 700; background: rgba(255, 51, 170, 0.2); border: 1px solid rgba(255, 51, 170, 0.4); padding: 1px 6px; border-radius: 3px;">NONE</span>
-              </div>
+          <!-- 7. Tips -->
+          <div class="manual-tab-pane" id="tab-strategy">
+            <div class="manual-card">
+              <div class="manual-card-title">⚡ OPENING GAMEPLAY</div>
+              <p>Immediately target the opponent's wormhole with primary lasers to spawn powerups right away. Upgraded guns eject powerups even faster.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title">🎒 INVENTORY CAPACITY</div>
+              <p>Your fighter holds a maximum of <strong style="color: var(--neon-cyan);">5 stored hazards</strong> in the top tray. Shoot them into wormholes using <strong style="color: #ffaa00;">[F]</strong> promptly to overwhelm your opponent.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title">🛡 COUNTERMEASURES</div>
+              <p>Save ZAP attacks and Invulnerability Shields when opponents send Nukes, Sweeping Beams, or massive HeatSeeker swarms.</p>
+            </div>
+            <div class="manual-card">
+              <div class="manual-card-title">👻 PUNTING GHOST-PUDS</div>
+              <p>Use your lasers to push wandering Ghost-Puds into enemy wormholes to turn an indestructible hazard against your opponent!</p>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Tab 6: Tips -->
-      <div class="manual-tab-pane" id="tab-strategy">
-        <div class="manual-card">
-          <div class="manual-card-title">⚡ OPENING GAMEPLAY</div>
-          <p>Immediately target the opponent's wormhole with primary lasers to spawn powerups right away. Upgraded guns eject powerups even faster.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">🎒 INVENTORY CAPACITY</div>
-          <p>Your fighter holds a maximum of <strong style="color: var(--neon-cyan);">5 stored hazards</strong> in the top tray. Shoot them into wormholes using <strong style="color: #ffaa00;">[F]</strong> promptly to overwhelm your opponent.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">🛡 COUNTERMEASURES</div>
-          <p>Save ZAP attacks and Invulnerability Shields when opponents send Nukes, Sweeping Beams, or massive HeatSeeker swarms.</p>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">👻 PUNTING GHOST-PUDS</div>
-          <p>Use your lasers to push wandering Ghost-Puds into enemy wormholes to turn an indestructible hazard against your opponent!</p>
-        </div>
-      </div>
-
-      <button class="action-btn" id="btn-close-manual" style="margin-top: 12px; padding: 8px 28px;">CLOSE MANUAL</button>
     </div>
 
     <!-- Test Hazard Spawner Modal -->
