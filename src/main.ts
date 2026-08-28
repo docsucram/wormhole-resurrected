@@ -35,6 +35,7 @@ export interface TablePlayer {
   rank: number;
   wins: number;
   color: string;
+  team?: 'A' | 'B';
 }
 
 export interface LobbyMatch {
@@ -43,6 +44,7 @@ export interface LobbyMatch {
   hostName: string;
   isPasswordProtected: boolean;
   password?: string;
+  matchType?: 'FFA' | 'TEAM';
   size: 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
   targetWins: number;
   powerupRule: 'STANDARD' | 'EXTENDED';
@@ -1040,7 +1042,8 @@ class WormholeGame {
     this.player.colorIndex = this.selectedColorIndex;
     this.simulatedRealm.clearAllBots();
     this.tablePlayers = new Array(8).fill(null);
-    // Slot 0: Local Player
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    // Slot 0: Local Player (Defaults to Team Alpha in Team Mode)
     const playerColor = (PLAYER_COLORS[this.selectedColorIndex] || PLAYER_COLORS[0]).primary;
     this.tablePlayers[0] = {
       slot: 0,
@@ -1054,6 +1057,7 @@ class WormholeGame {
       rank: 0,
       wins: this.totalMatchWins,
       color: playerColor,
+      team: isTeamMode ? 'A' : undefined,
     };
   }
 
@@ -1096,12 +1100,14 @@ class WormholeGame {
     }
     const botColor = (PLAYER_COLORS[botColorIdx] || PLAYER_COLORS[emptySlot % PLAYER_COLORS.length]).primary;
 
-    const diffTag = difficulty === 'hard' ? 'HARD AI' : difficulty === 'easy' ? 'EASY AI' : 'MED AI';
+    const diffTag = difficulty === 'hard' ? 'HARD AI' : difficulty === 'insane' ? 'INSANE AI' : difficulty === 'easy' ? 'EASY AI' : 'MED AI';
     const botNames = ['Vector', 'Nova', 'Centurion', 'Viper', 'Aegis', 'Titan', 'Spectre'];
     const botName = `${botNames[(emptySlot - 1) % botNames.length]} [${diffTag}]`;
     const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
     const botShipId = isRestrictedToClassic ? (emptySlot - 1) % 3 : (emptySlot - 1) % 8;
     const botShip = ShipCatalog.get(botShipId);
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    const assignedTeam: 'A' | 'B' | undefined = isTeamMode ? (emptySlot % 2 === 0 ? 'A' : 'B') : undefined;
 
     this.tablePlayers[emptySlot] = {
       slot: emptySlot,
@@ -1116,9 +1122,10 @@ class WormholeGame {
       rank: 0,
       wins: 0,
       color: botColor,
+      team: assignedTeam,
     };
 
-    this.addChatLog(`${botName} joined the arena.`, 'bot', botColor);
+    this.addChatLog(`${botName} joined the arena${assignedTeam ? ` [TEAM ${assignedTeam === 'A' ? 'ALPHA' : 'OMEGA'}]` : ''}.`, 'bot', botColor);
     this.triggerBotJoinChat(botName, emptySlot);
     this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty, botColorIdx);
     this.rebuildTableWormholes();
@@ -1183,13 +1190,24 @@ class WormholeGame {
     this.wormholes = [];
     const sizeCfg = GAME_CONSTANTS.SIZES[this.currentArenaSize as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
     const orbitDistance = sizeCfg.orbitDistance;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    const myPlayer = this.tablePlayers[this.player.slot];
+    const myTeam = myPlayer?.team || 'A';
 
-    // Active opponents are all players except local player
+    // Active opponents:
+    // In TEAM mode: ONLY include participants on opposing team (p.team !== myTeam)
+    // In FFA mode: include all participants except local player
     const activeOpponents: TablePlayer[] = [];
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
       if (p && !p.isLocal && p.slot !== this.player.slot) {
-        activeOpponents.push(p);
+        if (isTeamMode) {
+          if (p.team !== myTeam) {
+            activeOpponents.push(p);
+          }
+        } else {
+          activeOpponents.push(p);
+        }
       }
     }
 
@@ -1208,8 +1226,8 @@ class WormholeGame {
       });
     }
 
-    // Rebuild multi-wormholes across all simulated bot realms so they fight each other
-    this.simulatedRealm.rebuildTableWormholes(this.tablePlayers, orbitDistance);
+    // Rebuild multi-wormholes across all simulated bot realms so they fight each other (with enemy-only wormhole filter)
+    this.simulatedRealm.rebuildTableWormholes(this.tablePlayers, orbitDistance, isTeamMode);
   }
 
   public resetArenaForNewRound(): void {
@@ -1569,6 +1587,45 @@ class WormholeGame {
     };
   }
 
+  private checkTeamRoundStatus(): boolean {
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    if (!isTeamMode) return false;
+
+    let teamA_Alive = false;
+    let teamB_Alive = false;
+    for (let i = 0; i < 8; i++) {
+      const p = this.tablePlayers[i];
+      if (p && p.isAlive) {
+        if (p.team === 'A') teamA_Alive = true;
+        if (p.team === 'B') teamB_Alive = true;
+      }
+    }
+
+    const myTeam = this.tablePlayers[this.player.slot]?.team || 'A';
+
+    if (!teamB_Alive) {
+      // Team Alpha wins!
+      this.gameState.registerPlayer1Kill();
+      if (myTeam === 'A') {
+        this.showVictoryModal('TEAM ALPHA VICTORIOUS!', 'ALL ENEMY OMEGA SHIPS ELIMINATED');
+      } else {
+        this.showDefeatModal('TEAM OMEGA DEFEATED', 'ALL SQUADRON SHIPS ELIMINATED');
+      }
+      return true;
+    } else if (!teamA_Alive) {
+      // Team Omega wins!
+      this.gameState.registerPlayer2Kill();
+      if (myTeam === 'B') {
+        this.showVictoryModal('TEAM OMEGA VICTORIOUS!', 'ALL ENEMY ALPHA SHIPS ELIMINATED');
+      } else {
+        this.showDefeatModal('TEAM ALPHA DEFEATED', 'ALL ALLIED SHIPS ELIMINATED');
+      }
+      return true;
+    }
+
+    return false;
+  }
+
   private handlePlayerElimination(): void {
     if (this.gameState.phase === 'ROUND_OVER' || this.gameState.phase === 'MATCH_OVER') {
       return;
@@ -1576,12 +1633,31 @@ class WormholeGame {
 
     this.addChatLog('Your ship was destroyed!', 'system');
 
+    if (this.tablePlayers[this.player.slot]) {
+      this.tablePlayers[this.player.slot]!.health = 0;
+      this.tablePlayers[this.player.slot]!.isAlive = false;
+    }
+
     // Trigger bot taunt on player elimination
     const activeBot = this.tablePlayers.find((p) => p && p.isBot && p.isAlive);
     if (activeBot) {
       this.triggerBotKillChat(activeBot.name, activeBot.slot);
     }
 
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+
+    if (isTeamMode) {
+      this.updateTableRosterUI();
+      const roundOver = this.checkTeamRoundStatus();
+      if (!roundOver) {
+        // Teammates are still fighting! Keep in spectator standby
+        this.showAlert('SHIP DESTROYED // STANDBY AS TEAM FIGHTS');
+        this.addChatLog('Your ship was destroyed! Spectating active teammates...', 'system');
+      }
+      return;
+    }
+
+    // FFA Mode Elimination:
     // 1. Register opponent kill so stats & scores are synchronized across all elements
     if (this.isLanMatchHost) {
       this.gameState.registerPlayer2Kill();
@@ -1620,49 +1696,53 @@ class WormholeGame {
       this.network.sendPlayerDeath(1);
     }
 
-    // 2. If match is over, onMatchEnd already opened match-modal; otherwise open round-modal
-    if ((this.gameState.phase as string) !== 'MATCH_OVER') {
-      const roundModal = document.getElementById('round-modal')!;
-      const titleEl = document.getElementById('round-modal-title')!;
-      const subEl = document.getElementById('round-modal-subtitle')!;
-      const scoreEl = document.getElementById('round-modal-score')!;
-      const btnNext = document.getElementById('btn-next-round')!;
-
-      titleEl.innerText = 'YOU DIED';
-      titleEl.style.color = '#ff3344';
-      titleEl.style.textShadow = '0 0 25px #ff3344';
-      subEl.innerText = 'YOUR SHIP WAS DESTROYED';
-
-      const killerEl = document.getElementById('round-modal-killer');
-      if (killerEl) {
-        const dmg = this.player.lastDamagedBy;
-        if (dmg) {
-          const killerName = dmg.name || (dmg.slot !== undefined && this.tablePlayers[dmg.slot] ? this.tablePlayers[dmg.slot]!.name : 'ENEMY PILOT');
-          const weaponName = dmg.weapon || 'PRIMARY WEAPONS';
-          killerEl.innerText = `KILLED BY ${killerName.toUpperCase()}'S ${weaponName.toUpperCase()}`;
-          killerEl.style.display = 'block';
-        } else {
-          killerEl.innerText = 'KILLED BY ARENA HAZARD';
-          killerEl.style.display = 'block';
-        }
-      }
-
-      const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
-      const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
-      const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
-      scoreEl.innerText = `${myWins} - ${oppWins}`;
-      btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
-
-      roundModal.classList.add('active');
-      roundModal.style.display = 'block';
-      this.buildShipGrid();
-      this.modalHangarView.setShip(this.selectedShipIndex);
-      this.modalHangarView.startPreview();
-      this.sound.playDefeatFanfare();
-    }
+    // 2. Open round-modal
+    this.showDefeatModal();
   }
 
-  public showVictoryModal(): void {
+  public showDefeatModal(customTitle = 'YOU DIED', customSubtitle = 'YOUR SHIP WAS DESTROYED'): void {
+    if ((this.gameState.phase as string) === 'MATCH_OVER') return;
+
+    const roundModal = document.getElementById('round-modal')!;
+    const titleEl = document.getElementById('round-modal-title')!;
+    const subEl = document.getElementById('round-modal-subtitle')!;
+    const scoreEl = document.getElementById('round-modal-score')!;
+    const btnNext = document.getElementById('btn-next-round')!;
+
+    titleEl.innerText = customTitle;
+    titleEl.style.color = '#ff3344';
+    titleEl.style.textShadow = '0 0 25px #ff3344';
+    subEl.innerText = customSubtitle;
+
+    const killerEl = document.getElementById('round-modal-killer');
+    if (killerEl) {
+      const dmg = this.player.lastDamagedBy;
+      if (dmg) {
+        const killerName = dmg.name || (dmg.slot !== undefined && this.tablePlayers[dmg.slot] ? this.tablePlayers[dmg.slot]!.name : 'ENEMY PILOT');
+        const weaponName = dmg.weapon || 'PRIMARY WEAPONS';
+        killerEl.innerText = `KILLED BY ${killerName.toUpperCase()}'S ${weaponName.toUpperCase()}`;
+        killerEl.style.display = 'block';
+      } else {
+        killerEl.innerText = 'KILLED BY ARENA HAZARD';
+        killerEl.style.display = 'block';
+      }
+    }
+
+    const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
+    const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
+    const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
+    scoreEl.innerText = `${myWins} - ${oppWins}`;
+    btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
+
+    roundModal.classList.add('active');
+    roundModal.style.display = 'block';
+    this.buildShipGrid();
+    this.modalHangarView.setShip(this.selectedShipIndex);
+    this.modalHangarView.startPreview();
+    this.sound.playDefeatFanfare();
+  }
+
+  public showVictoryModal(customTitle = 'ROUND VICTORY!', customSubtitle = 'ENEMY FLEET ELIMINATED'): void {
     if (this.gameState.phase === 'MATCH_OVER') return;
 
     const roundModal = document.getElementById('round-modal')!;
@@ -1672,10 +1752,10 @@ class WormholeGame {
     const scoreEl = document.getElementById('round-modal-score')!;
     const btnNext = document.getElementById('btn-next-round')!;
 
-    titleEl.innerText = 'ROUND VICTORY!';
+    titleEl.innerText = customTitle;
     titleEl.style.color = 'var(--neon-cyan)';
     titleEl.style.textShadow = '0 0 25px var(--neon-cyan)';
-    subEl.innerText = 'ENEMY FLEET ELIMINATED';
+    subEl.innerText = customSubtitle;
     if (killerEl) {
       killerEl.innerText = '';
       killerEl.style.display = 'none';
@@ -1719,7 +1799,13 @@ class WormholeGame {
 
     this.updateTableRosterUI();
 
-    // Check if any opponent remains alive
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    if (isTeamMode) {
+      this.checkTeamRoundStatus();
+      return;
+    }
+
+    // Check if any opponent remains alive (FFA Mode)
     let opponentsRemaining = false;
     for (let i = 1; i < 8; i++) {
       if (this.tablePlayers[i] && this.tablePlayers[i]!.isAlive) {
@@ -2109,6 +2195,7 @@ class WormholeGame {
     if (btnConfirmCreate && createModal) {
       btnConfirmCreate.onclick = () => {
         const nameInput = (document.getElementById('host-match-name') as HTMLInputElement).value.trim() || `${this.playerName}'s Match`;
+        const matchTypeSelect = ((document.getElementById('host-match-type') as HTMLSelectElement)?.value as 'FFA' | 'TEAM') || 'FFA';
         const sizeSelect = (document.getElementById('host-match-size') as HTMLSelectElement).value as 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
         const winsSelect = parseInt((document.getElementById('host-target-wins') as HTMLSelectElement).value, 10) || 5;
         const pupsSelect = (document.getElementById('host-powerup-pool') as HTMLSelectElement).value as 'STANDARD' | 'EXTENDED';
@@ -2124,6 +2211,7 @@ class WormholeGame {
           hostName: this.playerName,
           isPasswordProtected: passInput.length > 0,
           password: passInput || undefined,
+          matchType: matchTypeSelect,
           size: sizeSelect,
           targetWins: winsSelect,
           powerupRule: pupsSelect,
@@ -3000,6 +3088,20 @@ class WormholeGame {
           return;
         }
 
+        const teamBtn = target.closest('.btn-toggle-team') as HTMLElement | null;
+        if (teamBtn && teamBtn.dataset.slot && (this.isLanMatchHost || !this.network.isConnected)) {
+          e.stopPropagation();
+          e.preventDefault();
+          const slot = parseInt(teamBtn.dataset.slot, 10);
+          const p = this.tablePlayers[slot];
+          if (p) {
+            p.team = p.team === 'A' ? 'B' : 'A';
+            this.rebuildTableWormholes();
+            this.updateTableRosterUI();
+          }
+          return;
+        }
+
         const card = target.closest('.roster-card.occupied') as HTMLElement | null;
         if (card && card.dataset.slot) {
           const slot = parseInt(card.dataset.slot, 10);
@@ -3019,6 +3121,7 @@ class WormholeGame {
     let occupiedCount = 0;
     let firstOpponent: TablePlayer | null = null;
     let botCount = 0;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
 
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
@@ -3037,10 +3140,21 @@ class WormholeGame {
         const pilotTypeIcon = p.isBot
           ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
           : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
+
+        let teamBadgeHtml = '';
+        if (isTeamMode) {
+          const isTeamA = p.team === 'A';
+          const teamLabel = isTeamA ? 'TEAM α' : 'TEAM Ω';
+          const teamCol = isTeamA ? '#00e5ff' : '#c040ff';
+          const teamBg = isTeamA ? 'rgba(0, 229, 255, 0.18)' : 'rgba(192, 64, 255, 0.18)';
+          teamBadgeHtml = `<button class="btn-toggle-team" data-slot="${i}" title="${(this.isLanMatchHost || !this.network.isConnected) ? 'Click to Toggle Team' : 'Team Assignment'}" style="background: ${teamBg}; border: 1px solid ${teamCol}; color: ${teamCol}; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px; cursor: pointer; line-height: 1;">${teamLabel}</button>`;
+        }
+
         card.innerHTML = `
           <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}</span>
             <div style="display: flex; align-items: center; gap: 4px;">
+              ${teamBadgeHtml}
               <span class="roster-player-stats">W: ${p.wins}</span>
               ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${i}" title="Remove Bot" style="background: rgba(255, 0, 80, 0.25); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">✕</button>` : ''}
             </div>

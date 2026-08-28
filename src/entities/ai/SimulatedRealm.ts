@@ -160,20 +160,29 @@ export class SimulatedRealm {
   }
 
   public rebuildTableWormholes(
-    tablePlayers: Array<{ name: string; slot: number; color?: string } | null>,
-    orbitDistance = this.orbitDistance
+    tablePlayers: Array<{ name: string; slot: number; color?: string; team?: 'A' | 'B' } | null>,
+    orbitDistance = this.orbitDistance,
+    isTeamMode = false
   ): void {
     this.orbitDistance = orbitDistance;
 
-    // Distribute wormholes in each bot's realm for all OTHER table participants
+    // Distribute wormholes in each bot's realm for all ENEMY / OTHER table participants
     for (const [slot, realm] of this.botRealms.entries()) {
       realm.wormholes = [];
+      const botPlayer = tablePlayers[slot];
+      const botTeam = botPlayer?.team || (slot % 2 === 0 ? 'A' : 'B');
 
-      const otherPlayers: Array<{ name: string; slot: number; color?: string }> = [];
+      const otherPlayers: Array<{ name: string; slot: number; color?: string; team?: 'A' | 'B' }> = [];
       for (let i = 0; i < tablePlayers.length; i++) {
         const p = tablePlayers[i];
         if (p && p.slot !== slot) {
-          otherPlayers.push(p);
+          if (isTeamMode) {
+            if (p.team !== botTeam) {
+              otherPlayers.push(p);
+            }
+          } else {
+            otherPlayers.push(p);
+          }
         }
       }
 
