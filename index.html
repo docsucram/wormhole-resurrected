@@ -145,48 +145,40 @@
         margin-top: 3px;
       }
 
-      /* Lobby Navigation Bar */
-      .lobby-nav-bar {
+      /* Top Lobby Header Bar (Unboxed & Clean) */
+      .lobby-top-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        background: rgba(5, 12, 28, 0.9);
-        border: 1.5px solid rgba(0, 229, 255, 0.3);
-        border-radius: 12px;
-        padding: 8px 14px;
-        flex-wrap: wrap;
+        gap: 16px;
+        width: 100%;
+        padding: 4px 0 10px 0;
       }
 
-      /* Player Profile Card in Top Nav */
+      /* Integrated Player Profile Unit */
       .player-profile-card {
         display: flex;
         align-items: center;
-        gap: 12px;
-        background: linear-gradient(135deg, rgba(4, 14, 32, 0.95) 0%, rgba(8, 22, 48, 0.8) 100%);
-        border: 1.5px solid rgba(0, 229, 255, 0.4);
-        box-shadow: 0 0 14px rgba(0, 229, 255, 0.15);
-        border-radius: 10px;
-        padding: 5px 12px;
+        gap: 8px;
       }
 
       .avatar-frame {
-        width: 44px;
-        height: 44px;
+        width: 52px;
+        height: 52px;
         border-radius: 8px;
         border: 1.5px solid #00e5ff;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+        box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
         position: relative;
         cursor: pointer;
         overflow: hidden;
-        background: #040a16;
+        background: #040c1a;
         flex-shrink: 0;
         transition: all 0.15s ease;
       }
       .avatar-frame:hover {
         border-color: #ffffff;
-        box-shadow: 0 0 18px var(--neon-cyan);
-        transform: scale(1.05);
+        box-shadow: 0 0 20px var(--neon-cyan);
+        transform: scale(1.04);
       }
 
       .player-avatar-thumb {
@@ -202,64 +194,76 @@
         right: 1px;
         background: rgba(0, 229, 255, 0.9);
         color: #030816;
-        font-size: 9px;
+        font-size: 8px;
         font-weight: 900;
-        width: 13px;
-        height: 13px;
-        border-radius: 3px;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
         display: flex;
         align-items: center;
         justify-content: center;
         line-height: 1;
       }
 
+      .player-identity-capsule {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #091728;
+        border: 1.5px solid #163658;
+        border-radius: 8px;
+        padding: 4px 10px 4px 12px;
+        height: 52px;
+        box-sizing: border-box;
+      }
+
+      .pilot-rank-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
       .pilot-identity-col {
         display: flex;
         flex-direction: column;
-        gap: 2px;
-      }
-
-      .pilot-badge-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .pilot-rank-icon {
-        color: #ffaa00;
-        font-size: 10px;
+        justify-content: center;
+        gap: 1px;
       }
 
       .pilot-callsign-label {
         font-family: 'Orbitron', sans-serif;
-        font-size: 8.5px;
-        font-weight: 800;
-        color: #64748b;
+        font-size: 9px;
+        font-weight: 700;
+        color: #8ea3bf;
         letter-spacing: 1.5px;
+        line-height: 1.1;
       }
 
       .pilot-name-display {
         font-family: 'Orbitron', sans-serif;
-        font-size: 13px;
-        font-weight: 900;
+        font-size: 16px;
+        font-weight: 800;
         color: #ffffff;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
       }
 
       .callsign-controls-row {
         display: flex;
         align-items: center;
-        gap: 4px;
-        margin-left: 6px;
+        gap: 6px;
+        margin-left: 8px;
       }
 
       .btn-profile-action {
-        background: rgba(0, 229, 255, 0.1);
-        border: 1px solid rgba(0, 229, 255, 0.35);
+        width: 32px;
+        height: 32px;
+        background: #0c1c30;
+        border: 1.5px solid #163658;
         color: #00e5ff;
-        border-radius: 6px;
-        padding: 4px 7px;
-        font-size: 12px;
+        border-radius: 8px;
+        font-size: 14px;
         cursor: pointer;
         transition: all 0.15s ease;
         line-height: 1;
@@ -268,45 +272,35 @@
         justify-content: center;
       }
       .btn-profile-action:hover {
-        background: rgba(0, 229, 255, 0.25);
+        background: rgba(0, 229, 255, 0.2);
         border-color: #00e5ff;
         box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
-      }
-
-      .online-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(0, 255, 136, 0.1);
-        border: 1px solid rgba(0, 255, 136, 0.3);
-        border-radius: 20px;
-        padding: 4px 10px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 10px;
-        font-weight: 800;
-        color: #00ff88;
-        letter-spacing: 1px;
-      }
-
-      .pulse-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #00ff88;
-        box-shadow: 0 0 8px #00ff88;
-        animation: dotPulse 1.5s infinite;
-      }
-
-      @keyframes dotPulse {
-        0%, 100% { transform: scale(1.0); opacity: 1; }
-        50% { transform: scale(1.4); opacity: 0.6; }
       }
 
       .lobby-actions-group {
         display: flex;
         align-items: center;
         gap: 8px;
-        flex-wrap: wrap;
+      }
+
+      .btn-util {
+        width: 40px;
+        height: 40px;
+        background: #091728;
+        border: 1.5px solid #163658;
+        color: #8ea3bf;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+      }
+      .btn-util:hover {
+        border-color: #00e5ff;
+        color: #00e5ff;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
       }
 
       /* 2-Column Command Hub Grid */
@@ -325,59 +319,69 @@
       .lobby-comms-panel {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        background: rgba(4, 10, 24, 0.75);
-        border: 1.5px solid rgba(0, 229, 255, 0.25);
-        border-radius: 12px;
-        padding: 14px;
+        gap: 12px;
+        background: transparent;
+        border: none;
+        padding: 0;
         height: 440px;
+      }
+
+      .pilots-section-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .pilots-section-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        color: #00e5ff;
+        letter-spacing: 1.5px;
+        margin-bottom: 4px;
       }
 
       .pilots-list-box {
         display: flex;
         flex-direction: column;
-        gap: 5px;
-        max-height: 140px;
+        gap: 8px;
+        max-height: 160px;
         overflow-y: auto;
-        background: rgba(2, 6, 16, 0.65);
-        border: 1px solid rgba(0, 229, 255, 0.15);
-        border-radius: 8px;
-        padding: 6px;
+        background: transparent;
+        border: none;
+        padding: 0;
       }
 
       .pilot-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         font-family: 'Orbitron', sans-serif;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 700;
-        color: #e2e8f0;
-        padding: 4px 8px;
-        border-radius: 6px;
-        background: rgba(6, 14, 30, 0.6);
-        border: 1px solid rgba(0, 229, 255, 0.12);
-        transition: all 0.1s ease;
+        color: #ffffff;
+        padding: 2px 0;
+        background: transparent !important;
+        border: none !important;
       }
 
-      .pilot-row:hover {
-        background: rgba(0, 229, 255, 0.08);
-        border-color: rgba(0, 229, 255, 0.3);
-      }
-
-      .pilot-row.self {
-        background: rgba(0, 229, 255, 0.12);
-        border-color: rgba(0, 229, 255, 0.4);
-        color: var(--neon-cyan);
+      .pilot-row.self .pilot-row-name {
+        color: #00e5ff;
       }
 
       .pilot-row-avatar {
-        width: 26px;
-        height: 26px;
-        border-radius: 5px;
-        border: 1px solid rgba(0, 229, 255, 0.4);
-        background: #040a16;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1.5px solid #163658;
+        background: #040c1a;
+        object-fit: cover;
         flex-shrink: 0;
+      }
+
+      .pilot-row.self .pilot-row-avatar {
+        border-color: #00ff88;
+        box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
       }
 
       .pilot-row-name {
@@ -385,34 +389,50 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-size: 13px;
       }
 
       .pilot-ping-pill {
-        font-size: 8px;
+        font-size: 9px;
         font-weight: 800;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: rgba(0, 255, 136, 0.15);
-        color: #00ff88;
-        border: 1px solid rgba(0, 255, 136, 0.35);
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: rgba(0, 229, 255, 0.12);
+        color: #00e5ff;
+        border: 1.5px solid #00e5ff;
         letter-spacing: 0.5px;
       }
-      .pilot-ping-pill.lan {
-        background: rgba(0, 229, 255, 0.15);
-        color: #00e5ff;
-        border-color: rgba(0, 229, 255, 0.35);
+      .pilot-ping-pill.local {
+        background: rgba(0, 255, 136, 0.12);
+        color: #00ff88;
+        border-color: #00ff88;
       }
 
-      .lobby-chat-box {
+      /* Communications Panel */
+      .comms-section-box {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         flex: 1;
-        background: rgba(2, 6, 16, 0.65);
-        border: 1px solid rgba(0, 229, 255, 0.15);
-        border-radius: 8px;
-        padding: 8px;
+        background: #061122;
+        border: 1.5px solid #163658;
+        border-radius: 10px;
+        padding: 12px;
         min-height: 0;
+      }
+
+      .comms-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .comms-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        color: #00e5ff;
+        letter-spacing: 1.5px;
       }
 
       .lobby-chat-log {
@@ -428,7 +448,41 @@
 
       .lobby-chat-input-row {
         display: flex;
-        gap: 6px;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .chat-styled-input {
+        flex: 1;
+        background: #040c1a;
+        border: 1.5px solid #163658;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 11px;
+        color: #ffffff;
+        outline: none;
+      }
+      .chat-styled-input:focus {
+        border-color: #00e5ff;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+      }
+
+      .btn-chat-send {
+        background: #091728;
+        border: 1.5px solid #163658;
+        border-radius: 8px;
+        color: #00e5ff;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        font-size: 11px;
+        padding: 8px 18px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .btn-chat-send:hover {
+        background: rgba(0, 229, 255, 0.2);
+        border-color: #00e5ff;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
       }
 
       /* Right Column: Live Matches Browser */
@@ -436,9 +490,9 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        background: rgba(4, 10, 24, 0.75);
-        border: 1.5px solid rgba(0, 229, 255, 0.25);
-        border-radius: 12px;
+        background: #061122;
+        border: 1.5px solid #163658;
+        border-radius: 10px;
         padding: 14px;
         height: 440px;
       }
@@ -2539,42 +2593,48 @@
     <!-- Clean Modern Command Dashboard & Match Lounge -->
     <div id="screen-front-end">
       <div class="main-card">
-        <!-- Logo Header -->
-        <div class="header-title-box">
-          <div class="header-logo">
-            <span class="logo-white">WORMHOLE</span>
-            <span class="logo-magenta">RESURRECTED</span>
-          </div>
-        </div>
-
-        <!-- Top Lobby Navigation & Profile Bar -->
-        <div class="lobby-nav-bar">
-          <!-- Player Profile Card (Avatar + Callsign + Dice + Edit Pencil) -->
+        <!-- Top Open Header Bar (Profile Capsule Left, Title Center, Actions Right) -->
+        <div class="lobby-top-header">
+          <!-- Player Profile Unit (Avatar + Attached Identity Capsule) -->
           <div class="player-profile-card">
             <div class="avatar-frame" id="btn-change-avatar" title="Tap to Change Pilot Avatar">
-              <img src="/avatars/avatar_1.svg" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" />
+              <img src="/avatars/avatar_1.png" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
               <div class="avatar-edit-badge">✎</div>
             </div>
-            <div class="pilot-identity-col">
-              <div class="pilot-badge-row">
-                <span class="pilot-rank-icon">⚡</span>
-                <span class="pilot-callsign-label">CALLSIGN</span>
+            <div class="player-identity-capsule">
+              <div class="pilot-rank-badge" title="Combat Rank: Pilot Prime">
+                <svg width="22" height="24" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L3 6V12C3 18 7 23 12 25C17 23 21 18 21 12V6L12 2Z" fill="#1c2010" stroke="#d4af37" stroke-width="1.8"/>
+                  <path d="M12 7L8 13H12L11 18L16 12H12L13 7H12Z" fill="#ffd700"/>
+                  <path d="M4 22L12 25L20 22" stroke="#d4af37" stroke-width="1.5"/>
+                </svg>
               </div>
-              <div class="pilot-name-display" id="display-callsign">VortexPrime</div>
-            </div>
-            <div class="callsign-controls-row">
-              <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">✏️</button>
-              <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">🎲</button>
+              <div class="pilot-identity-col">
+                <span class="pilot-callsign-label">CALLSIGN</span>
+                <span class="pilot-name-display" id="display-callsign">VortexPrime</span>
+              </div>
+              <div class="callsign-controls-row">
+                <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">🎲</button>
+                <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">✏️</button>
+              </div>
             </div>
             <input type="hidden" id="input-callsign" value="VortexPrime" />
           </div>
 
-          <!-- Utility Actions (Options, Sound, Guide, Fullscreen) -->
+          <!-- Logo Header Center -->
+          <div class="header-title-box">
+            <div class="header-logo">
+              <span class="logo-white">WORMHOLE</span>
+              <span class="logo-magenta">RESURRECTED</span>
+            </div>
+          </div>
+
+          <!-- Utility Actions (Options, Sound, Guide, Fullscreen) Right -->
           <div class="lobby-actions-group">
-            <button class="btn-util" id="btn-menu-options" title="Options & Keybindings" style="font-size: 16px; padding: 7px 14px; line-height: 1;">⚙</button>
-            <button class="btn-util" id="btn-menu-sound" title="Toggle Sound" style="font-size: 16px; padding: 7px 14px; line-height: 1;">🔊</button>
-            <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual" style="font-size: 16px; padding: 7px 14px; line-height: 1;">📖</button>
-            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen" style="font-size: 16px; padding: 7px 14px; line-height: 1;">⛶</button>
+            <button class="btn-util" id="btn-menu-options" title="Options & Keybindings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+            <button class="btn-util" id="btn-menu-sound" title="Toggle Sound"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
+            <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
           </div>
         </div>
 
@@ -2582,25 +2642,28 @@
         <div class="dashboard-grid-2col">
           <!-- Col 1: Pilots in Lounge & Lobby Comms Chat -->
           <div class="lobby-comms-panel">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-              <div class="section-title" id="lobby-online-count" style="font-size: 11px; margin-bottom: 0; color: var(--neon-cyan);">PILOTS IN LOUNGE (1)</div>
-            </div>
-            <div class="pilots-list-box" id="lobby-pilots-list">
-              <div class="pilot-row self">
-                <img src="/avatars/avatar_1.svg" class="pilot-row-avatar" />
-                <span class="pilot-row-name" id="lobby-self-name">VortexPrime (YOU)</span>
-                <span class="pilot-ping-pill">LOCAL</span>
+            <div class="pilots-section-box">
+              <div class="pilots-section-title" id="lobby-online-count">PILOTS IN LOUNGE (1)</div>
+              <div class="pilots-list-box" id="lobby-pilots-list">
+                <div class="pilot-row self">
+                  <img src="/avatars/avatar_1.png" class="pilot-row-avatar" onerror="this.src='/avatars/avatar_1.svg'" />
+                  <span class="pilot-row-name" id="lobby-self-name">VortexPrime (YOU)</span>
+                  <span class="pilot-ping-pill local">LOCAL</span>
+                </div>
               </div>
             </div>
 
-            <div class="section-title" style="font-size: 11px; margin-top: 4px; margin-bottom: 2px;">COMMUNICATIONS</div>
-            <div class="lobby-chat-box">
+            <div class="comms-section-box">
+              <div class="comms-header-row">
+                <span class="comms-title">COMMUNICATIONS</span>
+                <span style="color: #64748b; font-size: 11px;">∨</span>
+              </div>
               <div class="lobby-chat-log" id="lobby-chat-log">
                 <div class="chat-msg system">Lobby comms initialized. Ready for deployment.</div>
               </div>
               <div class="lobby-chat-input-row">
-                <input type="text" class="styled-input" id="input-lobby-chat" placeholder="Type message..." maxlength="80" style="font-size: 10px; padding: 6px 10px; flex: 1;" />
-                <button class="btn-join" id="btn-lobby-chat-send" style="padding: 6px 14px; font-size: 10px; font-weight: 900;">SEND</button>
+                <input type="text" class="chat-styled-input" id="input-lobby-chat" placeholder="Type message..." maxlength="80" />
+                <button class="btn-chat-send" id="btn-lobby-chat-send">SEND</button>
               </div>
             </div>
           </div>
@@ -2608,11 +2671,11 @@
           <!-- Col 2: Live Match Browser -->
           <div class="matches-browser-panel">
             <div class="matches-browser-header">
-              <div class="section-title" style="font-size: 11px; margin-bottom: 0;">LIVE HOSTED MATCHES</div>
+              <div class="section-title" style="font-size: 12px; margin-bottom: 0;">LIVE HOSTED MATCHES</div>
               <div class="matches-search-box">
-                <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 10px; padding: 5px 10px 5px 26px; width: 160px;" />
-                <span style="position: absolute; left: 8px; font-size: 11px; color: #64748b; pointer-events: none;">🔍</span>
-                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 5px 8px; font-size: 11px;">🔄</button>
+                <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 11px; padding: 6px 12px 6px 28px; width: 170px; background: #040c1a; border-color: #163658;" />
+                <span style="position: absolute; left: 9px; font-size: 11px; color: #64748b; pointer-events: none;">🔍</span>
+                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 6px 9px; font-size: 11px; background: #091728; border-color: #163658;">🔄</button>
               </div>
             </div>
 
@@ -2635,11 +2698,11 @@
             </div>
 
             <!-- Action Bar at bottom of matches panel: Host Match + Solo Practice -->
-            <div class="matches-action-footer" style="margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(0, 229, 255, 0.2); display: flex; gap: 10px; align-items: center;">
-              <button class="btn-host" id="btn-create-host" style="flex: 2; justify-content: center; padding: 10px 16px; font-size: 12px; font-weight: 900; white-space: nowrap; background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%); border: 1.5px solid #00e5ff; box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);">
+            <div class="matches-action-footer" style="margin-top: auto; padding-top: 10px; border-top: 1.5px solid #163658; display: flex; gap: 10px; align-items: center;">
+              <button class="btn-host" id="btn-create-host" style="flex: 2; justify-content: center; padding: 11px 18px; font-size: 12px; font-weight: 900; white-space: nowrap; background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%); border: 1.5px solid #00e5ff; box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);">
                 <span>+</span> HOST NEW MATCH
               </button>
-              <button class="btn-singleplayer" id="btn-main-engage" style="flex: 1; justify-content: center; padding: 10px 16px; font-size: 12px; font-weight: 900; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border: 1.5px solid #00ff88; color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);">
+              <button class="btn-singleplayer" id="btn-main-engage" style="flex: 1; justify-content: center; padding: 11px 18px; font-size: 12px; font-weight: 900; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border: 1.5px solid #00ff88; color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);">
                 <span>⚡</span> SOLO PRACTICE
               </button>
             </div>
@@ -2653,38 +2716,30 @@
       <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SELECT PILOT AVATAR</div>
       <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">CHOOSE YOUR TACTICAL IDENTITY IN SPACE</div>
 
-      <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 440px; margin: 0 auto 16px auto;">
-        <div class="avatar-card-item" data-avatar="avatar_1.svg">
-          <img src="/avatars/avatar_1.svg" alt="Vanguard" />
+      <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 440px; margin: 0 auto 16px auto;">
+        <div class="avatar-card-item" data-avatar="avatar_1.png">
+          <img src="/avatars/avatar_1.png" alt="Vanguard" onerror="this.src='/avatars/avatar_1.svg'" />
           <span>VANGUARD</span>
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_2.svg">
-          <img src="/avatars/avatar_2.svg" alt="Echo Claw" />
+        <div class="avatar-card-item" data-avatar="avatar_2.png">
+          <img src="/avatars/avatar_2.png" alt="Echo Claw" onerror="this.src='/avatars/avatar_2.svg'" />
           <span>ECHO CLAW</span>
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_3.svg">
-          <img src="/avatars/avatar_3.svg" alt="Starfire" />
+        <div class="avatar-card-item" data-avatar="avatar_3.png">
+          <img src="/avatars/avatar_3.png" alt="Starfire" onerror="this.src='/avatars/avatar_3.svg'" />
           <span>STARFIRE</span>
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_4.svg">
-          <img src="/avatars/avatar_4.svg" alt="Cosmo Dave" />
+        <div class="avatar-card-item" data-avatar="avatar_4.png">
+          <img src="/avatars/avatar_4.png" alt="Cosmo Dave" onerror="this.src='/avatars/avatar_4.svg'" />
           <span>COSMO DAVE</span>
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_5.svg">
-          <img src="/avatars/avatar_5.svg" alt="Valkyrie" />
+        <div class="avatar-card-item" data-avatar="avatar_5.png">
+          <img src="/avatars/avatar_5.png" alt="Valkyrie" onerror="this.src='/avatars/avatar_5.svg'" />
           <span>VALKYRIE</span>
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_6.svg">
-          <img src="/avatars/avatar_6.svg" alt="Shadow Ace" />
+        <div class="avatar-card-item" data-avatar="avatar_6.png">
+          <img src="/avatars/avatar_6.png" alt="Shadow Ace" onerror="this.src='/avatars/avatar_6.svg'" />
           <span>SHADOW ACE</span>
-        </div>
-        <div class="avatar-card-item" data-avatar="avatar_7.svg">
-          <img src="/avatars/avatar_7.svg" alt="Android Mech" />
-          <span>CYBORG MECH</span>
-        </div>
-        <div class="avatar-card-item" data-avatar="avatar_8.svg">
-          <img src="/avatars/avatar_8.svg" alt="Solaris" />
-          <span>SOLARIS</span>
         </div>
       </div>
 

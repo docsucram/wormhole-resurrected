@@ -85,7 +85,7 @@ class WormholeGame {
   // Local Player
   private player: PlayerShip;
   public playerName = 'BrightNomad';
-  public playerAvatar = localStorage.getItem('wh_avatar') || 'avatar_1.svg';
+  public playerAvatar = localStorage.getItem('wh_avatar') || 'avatar_1.png';
   public totalMatchWins = 0;
   private localClientId = Math.random().toString(36).substring(2, 9);
   public playerPilotMode: 'human' | BotDifficulty = 'human';
@@ -1060,9 +1060,9 @@ class WormholeGame {
     const selfRow = document.createElement('div');
     selfRow.className = 'pilot-row self';
     selfRow.innerHTML = `
-      <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" />
+      <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
       <span class="pilot-row-name">${this.playerName} (YOU)</span>
-      <span class="pilot-ping-pill">LOCAL</span>
+      <span class="pilot-ping-pill local">LOCAL</span>
     `;
     pilotsListEl.appendChild(selfRow);
 
@@ -1071,10 +1071,11 @@ class WormholeGame {
       if (id === this.localClientId) continue;
       const row = document.createElement('div');
       row.className = 'pilot-row';
+      const pilotAvatar = pilot.avatar || 'avatar_1.png';
       row.innerHTML = `
-        <img src="/avatars/${pilot.avatar || 'avatar_1.svg'}" class="pilot-row-avatar" alt="Avatar" />
+        <img src="/avatars/${pilotAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
         <span class="pilot-row-name">${pilot.callsign}</span>
-        <span class="pilot-ping-pill lan">ONLINE</span>
+        <span class="pilot-ping-pill lan">LAN</span>
       `;
       pilotsListEl.appendChild(row);
     }
