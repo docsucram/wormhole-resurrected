@@ -457,10 +457,23 @@ class WormholeGame {
             assignedTeam = teamACount <= teamBCount ? 'A' : 'B';
           }
 
+          // Ensure unique player name
+          let finalPlayerName = (data.playerName || 'Pilot').trim();
+          const existingNames = this.tablePlayers
+            .filter((p, idx) => p !== null && idx !== slot)
+            .map((p) => p!.name);
+          if (existingNames.includes(finalPlayerName)) {
+            let counter = 2;
+            while (existingNames.includes(`${finalPlayerName}-${counter}`)) {
+              counter++;
+            }
+            finalPlayerName = `${finalPlayerName}-${counter}`;
+          }
+
           this.tablePlayers[slot] = {
             slot,
             clientId: data.clientId,
-            name: data.playerName,
+            name: finalPlayerName,
             isLocal: false,
             isBot: false,
             shipId: data.shipId || 0,
@@ -477,7 +490,8 @@ class WormholeGame {
           this.simulatedRealm.isRemotePlayer = true;
           this.rebuildTableWormholes();
           this.updateTableRosterUI();
-          this.addChatLog(`${data.playerName} joined the match!`, 'system');
+          this.showAlert(`PILOT JOINED // ${finalPlayerName.toUpperCase()}!`);
+          this.addChatLog(`${finalPlayerName} joined the match!`, 'system');
           this.sound.playPowerup();
 
           // Update match player count in lobby list
@@ -497,7 +511,7 @@ class WormholeGame {
                 type: 'MATCH_JOIN_ACCEPT',
                 matchId: this.currentMatchConfig.id,
                 joinedClientId: data.clientId,
-                joinedPlayerName: data.playerName,
+                joinedPlayerName: finalPlayerName,
                 assignedSlot: slot,
                 roster: this.tablePlayers,
                 matchConfig: this.currentMatchConfig,
@@ -516,17 +530,20 @@ class WormholeGame {
           // If we were waiting in staging, notify host
           if (!isCombatInProgress) {
             const scoreEl = document.getElementById('round-modal-score');
-            if (scoreEl) scoreEl.innerText = `${data.playerName.toUpperCase()} READY // CLICK ENGAGE TO START`;
+            if (scoreEl) scoreEl.innerText = `${finalPlayerName.toUpperCase()} READY // CLICK ENGAGE TO START`;
           }
         }
       }
     } else if (data.type === 'MATCH_JOIN_ACCEPT') {
-      const isTargetedToMe = data.joinedClientId === this.localClientId ||
+      const isTargetedToMe = (data.joinedClientId && data.joinedClientId === this.localClientId) ||
                              data.joinedPlayerName === this.playerName ||
                              (data.assignedSlot !== undefined && data.roster && data.roster[data.assignedSlot]?.name === this.playerName);
 
       if (isTargetedToMe) {
         // Local client was accepted into match!
+        if (data.joinedPlayerName) {
+          this.playerName = data.joinedPlayerName;
+        }
         this.player.slot = data.assignedSlot;
         this.isLanMatchClient = true;
         this.isLanMatchHost = false;
@@ -558,6 +575,7 @@ class WormholeGame {
         this.gameState.currentRound = data.currentRound || 1;
         this.updateTableRosterUI();
         this.buildShipGrid();
+        this.showAlert(`JOINED MATCH // ${this.playerName.toUpperCase()} READY`);
         this.addChatLog(`Connected to Match: ${data.matchConfig.name}!`, 'system');
         this.sound.playPowerup();
 
@@ -627,6 +645,7 @@ class WormholeGame {
             }
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
+            this.showAlert(`PILOT DEPARTED // ${name.toUpperCase()} LEFT`);
             this.addChatLog(`${name} left the match.`, 'system');
 
             if (this.isLanMatchHost && this.currentMatchConfig) {
@@ -661,6 +680,15 @@ class WormholeGame {
           }
         } else if (pkt.type === 'ROSTER_UPDATE') {
           if (pkt.roster && Array.isArray(pkt.roster) && data.fromSlot !== this.player.slot) {
+            const prevNames = this.tablePlayers.filter((p) => p !== null && !p.isLocal).map((p) => p!.name);
+            const newNames = pkt.roster.filter((p: any) => p !== null && p.slot !== this.player.slot).map((p: any) => p.name);
+            for (const n of newNames) {
+              if (!prevNames.includes(n)) {
+                this.showAlert(`PILOT JOINED // ${n.toUpperCase()}`);
+                this.addChatLog(`${n} joined the arena.`, 'system');
+              }
+            }
+
             // Update tablePlayers preserving local slot properties
             this.tablePlayers = pkt.roster.map((p: TablePlayer | null) => {
               if (!p) return null;
@@ -1055,6 +1083,11 @@ class WormholeGame {
       const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (17)' : 'EXTENDED (20)';
       const isFull = match.currentPlayers >= match.maxPlayers;
 
+      const testBadge = match.isTestMode
+        ? `<span class="match-badge badge-rule" style="background: rgba(255, 170, 0, 0.25); border: 1px solid #ffaa00; color: #ffaa00; font-weight: 900; box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);">⚡ TEST MODE</span>`
+        : '';
+      const modeLabel = match.matchType === 'TEAM' ? '⚔ TEAM' : '🎯 FFA';
+
       card.innerHTML = `
         <div class="match-info-col">
           <div class="match-title-line">
@@ -1062,6 +1095,8 @@ class WormholeGame {
             <span style="font-size: 10px; font-weight: 700; color: #88bbdd;">(HOST: ${match.hostName})</span>
           </div>
           <div class="match-meta-line">
+            <span class="match-badge badge-rule" style="border-color: ${match.matchType === 'TEAM' ? '#c040ff' : '#00e5ff'}; color: ${match.matchType === 'TEAM' ? '#df70ff' : '#00e5ff'};">${modeLabel}</span>
+            ${testBadge}
             <span class="match-badge badge-size">${sizeLabel}</span>
             <span class="match-badge badge-size">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
             <span class="match-badge badge-rule">${pupsLabel}</span>
@@ -1271,8 +1306,23 @@ class WormholeGame {
     const botColor = (PLAYER_COLORS[botColorIdx] || PLAYER_COLORS[emptySlot % PLAYER_COLORS.length]).primary;
 
     const diffTag = difficulty === 'hard' ? 'HARD AI' : difficulty === 'insane' ? 'INSANE AI' : difficulty === 'easy' ? 'EASY AI' : 'MED AI';
-    const botNames = ['Vector', 'Nova', 'Centurion', 'Viper', 'Aegis', 'Titan', 'Spectre'];
-    const botName = `${botNames[(emptySlot - 1) % botNames.length]} [${diffTag}]`;
+    const botCallsigns = [
+      'Vector', 'Nova', 'Centurion', 'Viper', 'Aegis', 'Titan', 'Spectre',
+      'Hyperion', 'ZeroPoint', 'Krypton', 'Vortex', 'Phantom', 'Solaris', 'Raven',
+      'Eclipse', 'Apex', 'Nemesis', 'Zenith', 'Orion', 'Pulse', 'Cobalt', 'Glacier',
+      'Tempest', 'Valkyrie', 'Matrix', 'Chronos', 'Helios', 'Rogue', 'Phoenix'
+    ];
+    const existingNames = this.tablePlayers.filter((p) => p !== null).map((p) => p!.name);
+    let baseBotName = botCallsigns[(emptySlot - 1) % botCallsigns.length];
+    let botName = `${baseBotName} [${diffTag}]`;
+    if (existingNames.includes(botName)) {
+      let counter = 2;
+      while (existingNames.includes(`${baseBotName}-${counter} [${diffTag}]`)) {
+        counter++;
+      }
+      botName = `${baseBotName}-${counter} [${diffTag}]`;
+    }
+
     const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
     const botShipId = isRestrictedToClassic ? (emptySlot - 1) % 3 : (emptySlot - 1) % 8;
     const botShip = ShipCatalog.get(botShipId);
@@ -1295,6 +1345,7 @@ class WormholeGame {
       team: assignedTeam,
     };
 
+    this.showAlert(`BOT PILOT ENTERED // ${botName.toUpperCase()}`);
     this.addChatLog(`${botName} joined the arena${assignedTeam ? ` [TEAM ${assignedTeam === 'A' ? 'ALPHA' : 'OMEGA'}]` : ''}.`, 'bot', botColor);
     this.triggerBotJoinChat(botName, emptySlot);
     this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty, botColorIdx);
@@ -2205,25 +2256,42 @@ class WormholeGame {
     };
   }
 
-  public static generateRandomCallsign(): string {
+  public static generateRandomCallsign(existingNames: string[] = []): string {
     const prefixes = [
       'Ghost', 'Viper', 'Nova', 'Echo', 'Apex', 'Phantom',
       'Vector', 'Titan', 'Shadow', 'Raven', 'Hyper', 'Solar',
       'Pulse', 'Aegis', 'Cyber', 'Striker', 'Blaze', 'Cosmo',
       'Orion', 'Zenith', 'Spectre', 'Vortex', 'Krypton', 'Zero',
-      'Quantum', 'Omega', 'Astral', 'Nebula', 'Falcon', 'Raptor'
+      'Quantum', 'Omega', 'Astral', 'Nebula', 'Falcon', 'Raptor',
+      'Cobalt', 'Phoenix', 'Obsidian', 'Eclipse', 'Nemesis', 'Chronos',
+      'Helios', 'Hyperion', 'Starlight', 'Laser', 'Plasma', 'Static',
+      'Turbo', 'Valkyrie', 'Havoc', 'Rogue', 'Gargoyle', 'Matrix',
+      'Solstice', 'Tempest', 'Kraken', 'Siren', 'Glacier', 'Apex'
     ];
     const suffixes = [
       'Prime', 'Ace', 'Fox', 'Hawk', 'Wolf', 'Blade', 'Rogue',
       'Dash', 'Nomad', 'Fury', 'Ranger', 'Knight', 'Pilot',
-      'Hunter', 'Vanguard', 'Specter', 'Striker', 'Reaper', 'Surfer', 'Runner'
+      'Hunter', 'Vanguard', 'Specter', 'Striker', 'Reaper', 'Surfer', 'Runner',
+      'Wing', 'Core', 'Flash', 'Shift', 'Storm', 'Fire', 'Drive', 'Drift',
+      'Spark', 'Byte', 'Claw', 'Fang', 'Ghost', 'Flare', 'Blaster', 'Pulse'
     ];
+
     const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
     let suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
     while (suffix === prefix) {
       suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
     }
-    return `${prefix}${suffix}`;
+    let candidate = `${prefix}${suffix}`;
+
+    if (existingNames.includes(candidate)) {
+      let counter = 2;
+      while (existingNames.includes(`${candidate}-${counter}`)) {
+        counter++;
+      }
+      candidate = `${candidate}-${counter}`;
+    }
+
+    return candidate;
   }
 
   private setupFrontEndUI(): void {
@@ -4462,6 +4530,96 @@ class WormholeGame {
         }
 
         this.renderer.popCamera();
+
+        // =========================================================
+        // PASS 4: OFF-SCREEN WORMHOLE DIRECTION CHEVRONS / ARROWS
+        // =========================================================
+        const w = this.renderer.width;
+        const h = this.renderer.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const margin = 36;
+
+        const ctxScreen = this.renderer.ctx;
+
+        for (const wh of this.wormholes) {
+          if (!wh.isAlive) continue;
+
+          // Convert wormhole world position to screen space
+          const screenX = cx + (wh.x - this.camX) * this.zoom;
+          const screenY = cy + (wh.y - this.camY) * this.zoom;
+
+          // Check if wormhole center is off-screen
+          const isOffscreen = screenX < margin || screenX > w - margin ||
+                              screenY < margin || screenY > h - margin;
+
+          if (isOffscreen) {
+            const angle = Math.atan2(screenY - cy, screenX - cx);
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            const halfW = cx - margin;
+            const halfH = cy - margin;
+
+            const scaleX = cos !== 0 ? Math.abs(halfW / cos) : Infinity;
+            const scaleY = sin !== 0 ? Math.abs(halfH / sin) : Infinity;
+            const scale = Math.min(scaleX, scaleY);
+
+            const arrowX = cx + cos * scale;
+            const arrowY = cy + sin * scale;
+
+            const ownerColor = (PLAYER_COLORS[wh.slot] || PLAYER_COLORS[0]).primary;
+            const pulse = 0.85 + Math.sin(Date.now() * 0.007 + wh.slot * 1.5) * 0.15;
+
+            ctxScreen.save();
+            ctxScreen.translate(arrowX, arrowY);
+            ctxScreen.rotate(angle);
+
+            // Outer glowing neon chevron
+            ctxScreen.shadowColor = ownerColor;
+            ctxScreen.shadowBlur = 12;
+            ctxScreen.strokeStyle = ownerColor;
+            ctxScreen.fillStyle = ownerColor;
+            ctxScreen.lineWidth = 2;
+
+            ctxScreen.beginPath();
+            ctxScreen.moveTo(14 * pulse, 0);
+            ctxScreen.lineTo(-9 * pulse, -8 * pulse);
+            ctxScreen.lineTo(-4 * pulse, 0);
+            ctxScreen.lineTo(-9 * pulse, 8 * pulse);
+            ctxScreen.closePath();
+            ctxScreen.fill();
+            ctxScreen.stroke();
+
+            // Inner white core
+            ctxScreen.fillStyle = '#ffffff';
+            ctxScreen.beginPath();
+            ctxScreen.moveTo(8 * pulse, 0);
+            ctxScreen.lineTo(-4 * pulse, -3.5 * pulse);
+            ctxScreen.lineTo(-1 * pulse, 0);
+            ctxScreen.lineTo(-4 * pulse, 3.5 * pulse);
+            ctxScreen.closePath();
+            ctxScreen.fill();
+
+            ctxScreen.restore();
+
+            // Tactical Wormhole Owner Callsign Tag
+            ctxScreen.save();
+            ctxScreen.font = 'bold 9px "Orbitron", sans-serif';
+            ctxScreen.textAlign = cos > 0 ? 'right' : 'left';
+            ctxScreen.textBaseline = 'middle';
+            ctxScreen.fillStyle = '#ffffff';
+            ctxScreen.shadowColor = ownerColor;
+            ctxScreen.shadowBlur = 8;
+
+            const tagDist = 20;
+            const tagX = Math.max(margin, Math.min(w - margin, arrowX - cos * tagDist));
+            const tagY = Math.max(margin + 6, Math.min(h - margin - 6, arrowY - sin * tagDist));
+
+            ctxScreen.fillText(`🌀 ${wh.ownerName || 'OPPONENT'}`, tagX, tagY);
+            ctxScreen.restore();
+          }
+        }
       }
     } catch (err) {
       console.error('Render error:', err);
