@@ -353,10 +353,10 @@ export const PLAYER_COLORS: ColorProfile[] = [
   },
   {
     name: 'Plasma Violet',
-    primary: '#c040ff',
-    glow: 'rgba(192, 64, 255, 0.6)',
-    core: '#f8e8ff',
-    shades: ['#c040ff', '#ad39e6', '#9933cc', '#862cb3', '#732699', '#5f2080'],
+    primary: '#df70ff',
+    glow: 'rgba(223, 112, 255, 0.65)',
+    core: '#ffffff',
+    shades: ['#df70ff', '#cb5cee', '#b848dc', '#a434cb', '#9120b9', '#7e0ca8'],
   },
   {
     name: 'Laser Crimson',

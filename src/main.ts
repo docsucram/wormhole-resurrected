@@ -570,7 +570,36 @@ class WormholeGame {
       }
 
       if (this.inArena && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
-        if (pkt.type === 'SNAPSHOT') {
+        if (pkt.type === 'ROSTER_UPDATE') {
+          if (pkt.roster && Array.isArray(pkt.roster) && data.fromSlot !== this.player.slot) {
+            // Update tablePlayers preserving local slot properties
+            this.tablePlayers = pkt.roster.map((p: TablePlayer | null) => {
+              if (!p) return null;
+              return {
+                ...p,
+                isLocal: p.slot === this.player.slot,
+              };
+            });
+
+            // Synchronize simulated bot realms
+            for (let i = 1; i < 8; i++) {
+              const p = this.tablePlayers[i];
+              if (p && p.isBot) {
+                if (!this.simulatedRealm.botRealms.has(i)) {
+                  const colorIdx = PLAYER_COLORS.findIndex((c) => c.primary.toLowerCase() === p.color.toLowerCase());
+                  this.simulatedRealm.addBotRealm(i, p.name, p.shipId || 0, p.botDifficulty || 'medium', colorIdx >= 0 ? colorIdx : i);
+                }
+              } else {
+                if (this.simulatedRealm.botRealms.has(i)) {
+                  this.simulatedRealm.removeBotRealm(i);
+                }
+              }
+            }
+
+            this.rebuildTableWormholes();
+            this.updateTableRosterUI();
+          }
+        } else if (pkt.type === 'SNAPSHOT') {
           if (data.fromSlot !== this.player.slot) {
             this.simulatedRealm.applyRemoteSnapshot(pkt.snapshot);
             if (this.tablePlayers[data.fromSlot]) {
@@ -1143,6 +1172,7 @@ class WormholeGame {
     this.simulatedRealm.addBotRealm(emptySlot, botName, botShipId, difficulty, botColorIdx);
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
+    this.broadcastRosterSync();
 
     // If waiting in staging, update ready message
     const scoreEl = document.getElementById('round-modal-score');
@@ -1152,6 +1182,21 @@ class WormholeGame {
     }
 
     return true;
+  }
+
+  public broadcastRosterSync(): void {
+    if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'ROSTER_UPDATE',
+          roster: this.tablePlayers,
+          matchConfig: this.currentMatchConfig,
+        },
+      });
+    }
   }
 
   public removeBotFromTable(slot: number): void {
@@ -1173,6 +1218,7 @@ class WormholeGame {
 
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
+    this.broadcastRosterSync();
   }
 
   private cycleOpponent(direction: 1 | -1): void {
@@ -2366,20 +2412,9 @@ class WormholeGame {
         if (btn && btn.dataset.emoji) {
           e.stopPropagation();
           const emoji = btn.dataset.emoji;
-          const myColor = this.getPlayerColor(this.player.slot);
-          this.addChatLog(`${this.playerName}: ${emoji}`, 'player', myColor);
-          if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
-            this.sendLanPacket({
-              type: 'MATCH_PACKET',
-              matchId: this.currentMatchConfig.id,
-              fromSlot: this.player.slot,
-              packet: {
-                type: 'CHAT_MSG',
-                senderName: this.playerName,
-                senderSlot: this.player.slot,
-                message: emoji,
-              },
-            });
+          if (inputChat) {
+            inputChat.value += emoji;
+            inputChat.focus();
           }
           this.sound.playLaser(0);
           emojiPicker.classList.remove('active');
@@ -2892,14 +2927,48 @@ class WormholeGame {
     const btnCloseSpawner = document.getElementById('btn-close-spawner');
     if (btnCloseSpawner) btnCloseSpawner.onclick = closeSpawner;
 
+    const btnCloseSpawnerTop = document.getElementById('btn-close-spawner-top');
+    if (btnCloseSpawnerTop) btnCloseSpawnerTop.onclick = closeSpawner;
+
+    // Wormhole Powerup Ejection buttons
+    const pupBtns = document.querySelectorAll('#spawner-pups-grid .pup-eject-btn');
+    pupBtns.forEach((btn) => {
+      (btn as HTMLButtonElement).onclick = () => {
+        const rawType = parseInt((btn as HTMLElement).dataset.puptype || '-1', 10);
+        const targetSlot = parseInt(targetSelect?.value || '0', 10);
+        const name = rawType >= 0 ? (POWERUP_NAMES[rawType] || `POWERUP #${rawType}`) : 'RANDOM POWERUP';
+
+        if (targetSlot === 0) {
+          // Eject from local player's wormhole
+          const wh = this.wormholes[0];
+          if (wh) {
+            wh.forceEjectPowerup(this.powerups, this.particles, this.sound, rawType >= 0 ? rawType : undefined);
+          } else {
+            const pup = rawType >= 0 ? new Powerup(this.player.x, this.player.y - 120, rawType) : Powerup.spawnRandom(this.player.x, this.player.y - 120);
+            this.powerups.push(pup);
+            this.sound.playPowerup();
+          }
+          this.showAlert(`EJECTED // ${name.toUpperCase()} FROM WORMHOLE`);
+          this.addChatLog(`[TEST] Ejected ${name} from Wormhole`, 'system');
+        } else {
+          // Eject into chosen opponent's realm
+          this.simulatedRealm.receiveHazardFromPlayer1(rawType >= 0 ? rawType : 0, targetSlot);
+          const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
+          this.showAlert(`SPAWNED // ${name.toUpperCase()} -> ${oppName.toUpperCase()}`);
+          this.addChatLog(`[TEST] Sent ${name} -> ${oppName}'s Realm`, 'system');
+          this.sound.playSpecial(1);
+        }
+      };
+    });
+
     const grid = document.getElementById('spawner-btn-grid');
     if (grid) {
       grid.innerHTML = '';
       for (let type = 6; type <= 19; type++) {
         const btn = document.createElement('button');
         btn.className = 'arena-btn';
-        btn.style.padding = '8px 6px';
-        btn.style.fontSize = '10px';
+        btn.style.padding = '6px 6px';
+        btn.style.fontSize = '9.5px';
         btn.style.textAlign = 'left';
         btn.style.display = 'flex';
         btn.style.justifyContent = 'space-between';
@@ -2915,13 +2984,13 @@ class WormholeGame {
             const targetWh = this.wormholes[0] || new Wormhole('TARGET', 1, 0, 240);
             this.hazardManager.spawnHazard(type, targetWh, this.player, this.missiles);
             this.showAlert(`SPAWNED // ${name} -> YOUR REALM`);
-            this.addChatLog(`[SPAWNER] Spawned ${name} in Your Realm`, 'system');
+            this.addChatLog(`[TEST] Spawned ${name} in Your Realm`, 'system');
           } else {
             // Spawn in chosen opponent's realm
             this.simulatedRealm.receiveHazardFromPlayer1(type, targetSlot);
             const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
             this.showAlert(`SPAWNED // ${name} -> ${oppName.toUpperCase()}`);
-            this.addChatLog(`[SPAWNER] Spawned ${name} in ${oppName}'s Realm`, 'system');
+            this.addChatLog(`[TEST] Spawned ${name} in ${oppName}'s Realm`, 'system');
           }
           this.sound.playSpecial(1);
         };
@@ -3149,6 +3218,7 @@ class WormholeGame {
             p.team = p.team === 'A' ? 'B' : 'A';
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
+            this.broadcastRosterSync();
           }
           return;
         }
@@ -4048,6 +4118,28 @@ class WormholeGame {
       const mobShipName = document.getElementById('mob-ship-name');
       if (mobShipName) mobShipName.innerText = this.player.compiled.config.name.toUpperCase();
 
+      const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+      const mobTeamBadge = document.getElementById('mob-team-badge');
+      if (mobTeamBadge) {
+        if (isTeamMode) {
+          mobTeamBadge.style.display = 'inline-block';
+          const myTeam = this.tablePlayers[this.player.slot]?.team || 'A';
+          if (myTeam === 'A') {
+            mobTeamBadge.style.color = '#00e5ff';
+            mobTeamBadge.style.borderColor = '#00e5ff';
+            mobTeamBadge.style.background = 'rgba(0, 229, 255, 0.2)';
+            mobTeamBadge.innerText = 'TEAM α';
+          } else {
+            mobTeamBadge.style.color = '#df70ff';
+            mobTeamBadge.style.borderColor = '#df70ff';
+            mobTeamBadge.style.background = 'rgba(223, 112, 255, 0.2)';
+            mobTeamBadge.innerText = 'TEAM Ω';
+          }
+        } else {
+          mobTeamBadge.style.display = 'none';
+        }
+      }
+
       const mobGun = document.getElementById('mob-hud-gun');
       if (mobGun) mobGun.innerText = `G${this.player.bulletLevel + 1}`;
 
@@ -4088,9 +4180,12 @@ class WormholeGame {
           if (!p) continue;
           if (p.slot === this.player.slot || p.isLocal) continue; // Filter out local player (already displayed in top-left cluster)
           const ratio = Math.max(0, Math.min(1, p.health / p.maxHealth));
+          const isTeamA = p.team === 'A';
+          const teamColor = isTeamA ? '#00e5ff' : '#df70ff';
+          const teamPrefix = isTeamMode ? (isTeamA ? '[α] ' : '[Ω] ') : '';
           html += `
-            <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}">
-              <span>${p.name || 'PILOT'}</span>
+            <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}; border-color: ${isTeamMode ? teamColor : 'rgba(0, 229, 255, 0.4)'};">
+              <span style="${isTeamMode ? `color: ${teamColor}; font-weight: 800;` : ''}">${teamPrefix}${p.name || 'PILOT'}</span>
               <div class="mob-roster-hp"><div class="mob-roster-hp-fill" style="width: ${ratio * 100}%; background: ${p.isAlive ? '#00ff88' : '#ff3344'};"></div></div>
             </div>`;
         }

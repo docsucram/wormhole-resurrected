@@ -1206,14 +1206,17 @@
       }
 
       .roster-player-name {
-        color: var(--slot-color, #00e5ff);
+        color: #ffffff;
+        text-shadow: 0 0 6px var(--slot-color, #00e5ff), 0 0 14px rgba(0, 0, 0, 0.9);
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 140px;
+        max-width: 155px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
       }
 
       .roster-player-stats {
@@ -1381,10 +1384,13 @@
       }
 
       .roster-player-name {
-        color: var(--slot-color, #00e5ff);
+        color: #ffffff;
+        text-shadow: 0 0 6px var(--slot-color, #00e5ff), 0 0 14px rgba(0, 0, 0, 0.9);
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
       }
 
       .roster-player-stats {
@@ -2668,31 +2674,50 @@
       </div>
     </div>
 
-    <!-- Test Hazard Spawner Modal -->
+    <!-- Test & Spawner Modal -->
     <div id="spawner-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: #ffaa00; margin-bottom: 4px;">⚡ TEST HAZARD SPAWNER</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 170, 0, 0.3); padding-bottom: 6px;">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: #ffaa00; letter-spacing: 1px;">⚡ TEST CONTROL PANEL</div>
+        <button id="btn-close-spawner-top" style="background: transparent; border: none; color: #94a3b8; font-size: 16px; font-weight: bold; cursor: pointer; padding: 0 4px; line-height: 1;">✕</button>
+      </div>
       
-      <!-- Player 1 Pilot Control Mode Selector -->
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 6px 0; background: rgba(0, 255, 136, 0.08); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(0, 255, 136, 0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #00ff88; letter-spacing: 1px;">PLAYER 1 PILOT:</span>
-        <select id="spawner-pilot-select" class="styled-select" style="padding: 4px 10px; font-size: 11px; width: auto; color: #ffffff; border-color: rgba(0, 255, 136, 0.6);">
-          <option value="human">HUMAN PLAYER (MANUAL)</option>
-          <option value="easy">AI BOT // EASY</option>
-          <option value="medium">AI BOT // MEDIUM</option>
-          <option value="hard">AI BOT // HARD</option>
-          <option value="insane">AI BOT // INSANE (CYBORG)</option>
-        </select>
+      <!-- Section 1: Pilot & Arena Targeting -->
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0, 255, 136, 0.08); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.3);">
+          <span style="font-size: 10px; font-weight: 800; color: #00ff88; letter-spacing: 0.5px;">PLAYER 1 PILOT:</span>
+          <select id="spawner-pilot-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; width: auto; color: #ffffff; border-color: rgba(0, 255, 136, 0.6);">
+            <option value="human">HUMAN (MANUAL)</option>
+            <option value="easy">AI // NOVICE</option>
+            <option value="medium">AI // PILOT</option>
+            <option value="hard">AI // ACE</option>
+            <option value="insane">AI // CYBORG (INSANE)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.45); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255, 170, 0, 0.3);">
+          <span style="font-size: 10px; font-weight: 800; color: var(--neon-cyan); letter-spacing: 0.5px;">TARGET ARENA:</span>
+          <select id="spawner-target-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; width: auto; color: #ffffff; border-color: rgba(255, 170, 0, 0.6);"></select>
+        </div>
       </div>
 
-      <!-- Target Player Selector -->
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 12px 0; background: rgba(0, 0, 0, 0.4); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 170, 0, 0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: var(--neon-cyan); letter-spacing: 1px;">SPAWN TO:</span>
-        <select id="spawner-target-select" class="styled-select" style="padding: 4px 10px; font-size: 11px; width: auto; color: #ffffff; border-color: rgba(255, 170, 0, 0.6);"></select>
+      <!-- Section 2: Wormhole Powerup Ejection -->
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: var(--neon-cyan); text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">🌀 EJECT POWERUP FROM WORMHOLE:</div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-bottom: 10px;" id="spawner-pups-grid">
+        <button class="arena-btn pup-eject-btn" data-puptype="-1" style="border-color: #00ff88; color: #00ff88;">🎲 RANDOM PUP</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="0" style="border-color: #ff3344; color: #ff6677;">🔴 GUN (+1)</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="1" style="border-color: #ffaa00; color: #ffaa00;">🟠 THRUST (+1)</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="2" style="border-color: #3399ff; color: #3399ff;">🔵 RETROS</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="3" style="border-color: #00ffcc; color: #00ffcc;">🟢 SHIELD</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="4" style="border-color: #ffffff; color: #ffffff;">⚪ SCREEN ZAP</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="5" style="border-color: #df70ff; color: #df70ff;">🟣 +HP REPAIR</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="6" style="border-color: #ffcc00; color: #ffcc00;">🟡 HEATSEEKER</button>
       </div>
 
-      <div style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">CLICK ANY HAZARD TO SPAWN IN TARGET ARENA:</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; padding-right: 4px;" id="spawner-btn-grid"></div>
-      <button class="action-btn" id="btn-close-spawner" style="margin-top: 14px; padding: 6px 24px;">CLOSE SPAWNER</button>
+      <!-- Section 3: Direct Arena Hazard Spawn -->
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: #ffaa00; text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">💣 SPAWN HAZARD DIRECTLY:</div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 2px;" id="spawner-btn-grid"></div>
+
+      <button class="action-btn" id="btn-close-spawner" style="margin-top: 10px; width: 100%; padding: 7px 0; font-size: 10px;">CLOSE TEST PANEL</button>
     </div>
 
     <!-- Pause Menu Modal -->
@@ -3001,9 +3026,9 @@
       <!-- Left Dock: Match Actions, Bot Adder & Comms Log -->
       <div class="arena-dock-left">
         <div class="arena-actions-box">
-          <button class="arena-btn" id="btn-match-start">START MATCH</button>
+          <button class="arena-btn" id="btn-match-start" style="border-color: rgba(0, 255, 136, 0.5); color: #00ff88;">START MATCH</button>
           <button class="arena-btn" id="btn-match-leave" style="border-color: rgba(255, 0, 127, 0.4); color: #ff55aa;">LEAVE MATCH</button>
-          <button class="arena-btn" id="btn-match-spawner" style="color: #ffaa00; border-color: rgba(255, 170, 0, 0.4);">⚡ HAZARDS</button>
+          <button class="arena-btn" id="btn-match-spawner" style="color: #ffaa00; border-color: rgba(255, 170, 0, 0.5);">⚡ TEST</button>
         </div>
 
         <div class="arena-bot-adder">
@@ -3074,8 +3099,9 @@
     <div id="mobile-hud-root">
       <!-- Top-Left Telemetry Cluster -->
       <div class="mob-hud-top-left">
-        <div class="mob-hud-name-row">
+        <div class="mob-hud-name-row" style="display: flex; align-items: center; gap: 5px;">
           <span id="mob-callsign" style="color: var(--neon-cyan);">Ghost-404</span>
+          <span id="mob-team-badge" style="display: none; font-size: 8px; font-weight: 900; font-family: 'Orbitron', sans-serif; padding: 1px 4px; border-radius: 3px; border: 1px solid #00e5ff; color: #00e5ff; background: rgba(0, 229, 255, 0.2); letter-spacing: 0.5px;">TEAM α</span>
           <span id="mob-ship-name" style="font-size: 9px; color: #94a3b8;">TANK</span>
         </div>
         <div class="mob-hud-hp-track">

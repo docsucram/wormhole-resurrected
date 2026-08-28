@@ -121,6 +121,19 @@ export class Wormhole {
     }
   }
 
+  public forceEjectPowerup(
+    powerups: Powerup[],
+    particles: ParticleSystem,
+    sound: SoundEngine,
+    specificType?: number
+  ): void {
+    const pup = specificType !== undefined ? new Powerup(this.x, this.y, specificType) : Powerup.spawnRandom(this.x, this.y);
+    powerups.push(pup);
+    particles.createExplosion(this.x, this.y, '#ffffff', 22);
+    sound.playExplosion(true);
+    sound.playPowerup();
+  }
+
   public absorbPowerupShot(
     _powerupType: number,
     particles: ParticleSystem,
