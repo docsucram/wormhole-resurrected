@@ -1071,6 +1071,47 @@
         padding: 6px;
         background: rgba(3, 8, 18, 0.95);
         border-top: 1px solid rgba(0, 229, 255, 0.2);
+        position: relative;
+      }
+
+      .arena-emoji-picker {
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 4px;
+        background: rgba(5, 14, 30, 0.98);
+        border: 1.5px solid var(--neon-cyan);
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.35), 0 8px 24px rgba(0, 0, 0, 0.85);
+        border-radius: 8px;
+        padding: 6px;
+        z-index: 1000;
+        display: none;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+      }
+
+      .arena-emoji-picker.active {
+        display: grid !important;
+        animation: modalPop 0.15s ease-out;
+      }
+
+      .emoji-opt-btn {
+        background: rgba(10, 25, 50, 0.8);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        border-radius: 4px;
+        font-size: 16px;
+        padding: 4px 6px;
+        cursor: pointer;
+        transition: all 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+
+      .emoji-opt-btn:hover {
+        background: rgba(0, 229, 255, 0.35);
+        border-color: var(--neon-cyan);
+        transform: scale(1.15);
       }
 
       /* Right Dock Panel: Compact Roster & Live PiP Camera */
@@ -1467,11 +1508,12 @@
       }
 
       #manual-modal {
-        max-width: 940px;
-        width: 95vw;
-        max-height: 88vh;
-        height: 78vh;
-        padding: 16px 20px;
+        max-width: 900px;
+        width: 94vw;
+        max-height: 70vh;
+        height: 60vh;
+        min-height: 360px;
+        padding: 14px 18px;
         box-sizing: border-box;
         display: none !important;
         flex-direction: column;
@@ -2983,7 +3025,21 @@
             <div class="chat-msg system">Connected to Match. Waiting for pilots...</div>
           </div>
           <div class="arena-chat-input-row">
-            <button class="btn-emote" id="btn-emote-smile">&#x1F600;</button>
+            <div id="arena-emoji-picker" class="arena-emoji-picker">
+              <button class="emoji-opt-btn" data-emoji="😄" title="Smile">😄</button>
+              <button class="emoji-opt-btn" data-emoji="😎" title="Cool">😎</button>
+              <button class="emoji-opt-btn" data-emoji="🔥" title="Fire">🔥</button>
+              <button class="emoji-opt-btn" data-emoji="💀" title="Skull">💀</button>
+              <button class="emoji-opt-btn" data-emoji="🛸" title="UFO">🛸</button>
+              <button class="emoji-opt-btn" data-emoji="⚡" title="Zap">⚡</button>
+              <button class="emoji-opt-btn" data-emoji="🚀" title="Rocket">🚀</button>
+              <button class="emoji-opt-btn" data-emoji="👑" title="Crown">👑</button>
+              <button class="emoji-opt-btn" data-emoji="💥" title="Explosion">💥</button>
+              <button class="emoji-opt-btn" data-emoji="👋" title="Wave">👋</button>
+              <button class="emoji-opt-btn" data-emoji="🎯" title="Target">🎯</button>
+              <button class="emoji-opt-btn" data-emoji="👾" title="Alien">👾</button>
+            </div>
+            <button class="btn-emote" id="btn-emote-smile" title="Select Emoji">😄</button>
             <input type="text" class="styled-input input-chat" id="input-chat-msg" placeholder="Send transmission..." maxlength="60" />
             <button class="btn-chat-send" id="btn-chat-send">SEND</button>
           </div>

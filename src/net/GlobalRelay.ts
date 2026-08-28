@@ -33,21 +33,21 @@ export class GlobalRelay {
     const isLocalLan = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
     const isRenderHosted = host.includes('onrender.com');
 
-    if (isLocalLan || isRenderHosted) {
-      // 1. Direct dedicated Node.js WebSocket relay (LAN or Render)
+    // Tiered connection strategy:
+    // 0: Local /lan-relay (if on LAN/Render) or Render cloud relay (if on web)
+    // 1: Render cloud relay (wss://wormhole-resurrected.onrender.com/lan-relay)
+    // 2+: Public canonical MQTT broker (wss://broker.emqx.io:8084/mqtt)
+    if (this.retryCount === 0 && (isLocalLan || isRenderHosted)) {
       this.isMqttMode = false;
       const localUrl = `${protocol}//${window.location.host}/lan-relay`;
       this.initWebSocket(localUrl, false);
+    } else if (this.retryCount <= 1) {
+      this.isMqttMode = false;
+      const renderRelayUrl = `wss://wormhole-resurrected.onrender.com/lan-relay`;
+      this.initWebSocket(renderRelayUrl, false);
     } else {
-      // 2. Connect to dedicated Render WebSocket relay from Cloudflare / web (with MQTT fallback)
-      if (this.retryCount > 2) {
-        this.isMqttMode = true;
-        this.initWebSocket(this.canonicalBroker, true);
-      } else {
-        this.isMqttMode = false;
-        const renderRelayUrl = `wss://wormhole-resurrected.onrender.com/lan-relay`;
-        this.initWebSocket(renderRelayUrl, false);
-      }
+      this.isMqttMode = true;
+      this.initWebSocket(this.canonicalBroker, true);
     }
   }
 
@@ -65,6 +65,7 @@ export class GlobalRelay {
         } else {
           this.ws = ws;
           this.isConnectedState = true;
+          this.retryCount = 0;
           this.startPing();
           if (this.onConnectCallback) this.onConnectCallback();
         }
@@ -89,6 +90,7 @@ export class GlobalRelay {
         this.ws = null;
         this.isConnectedState = false;
         this.stopPing();
+        this.retryCount = (this.retryCount + 1) % 4;
         this.scheduleReconnect();
       };
 
@@ -100,6 +102,7 @@ export class GlobalRelay {
         }
       };
     } catch {
+      this.retryCount = (this.retryCount + 1) % 4;
       this.scheduleReconnect();
     }
   }
@@ -109,7 +112,7 @@ export class GlobalRelay {
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
-    }, 2500);
+    }, 1500);
   }
 
   private startPing(): void {
@@ -233,6 +236,7 @@ export class GlobalRelay {
         // SUBACK -> Ready to send and receive!
         this.ws = ws;
         this.isConnectedState = true;
+        this.retryCount = 0;
         this.startPing();
         if (this.onConnectCallback) this.onConnectCallback();
       } else if (packetType === 3) {

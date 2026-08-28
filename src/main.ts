@@ -327,15 +327,20 @@ class WormholeGame {
   }
 
   private sendLanPacket(packet: any): void {
-    if (this.globalRelay && this.globalRelay.send(packet)) {
-      // Successfully sent via global relay
-    } else if (this.lanWs && this.lanWs.readyState === WebSocket.OPEN) {
-      this.lanWs.send(JSON.stringify(packet));
+    if (this.globalRelay) {
+      this.globalRelay.send(packet);
+    }
+    if (this.lanWs && this.lanWs.readyState === WebSocket.OPEN) {
+      try {
+        this.lanWs.send(JSON.stringify(packet));
+      } catch {
+        // ignore
+      }
     }
     if (this.lanChannel) {
       try {
         this.lanChannel.postMessage(packet);
-      } catch (e) {
+      } catch {
         // BroadcastChannel error ignored
       }
     }
@@ -373,7 +378,7 @@ class WormholeGame {
       }
     } else if (data.type === 'MATCH_JOIN_REQUEST') {
       // Host receives join request from another LAN / Web pilot
-      if (this.isLanMatchHost && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
+      if (this.isLanMatchHost && this.currentMatchConfig && (this.currentMatchConfig.id === data.matchId || !data.matchId)) {
         // 1. Check if this client is already assigned a slot in the current match
         let slot = -1;
         for (let i = 1; i < 8; i++) {
@@ -405,6 +410,13 @@ class WormholeGame {
         }
 
         if (slot !== -1) {
+          let assignedTeam: 'A' | 'B' | undefined = undefined;
+          if (this.currentMatchConfig.matchType === 'TEAM') {
+            const teamACount = this.tablePlayers.filter((p) => p && p.team === 'A').length;
+            const teamBCount = this.tablePlayers.filter((p) => p && p.team === 'B').length;
+            assignedTeam = teamACount <= teamBCount ? 'A' : 'B';
+          }
+
           this.tablePlayers[slot] = {
             slot,
             clientId: data.clientId,
@@ -418,6 +430,7 @@ class WormholeGame {
             rank: 0,
             wins: 0,
             color: PLAYER_COLORS[slot % PLAYER_COLORS.length].primary,
+            team: assignedTeam,
           };
 
           this.isMatchWaitingForPilots = false;
@@ -2340,23 +2353,45 @@ class WormholeGame {
       if (e.key === 'Enter') sendChat();
     });
 
-    document.getElementById('btn-emote-smile')!.onclick = () => {
-      const myColor = this.getPlayerColor(this.player.slot);
-      this.addChatLog(`${this.playerName}: 😄`, 'player', myColor);
-      if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
-        this.sendLanPacket({
-          type: 'MATCH_PACKET',
-          matchId: this.currentMatchConfig.id,
-          fromSlot: this.player.slot,
-          packet: {
-            type: 'CHAT_MSG',
-            senderName: this.playerName,
-            senderSlot: this.player.slot,
-            message: '😄',
-          },
-        });
-      }
-    };
+    const emojiPicker = document.getElementById('arena-emoji-picker');
+    const btnEmote = document.getElementById('btn-emote-smile');
+    if (btnEmote && emojiPicker) {
+      btnEmote.onclick = (e) => {
+        e.stopPropagation();
+        emojiPicker.classList.toggle('active');
+      };
+
+      emojiPicker.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('.emoji-opt-btn') as HTMLElement | null;
+        if (btn && btn.dataset.emoji) {
+          e.stopPropagation();
+          const emoji = btn.dataset.emoji;
+          const myColor = this.getPlayerColor(this.player.slot);
+          this.addChatLog(`${this.playerName}: ${emoji}`, 'player', myColor);
+          if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+            this.sendLanPacket({
+              type: 'MATCH_PACKET',
+              matchId: this.currentMatchConfig.id,
+              fromSlot: this.player.slot,
+              packet: {
+                type: 'CHAT_MSG',
+                senderName: this.playerName,
+                senderSlot: this.player.slot,
+                message: emoji,
+              },
+            });
+          }
+          this.sound.playLaser(0);
+          emojiPicker.classList.remove('active');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!emojiPicker.contains(e.target as Node) && e.target !== btnEmote) {
+          emojiPicker.classList.remove('active');
+        }
+      });
+    }
 
     document.getElementById('btn-chat-clear')!.onclick = () => {
       const logEl = document.getElementById('match-chat-log') || document.getElementById('table-chat-log');
@@ -3134,53 +3169,91 @@ class WormholeGame {
 
     rosterList.innerHTML = '';
 
-    let occupiedCount = 0;
     let firstOpponent: TablePlayer | null = null;
     let botCount = 0;
+    let occupiedCount = 0;
     const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
 
-    for (let i = 0; i < 8; i++) {
-      const p = this.tablePlayers[i];
-      if (p) {
-        occupiedCount++;
-        if (p.isBot) botCount++;
-        if (!p.isLocal && !firstOpponent) {
-          firstOpponent = p;
-        }
-        const isSelectedInPip = i === this.selectedOpponentSlot;
-        const card = document.createElement('div');
-        card.className = `roster-card occupied ${isSelectedInPip ? 'selected' : ''}`;
-        card.dataset.slot = i.toString();
-        card.style.setProperty('--slot-color', p.color);
-        const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
-        const pilotTypeIcon = p.isBot
-          ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
-          : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
+    const renderCard = (p: TablePlayer, slot: number) => {
+      occupiedCount++;
+      if (p.isBot) botCount++;
+      if (!p.isLocal && !firstOpponent) {
+        firstOpponent = p;
+      }
+      const isSelectedInPip = slot === this.selectedOpponentSlot;
+      const card = document.createElement('div');
+      card.className = `roster-card occupied ${isSelectedInPip ? 'selected' : ''}`;
+      card.dataset.slot = slot.toString();
+      card.style.setProperty('--slot-color', p.color);
+      const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
+      const pilotTypeIcon = p.isBot
+        ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
+        : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
 
-        let teamBadgeHtml = '';
-        if (isTeamMode) {
-          const isTeamA = p.team === 'A';
-          const teamLabel = isTeamA ? 'TEAM α' : 'TEAM Ω';
-          const teamCol = isTeamA ? '#00e5ff' : '#c040ff';
-          const teamBg = isTeamA ? 'rgba(0, 229, 255, 0.18)' : 'rgba(192, 64, 255, 0.18)';
-          teamBadgeHtml = `<button class="btn-toggle-team" data-slot="${i}" title="${(this.isLanMatchHost || !this.network.isConnected) ? 'Click to Toggle Team' : 'Team Assignment'}" style="background: ${teamBg}; border: 1px solid ${teamCol}; color: ${teamCol}; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px; cursor: pointer; line-height: 1;">${teamLabel}</button>`;
-        }
+      const swapTeamBtn = isTeamMode && (this.isLanMatchHost || !this.network.isConnected)
+        ? `<button class="btn-toggle-team" data-slot="${slot}" title="Swap Faction (Alpha / Omega)" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.25); color: #cbd5e1; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">⇄</button>`
+        : '';
 
-        card.innerHTML = `
-          <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}</span>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              ${teamBadgeHtml}
-              <span class="roster-player-stats">W: ${p.wins}</span>
-              ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${i}" title="Remove Bot" style="background: rgba(255, 0, 80, 0.25); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">✕</button>` : ''}
-            </div>
+      card.innerHTML = `
+        <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 155px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}</span>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            ${swapTeamBtn}
+            <span class="roster-player-stats">W: ${p.wins}</span>
+            ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${slot}" title="Remove Bot" style="background: rgba(255, 0, 80, 0.25); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">✕</button>` : ''}
           </div>
-          <div class="roster-health-track">
-            <div class="roster-health-fill" style="width: ${hpPct}%;"></div>
-          </div>
-        `;
+        </div>
+        <div class="roster-health-track">
+          <div class="roster-health-fill" style="width: ${hpPct}%;"></div>
+        </div>
+      `;
 
-        rosterList.appendChild(card);
+      return card;
+    };
+
+    if (isTeamMode) {
+      const teamAPlayers: { p: TablePlayer; slot: number }[] = [];
+      const teamBPlayers: { p: TablePlayer; slot: number }[] = [];
+
+      for (let i = 0; i < 8; i++) {
+        const p = this.tablePlayers[i];
+        if (p) {
+          if (p.team === 'A') {
+            teamAPlayers.push({ p, slot: i });
+          } else {
+            teamBPlayers.push({ p, slot: i });
+          }
+        }
+      }
+
+      // 1. Team Alpha Header & Cards
+      const headerA = document.createElement('div');
+      headerA.className = 'team-group-header';
+      headerA.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 3px 7px; margin: 3px 0 5px 0; background: rgba(0, 229, 255, 0.12); border-left: 3px solid #00e5ff; border-radius: 4px; font-family: "Orbitron", sans-serif; font-size: 9px; font-weight: 900; color: #00e5ff; letter-spacing: 1px;';
+      headerA.innerHTML = `<span>⚡ TEAM ALPHA (α)</span><span style="font-size: 8px; opacity: 0.85;">${teamAPlayers.length} PILOT${teamAPlayers.length === 1 ? '' : 'S'}</span>`;
+      rosterList.appendChild(headerA);
+
+      teamAPlayers.forEach(({ p, slot }) => {
+        rosterList.appendChild(renderCard(p, slot));
+      });
+
+      // 2. Team Omega Header & Cards
+      const headerB = document.createElement('div');
+      headerB.className = 'team-group-header';
+      headerB.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 3px 7px; margin: 8px 0 5px 0; background: rgba(192, 64, 255, 0.12); border-left: 3px solid #c040ff; border-radius: 4px; font-family: "Orbitron", sans-serif; font-size: 9px; font-weight: 900; color: #c040ff; letter-spacing: 1px;';
+      headerB.innerHTML = `<span>🔮 TEAM OMEGA (Ω)</span><span style="font-size: 8px; opacity: 0.85;">${teamBPlayers.length} PILOT${teamBPlayers.length === 1 ? '' : 'S'}</span>`;
+      rosterList.appendChild(headerB);
+
+      teamBPlayers.forEach(({ p, slot }) => {
+        rosterList.appendChild(renderCard(p, slot));
+      });
+    } else {
+      // Standard Free-For-All Roster
+      for (let i = 0; i < 8; i++) {
+        const p = this.tablePlayers[i];
+        if (p) {
+          rosterList.appendChild(renderCard(p, i));
+        }
       }
     }
 
@@ -3197,7 +3270,7 @@ class WormholeGame {
       if (currentOpp && !currentOpp.isLocal) {
         pipNameEl.innerText = `FEED // ${currentOpp.name.toUpperCase()}`;
       } else if (firstOpponent) {
-        pipNameEl.innerText = `FEED // ${firstOpponent.name.toUpperCase()}`;
+        pipNameEl.innerText = `FEED // ${(firstOpponent as TablePlayer).name.toUpperCase()}`;
       } else {
         pipNameEl.innerText = 'OPPONENT // WAITING FOR PILOT';
       }
