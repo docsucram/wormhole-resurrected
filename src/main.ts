@@ -2399,9 +2399,6 @@ class WormholeGame {
     }
     if (callsignInput) {
       callsignInput.value = this.playerName;
-      callsignInput.addEventListener('input', () => {
-        updateAllCallsignUI(callsignInput.value.trim() || 'Pilot-1');
-      });
     }
 
     if (playerAvatarImg) {
@@ -2427,10 +2424,16 @@ class WormholeGame {
 
     const commitInlineCallsignEdit = () => {
       if (displayCallsign && callsignInput) {
-        const newName = callsignInput.value.trim();
-        if (newName && newName !== this.playerName) {
+        let newName = callsignInput.value.trim();
+        // Only assign a fallback random name if the user actively confirms an empty string
+        if (!newName) {
+          newName = WormholeGame.generateRandomCallsign();
+        }
+        if (newName !== this.playerName) {
           updateAllCallsignUI(newName.slice(0, 16));
           this.sound.playUISelect();
+        } else {
+          callsignInput.value = this.playerName;
         }
         callsignInput.style.display = 'none';
         displayCallsign.style.display = 'inline';
