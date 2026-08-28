@@ -55,8 +55,13 @@ export class Powerup {
     };
 
     const cfg = configMap[type] || { col: '#00e5ff', tag: 'ITEM' };
-    this.color = cfg.col;
-    this.shortTag = cfg.tag;
+    if (Powerup.powerupRule === 'STANDARD' && type <= 2) {
+      this.color = '#ffaa00';
+      this.shortTag = 'UPGRADE';
+    } else {
+      this.color = cfg.col;
+      this.shortTag = cfg.tag;
+    }
   }
 
   public takeDamage(dmg: number, particles?: any, sound?: any): boolean {
@@ -180,27 +185,39 @@ export class Powerup {
     renderer.ctx.lineWidth = 2.0;
 
     switch (this.type) {
-      case 0: {
-        // Gun Upgrade: Crosshair
-        renderer.drawGlowLine(-7, 0, 7, 0, '#ffffff', this.color, 2);
-        renderer.drawGlowLine(0, -7, 0, 7, '#ffffff', this.color, 2);
-        renderer.drawGlowCircle(0, 0, 3, '#ffffff', this.color, 1.5);
-        break;
-      }
-      case 1: {
-        // Thrust Upgrade: Upward double chevrons
-        renderer.drawGlowLine(-6, 5, 0, -1, '#ffffff', this.color, 2.5);
-        renderer.drawGlowLine(0, -1, 6, 5, '#ffffff', this.color, 2.5);
-        renderer.drawGlowLine(-6, 0, 0, -6, '#ffffff', this.color, 2.5);
-        renderer.drawGlowLine(0, -6, 6, 0, '#ffffff', this.color, 2.5);
-        break;
-      }
+      case 0:
+      case 1:
       case 2: {
-        // Retros: Opposing braking arrows
-        renderer.drawGlowLine(-6, -3, 0, -7, '#ffffff', this.color, 2);
-        renderer.drawGlowLine(0, -7, 6, -3, '#ffffff', this.color, 2);
-        renderer.drawGlowLine(-6, 3, 0, 7, '#ffffff', this.color, 2);
-        renderer.drawGlowLine(0, 7, 6, 3, '#ffffff', this.color, 2);
+        if (Powerup.powerupRule === 'STANDARD') {
+          // Shared Ship Upgrade (Standard Arsenal Mode: Gun / Thrust / Retros)
+          // Classic golden/amber starburst & chevron token from legacy Image 0
+          renderer.drawGlowLine(-7, 4, 0, -5, '#ffffff', '#ffaa00', 2.5);
+          renderer.drawGlowLine(0, -5, 7, 4, '#ffffff', '#ffaa00', 2.5);
+          renderer.drawGlowLine(-5, 8, 0, 0, '#ffffff', '#ffaa00', 2);
+          renderer.drawGlowLine(0, 0, 5, 8, '#ffffff', '#ffaa00', 2);
+          renderer.drawGlowCircle(0, -5, 2.5, '#ffffff', '#ffcc00', 1.5);
+          break;
+        }
+
+        // Extended Arsenal Mode: Distinct Individual Icons
+        if (this.type === 0) {
+          // Gun Upgrade: Crosshair
+          renderer.drawGlowLine(-7, 0, 7, 0, '#ffffff', this.color, 2);
+          renderer.drawGlowLine(0, -7, 0, 7, '#ffffff', this.color, 2);
+          renderer.drawGlowCircle(0, 0, 3, '#ffffff', this.color, 1.5);
+        } else if (this.type === 1) {
+          // Thrust Upgrade: Upward double chevrons
+          renderer.drawGlowLine(-6, 5, 0, -1, '#ffffff', this.color, 2.5);
+          renderer.drawGlowLine(0, -1, 6, 5, '#ffffff', this.color, 2.5);
+          renderer.drawGlowLine(-6, 0, 0, -6, '#ffffff', this.color, 2.5);
+          renderer.drawGlowLine(0, -6, 6, 0, '#ffffff', this.color, 2.5);
+        } else {
+          // Retros: Opposing braking arrows
+          renderer.drawGlowLine(-6, -3, 0, -7, '#ffffff', this.color, 2);
+          renderer.drawGlowLine(0, -7, 6, -3, '#ffffff', this.color, 2);
+          renderer.drawGlowLine(-6, 3, 0, 7, '#ffffff', this.color, 2);
+          renderer.drawGlowLine(0, 7, 6, 3, '#ffffff', this.color, 2);
+        }
         break;
       }
       case 3: {

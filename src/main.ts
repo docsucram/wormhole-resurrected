@@ -32,6 +32,7 @@ export interface TablePlayer {
   health: number;
   maxHealth: number;
   isAlive: boolean;
+  isSpectating?: boolean;
   rank: number;
   wins: number;
   color: string;
@@ -102,6 +103,7 @@ class WormholeGame {
   public isMatchWaitingForPilots = false;
   public isLanMatchHost = false;
   public isLanMatchClient = false;
+  public isSpectating = false;
 
   // Simulated Realm (for AI bot simulation)
   private simulatedRealm: SimulatedRealm;
@@ -477,6 +479,8 @@ class WormholeGame {
             finalPlayerName = `${finalPlayerName}-${counter}`;
           }
 
+          const isCombatInProgress = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
+
           this.tablePlayers[slot] = {
             slot,
             clientId: data.clientId,
@@ -484,9 +488,10 @@ class WormholeGame {
             isLocal: false,
             isBot: false,
             shipId: data.shipId || 0,
-            health: 280,
+            health: isCombatInProgress ? 0 : 280,
             maxHealth: 280,
-            isAlive: true,
+            isAlive: !isCombatInProgress,
+            isSpectating: isCombatInProgress,
             rank: 0,
             wins: 0,
             color: PLAYER_COLORS[slot % PLAYER_COLORS.length].primary,
@@ -497,8 +502,14 @@ class WormholeGame {
           this.simulatedRealm.isRemotePlayer = true;
           this.rebuildTableWormholes();
           this.updateTableRosterUI();
-          this.showAlert(`PILOT JOINED // ${finalPlayerName.toUpperCase()}!`);
-          this.addChatLog(`${finalPlayerName} joined the match!`, 'system');
+
+          if (isCombatInProgress) {
+            this.showAlert(`PILOT QUEUED // ${finalPlayerName.toUpperCase()} [WAITING FOR NEXT ROUND]`);
+            this.addChatLog(`${finalPlayerName} joined queue (spectating active round).`, 'system');
+          } else {
+            this.showAlert(`PILOT JOINED // ${finalPlayerName.toUpperCase()}!`);
+            this.addChatLog(`${finalPlayerName} joined the match!`, 'system');
+          }
           this.sound.playPowerup();
 
           // Update match player count in lobby list
@@ -509,8 +520,6 @@ class WormholeGame {
             matchInList.currentPlayers = activeCount;
           }
           this.broadcastMatches();
-
-          const isCombatInProgress = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
 
           const sendAcceptance = () => {
             if (this.currentMatchConfig) {
@@ -556,6 +565,8 @@ class WormholeGame {
         this.isLanMatchHost = false;
         this.isMatchWaitingForPilots = false;
         this.currentMatchConfig = data.matchConfig;
+        this.isSpectating = !!data.inProgress;
+        Powerup.powerupRule = data.matchConfig.powerupRule || 'STANDARD';
 
         // Apply dimensions
         this.currentArenaSize = data.matchConfig.size;
@@ -576,21 +587,24 @@ class WormholeGame {
         this.simulatedRealm.isRemotePlayer = true;
         this.rebuildTableWormholes();
         this.setDeckActive(false);
-        this.respawnPlayer();
         this.simulatedRealm.resetForNewRound();
         this.gameState.startMatch(data.targetWins, false);
         this.gameState.currentRound = data.currentRound || 1;
         this.updateTableRosterUI();
         this.buildShipGrid();
-        this.showAlert(`JOINED MATCH // ${this.playerName.toUpperCase()} READY`);
-        this.addChatLog(`Connected to Match: ${data.matchConfig.name}!`, 'system');
         this.sound.playPowerup();
 
         if (data.inProgress) {
           // Mid-match drop-in: spectate active round, spawn on next round
-          this.showAlert('ROUND IN PROGRESS // DEPLOYING ON NEXT ROUND');
-          this.addChatLog('Round currently active. Spawning next round...', 'system');
+          this.player.isAlive = false;
+          this.player.health = 0;
+          this.gameState.phase = 'STANDBY';
+          this.showAlert('ROUND IN PROGRESS // SPECTATING - DEPLOYING ON NEXT ROUND');
+          this.addChatLog(`Connected to ${data.matchConfig.name} [Spectating active round - deploying on next round]`, 'system');
         } else {
+          this.respawnPlayer();
+          this.showAlert(`JOINED MATCH // ${this.playerName.toUpperCase()} READY`);
+          this.addChatLog(`Connected to Match: ${data.matchConfig.name}!`, 'system');
           // Staging room: choose ship class and ready up
           const roundModal = document.getElementById('round-modal')!;
           const titleEl = document.getElementById('round-modal-title')!;
@@ -863,8 +877,22 @@ class WormholeGame {
             if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('ROUND_OVER');
           }
         } else if (pkt.type === 'MATCH_START') {
+          this.isSpectating = false;
+          if (pkt.roster && Array.isArray(pkt.roster)) {
+            this.tablePlayers = pkt.roster.map((p: TablePlayer | null) => {
+              if (!p) return null;
+              return {
+                ...p,
+                isLocal: p.slot === this.player.slot,
+                isSpectating: false,
+                isAlive: true,
+              };
+            });
+          }
           this.setDeckActive(false);
           this.resetArenaForNewRound();
+          this.respawnPlayer();
+          this.simulatedRealm.resetForNewRound();
           const roundModal = document.getElementById('round-modal');
           if (roundModal) {
             roundModal.classList.remove('active');
@@ -879,6 +907,7 @@ class WormholeGame {
           this.gameState.targetWins = pkt.targetWins;
           this.gameState.currentRound = pkt.round || this.gameState.currentRound + 1;
           this.gameState.startCountdown();
+          this.updateTableRosterUI();
         } else if (pkt.type === 'CLIENT_READY') {
           if (this.isLanMatchHost) {
             this.addChatLog(`${pkt.playerName || 'Opponent'} is ready for next round! [SPACE to start]`, 'system');
@@ -2536,8 +2565,19 @@ class WormholeGame {
         const waitOverlay = document.getElementById('waiting-pilots-overlay');
         if (waitOverlay) waitOverlay.style.display = 'none';
 
+        // Unspectate all queued pilots
+        for (const p of this.tablePlayers) {
+          if (p) {
+            p.isSpectating = false;
+            p.isAlive = true;
+            p.health = p.maxHealth;
+          }
+        }
+        this.isSpectating = false;
+
         this.resetArenaForNewRound();
         this.gameState.startMatch(this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5);
+        this.updateTableRosterUI();
         this.addChatLog(`Match engaged! First to ${this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5} wins!`, 'system');
 
         if (this.isLanMatchHost && this.currentMatchConfig) {
@@ -2549,6 +2589,7 @@ class WormholeGame {
               type: 'MATCH_START',
               targetWins: this.gameState.targetWins,
               round: 1,
+              roster: this.tablePlayers,
               seed: Math.random(),
             },
           });
@@ -3511,10 +3552,17 @@ class WormholeGame {
       card.className = `roster-card occupied ${isSelectedInPip ? 'selected' : ''}`;
       card.dataset.slot = slot.toString();
       card.style.setProperty('--slot-color', p.color);
+      if (p.isSpectating) {
+        card.style.opacity = '0.55';
+      }
       const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
       const pilotTypeIcon = p.isBot
         ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
         : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
+
+      const waitingBadge = p.isSpectating
+        ? `<span style="font-size: 8px; color: #ffaa00; font-weight: 900; border: 1px solid rgba(255, 170, 0, 0.5); background: rgba(255, 170, 0, 0.15); padding: 1px 4px; border-radius: 3px; margin-left: 4px;">WAITING</span>`
+        : '';
 
       const swapTeamBtn = isTeamMode && (this.isLanMatchHost || !this.network.isConnected)
         ? `<button class="btn-toggle-team" data-slot="${slot}" title="Swap Faction (Alpha / Omega)" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.25); color: #cbd5e1; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">⇄</button>`
@@ -3522,7 +3570,7 @@ class WormholeGame {
 
       card.innerHTML = `
         <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 155px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}</span>
+          <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 155px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}${waitingBadge}</span>
           <div style="display: flex; align-items: center; gap: 4px;">
             ${swapTeamBtn}
             <span class="roster-player-stats">W: ${p.wins}</span>
@@ -3583,8 +3631,49 @@ class WormholeGame {
       }
     }
 
-    // Toggle PiP mini-cam bot feed visibility & Test controls (Active for solo play or when Host enabled Test Mode)
+    // Host vs Peer Button & Controls Configuration
     const isSolo = !this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected;
+    const isPeerClient = this.isLanMatchClient || (!this.isLanMatchHost && this.network.isConnected);
+
+    const btnStart = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
+    const btnPauseStart = document.getElementById('btn-pause-start-match');
+    const botAdder = document.querySelector('.arena-bot-adder') as HTMLElement | null;
+    const pauseBotAdder = document.getElementById('btn-pause-add-bot');
+
+    if (isPeerClient) {
+      if (btnStart) btnStart.style.display = 'none';
+      if (btnPauseStart) btnPauseStart.style.display = 'none';
+      if (botAdder) botAdder.style.display = 'none';
+      if (pauseBotAdder) pauseBotAdder.style.display = 'none';
+    } else {
+      if (btnStart) btnStart.style.display = 'block';
+      if (btnPauseStart) btnPauseStart.style.display = 'block';
+      if (botAdder) botAdder.style.display = 'flex';
+      if (pauseBotAdder) pauseBotAdder.style.display = 'block';
+
+      const isCombatActive = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
+      if (isCombatActive) {
+        if (btnStart) {
+          btnStart.innerText = '🔄 RESTART MATCH';
+          btnStart.style.borderColor = 'rgba(255, 170, 0, 0.6)';
+          btnStart.style.color = '#ffaa00';
+        }
+        if (btnPauseStart) {
+          btnPauseStart.innerText = '🔄 RESTART MATCH';
+        }
+      } else {
+        if (btnStart) {
+          btnStart.innerText = '⚡ START MATCH';
+          btnStart.style.borderColor = 'rgba(0, 255, 136, 0.5)';
+          btnStart.style.color = '#00ff88';
+        }
+        if (btnPauseStart) {
+          btnPauseStart.innerText = '⚡ START MATCH';
+        }
+      }
+    }
+
+    // Toggle PiP mini-cam bot feed visibility & Test controls (Active for solo play or when Host enabled Test Mode)
     const isHostTestMode = this.isLanMatchHost && !!this.currentMatchConfig?.isTestMode;
     const showTestFeatures = isSolo || isHostTestMode;
 
