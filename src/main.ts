@@ -54,6 +54,7 @@ export interface LobbyMatch {
   currentPlayers: number;
   status: 'WAITING' | 'IN_MATCH';
   isCustom?: boolean;
+  isTestMode?: boolean;
 }
 
 export interface ConnectedPilot {
@@ -126,6 +127,8 @@ class WormholeGame {
   private lastCountdownSec = -1;
   private snapshotTimer = 0;
   private rosterThrottleTimer = 0;
+  private playerLastSeen: Map<number, number> = new Map();
+  private heartbeatReaperTimer = 0;
 
   // Real-time FPS & Performance Diagnostics Monitoring
   private frameCount = 0;
@@ -607,7 +610,56 @@ class WormholeGame {
       }
 
       if (this.inArena && this.currentMatchConfig && this.currentMatchConfig.id === data.matchId) {
-        if (pkt.type === 'ROSTER_UPDATE') {
+        if (data.fromSlot !== undefined) {
+          this.playerLastSeen.set(data.fromSlot, Date.now());
+        }
+
+        if (pkt.type === 'PLAYER_LEAVE') {
+          const leavingSlot = pkt.slot ?? data.fromSlot;
+          const leavingPlayer = this.tablePlayers[leavingSlot];
+          if (leavingPlayer) {
+            const name = leavingPlayer.name;
+            this.tablePlayers[leavingSlot] = null;
+            this.playerLastSeen.delete(leavingSlot);
+            const victimWh = this.wormholes.find((w) => w.slot === leavingSlot);
+            if (victimWh) {
+              victimWh.killSelf(this.particles, this.sound);
+            }
+            this.rebuildTableWormholes();
+            this.updateTableRosterUI();
+            this.addChatLog(`${name} left the match.`, 'system');
+
+            if (this.isLanMatchHost && this.currentMatchConfig) {
+              const activeCount = this.tablePlayers.filter((p) => p !== null).length;
+              this.currentMatchConfig.currentPlayers = activeCount;
+              const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
+              if (matchInList) {
+                matchInList.currentPlayers = activeCount;
+              }
+              this.broadcastMatches();
+              this.broadcastRosterSync();
+
+              if (this.gameState.phase === 'PLAYING') {
+                const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+                if (isTeamMode) {
+                  this.checkTeamRoundStatus();
+                } else {
+                  let opponentsRemaining = false;
+                  for (let i = 1; i < 8; i++) {
+                    if (this.tablePlayers[i] && this.tablePlayers[i]!.isAlive) {
+                      opponentsRemaining = true;
+                      break;
+                    }
+                  }
+                  if (!opponentsRemaining) {
+                    this.gameState.registerPlayer1Kill();
+                    this.showVictoryModal();
+                  }
+                }
+              }
+            }
+          }
+        } else if (pkt.type === 'ROSTER_UPDATE') {
           if (pkt.roster && Array.isArray(pkt.roster) && data.fromSlot !== this.player.slot) {
             // Update tablePlayers preserving local slot properties
             this.tablePlayers = pkt.roster.map((p: TablePlayer | null) => {
@@ -636,17 +688,22 @@ class WormholeGame {
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
           }
-        } else if (pkt.type === 'SNAPSHOT') {
-          if (data.fromSlot !== this.player.slot) {
-            this.simulatedRealm.applyRemoteSnapshot(pkt.snapshot);
-            if (this.tablePlayers[data.fromSlot]) {
-              this.tablePlayers[data.fromSlot]!.health = pkt.snapshot.hp;
-              this.tablePlayers[data.fromSlot]!.maxHealth = pkt.snapshot.maxHp;
-              // Only apply isAlive from snapshot during active PLAYING phase after grace period
-              if (this.gameState.phase === 'PLAYING' && Date.now() - this.roundStartTime > 1200) {
-                this.tablePlayers[data.fromSlot]!.isAlive = pkt.snapshot.isAlive;
-              }
+        } else if (pkt.type === 'HEALTH_SYNC' || pkt.type === 'SNAPSHOT') {
+          const syncSlot = pkt.slot ?? data.fromSlot;
+          const hp = pkt.hp ?? pkt.snapshot?.hp;
+          const maxHp = pkt.maxHp ?? pkt.snapshot?.maxHp;
+          const isAlive = pkt.isAlive ?? pkt.snapshot?.isAlive;
+
+          if (syncSlot !== this.player.slot && this.tablePlayers[syncSlot]) {
+            if (hp !== undefined) this.tablePlayers[syncSlot]!.health = hp;
+            if (maxHp !== undefined) this.tablePlayers[syncSlot]!.maxHealth = maxHp;
+            if (isAlive !== undefined && this.gameState.phase === 'PLAYING' && Date.now() - this.roundStartTime > 1200) {
+              this.tablePlayers[syncSlot]!.isAlive = isAlive;
             }
+          }
+
+          if (pkt.type === 'SNAPSHOT' && data.fromSlot !== this.player.slot && pkt.snapshot) {
+            this.simulatedRealm.applyRemoteSnapshot(pkt.snapshot);
           }
         } else if (pkt.type === 'WARP_HAZARD') {
           const fromSlot = pkt.payload.fromSlot;
@@ -859,11 +916,29 @@ class WormholeGame {
       }
     }, 4000);
 
-    // Clean up hosted match if window is closed
+    // Clean up hosted match or notify host if window is closed
     window.addEventListener('beforeunload', () => {
-      if (this.isLanMatchHost && this.currentMatchConfig) {
-        this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
-        this.broadcastMatches();
+      if (this.currentMatchConfig) {
+        if (this.isLanMatchHost) {
+          this.sendLanPacket({
+            type: 'MATCH_TERMINATED',
+            matchId: this.currentMatchConfig.id,
+          });
+          this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
+          this.broadcastMatches();
+        } else if (this.isLanMatchClient) {
+          this.sendLanPacket({
+            type: 'MATCH_PACKET',
+            matchId: this.currentMatchConfig.id,
+            fromSlot: this.player.slot,
+            packet: {
+              type: 'PLAYER_LEAVE',
+              slot: this.player.slot,
+              playerName: this.playerName,
+              clientId: this.localClientId,
+            },
+          });
+        }
       }
     });
 
@@ -2326,6 +2401,8 @@ class WormholeGame {
         const shipSelect = (document.getElementById('host-ship-restriction') as HTMLSelectElement).value as 'STANDARD' | 'ALL';
         const botDiff = (document.getElementById('host-bot-diff') as HTMLSelectElement).value as BotDifficulty | 'none';
         const passInput = (document.getElementById('host-match-password') as HTMLInputElement).value.trim();
+        const testModeCheck = document.getElementById('host-test-mode') as HTMLInputElement | null;
+        const isTestMode = testModeCheck ? testModeCheck.checked : false;
 
         const maxSlots = sizeSelect === 'SMALL' ? 2 : sizeSelect === 'MEDIUM' ? 4 : sizeSelect === 'LARGE' ? 6 : 8;
 
@@ -2345,6 +2422,7 @@ class WormholeGame {
           currentPlayers: botDiff === 'none' ? 1 : maxSlots,
           status: 'WAITING',
           isCustom: true,
+          isTestMode: isTestMode,
         };
 
         this.isLanMatchHost = true;
@@ -2390,12 +2468,32 @@ class WormholeGame {
     const btnMatchLeave = document.getElementById('btn-match-leave') || document.getElementById('btn-table-leave');
     if (btnMatchLeave) {
       btnMatchLeave.onclick = () => {
+        if (this.currentMatchConfig && this.isLanMatchClient) {
+          this.sendLanPacket({
+            type: 'MATCH_PACKET',
+            matchId: this.currentMatchConfig.id,
+            fromSlot: this.player.slot,
+            packet: {
+              type: 'PLAYER_LEAVE',
+              slot: this.player.slot,
+              playerName: this.playerName,
+              clientId: this.localClientId,
+            },
+          });
+        }
         this.network.disconnect();
         // Remove hosted match if we were host
         if (this.currentMatchConfig && this.currentMatchConfig.hostName === this.playerName) {
+          this.sendLanPacket({
+            type: 'MATCH_TERMINATED',
+            matchId: this.currentMatchConfig.id,
+          });
           this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
           this.broadcastMatches();
         }
+        this.isLanMatchClient = false;
+        this.isLanMatchHost = false;
+        this.currentMatchConfig = null;
         this.setDeckActive(true);
         this.renderLobbyMatches();
       };
@@ -3392,11 +3490,20 @@ class WormholeGame {
       }
     }
 
-    // Toggle PiP mini-cam bot feed visibility (hide when 0 bots in the match)
+    // Toggle PiP mini-cam bot feed visibility & Test controls (Active for solo play or when Host enabled Test Mode)
+    const isSolo = !this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected;
+    const isHostTestMode = this.isLanMatchHost && !!this.currentMatchConfig?.isTestMode;
+    const showTestFeatures = isSolo || isHostTestMode;
+
+    const btnSpawner = document.getElementById('btn-match-spawner');
+    if (btnSpawner) {
+      btnSpawner.style.display = showTestFeatures ? 'block' : 'none';
+    }
+
     const pipCard = document.getElementById('pip-camera-card');
     if (pipCard) {
       const hasBots = botCount > 0 || this.simulatedRealm.botRealms.size > 0;
-      pipCard.style.display = hasBots ? 'flex' : 'none';
+      pipCard.style.display = (showTestFeatures && hasBots) ? 'flex' : 'none';
     }
 
     const pipNameEl = document.getElementById('pip-opponent-name');
@@ -3821,71 +3928,81 @@ class WormholeGame {
       }
     }
 
-    // 3. Network snapshot streaming (strictly during active PLAYING phase when ship is alive)
-    if (this.inArena && this.currentMatchConfig && this.gameState.phase === 'PLAYING' && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
-      this.snapshotTimer += dt;
-      if (this.snapshotTimer >= 0.04) {
-        this.snapshotTimer = 0;
+    // 3. Heartbeat Reaper on Host (clean up abruptly disconnected peers)
+    if (this.isLanMatchHost && this.currentMatchConfig && this.inArena) {
+      this.heartbeatReaperTimer += dt;
+      if (this.heartbeatReaperTimer >= 1.5) {
+        this.heartbeatReaperTimer = 0;
+        const now = Date.now();
+        let changed = false;
 
-        if (this.player.isAlive) {
-          const snap = {
-            x: this.player.x,
-            y: this.player.y,
-            angle: this.player.angle,
-            hp: this.player.health,
-            maxHp: this.player.maxHealth,
-            isAlive: this.player.isAlive,
-            hasRetros: this.player.hasRetros,
-            slot: this.player.slot,
-            hazards: this.hazardManager.hazards.map((h) => ({
-              type: h.powerupType,
-              x: h.x,
-              y: h.y,
-              hp: h.health,
-              radius: h.radius,
-            })),
-            bullets: this.bullets.map((b) => ({ x: b.x, y: b.y, color: b.color })),
-          };
-
-          if (this.isLanMatchHost || this.isLanMatchClient) {
-            this.sendLanPacket({
-              type: 'MATCH_PACKET',
-              matchId: this.currentMatchConfig.id,
-              fromSlot: this.player.slot,
-              packet: {
-                type: 'SNAPSHOT',
-                snapshot: snap,
-              },
-            });
-          }
-          if (this.network.isConnected) {
-            this.network.sendSnapshot(snap);
+        for (let i = 1; i < 8; i++) {
+          const p = this.tablePlayers[i];
+          if (p && !p.isLocal && !p.isBot) {
+            const lastSeen = this.playerLastSeen.get(i) || this.roundStartTime || now;
+            if (now - lastSeen > 7000) {
+              // Stale peer timed out
+              const name = p.name;
+              this.tablePlayers[i] = null;
+              this.playerLastSeen.delete(i);
+              const victimWh = this.wormholes.find((w) => w.slot === i);
+              if (victimWh) {
+                victimWh.killSelf(this.particles, this.sound);
+              }
+              this.addChatLog(`${name} timed out / disconnected.`, 'system');
+              changed = true;
+            }
           }
         }
 
-        // Host authoritatively broadcasts telemetry snapshots for all simulated bots to peers
+        if (changed) {
+          const activeCount = this.tablePlayers.filter((p) => p !== null).length;
+          this.currentMatchConfig.currentPlayers = activeCount;
+          const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
+          if (matchInList) {
+            matchInList.currentPlayers = activeCount;
+          }
+          this.rebuildTableWormholes();
+          this.updateTableRosterUI();
+          this.broadcastMatches();
+          this.broadcastRosterSync();
+        }
+      }
+    }
+
+    // 4. Lightweight Health & Telemetry Sync (2Hz heartbeat, zero continuous PiP streaming)
+    if (this.inArena && this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+      this.snapshotTimer += dt;
+      if (this.snapshotTimer >= 0.5) {
+        this.snapshotTimer = 0;
+
+        // Broadcast local player health & heartbeat
+        this.sendLanPacket({
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'HEALTH_SYNC',
+            slot: this.player.slot,
+            hp: this.player.health,
+            maxHp: this.player.maxHealth,
+            isAlive: this.player.isAlive,
+          },
+        });
+
+        // Host authoritatively broadcasts health for all simulated bots
         if (this.isLanMatchHost) {
           for (const [bSlot, realm] of this.simulatedRealm.botRealms.entries()) {
-            const botSnap = {
-              x: realm.botShip.x,
-              y: realm.botShip.y,
-              angle: realm.botShip.angle,
-              hp: realm.botShip.health,
-              maxHp: realm.botShip.maxHealth,
-              isAlive: realm.botShip.isAlive,
-              hasRetros: realm.botShip.hasRetros,
-              slot: bSlot,
-              hazards: [],
-              bullets: realm.bullets.map((b) => ({ x: b.x, y: b.y, color: b.color })),
-            };
-
             this.sendLanPacket({
               type: 'MATCH_PACKET',
               matchId: this.currentMatchConfig.id,
               fromSlot: bSlot,
               packet: {
-                type: 'SNAPSHOT',
-                snapshot: botSnap,
+                type: 'HEALTH_SYNC',
+                slot: bSlot,
+                hp: realm.botShip.health,
+                maxHp: realm.botShip.maxHealth,
+                isAlive: realm.botShip.isAlive,
               },
             });
           }
