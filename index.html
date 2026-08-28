@@ -151,17 +151,126 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        background: rgba(5, 12, 28, 0.85);
-        border: 1px solid rgba(0, 229, 255, 0.25);
-        border-radius: 10px;
-        padding: 8px 16px;
+        background: rgba(5, 12, 28, 0.9);
+        border: 1.5px solid rgba(0, 229, 255, 0.3);
+        border-radius: 12px;
+        padding: 8px 14px;
         flex-wrap: wrap;
       }
 
-      .pilot-tag-box {
+      /* Player Profile Card in Top Nav */
+      .player-profile-card {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        background: linear-gradient(135deg, rgba(4, 14, 32, 0.95) 0%, rgba(8, 22, 48, 0.8) 100%);
+        border: 1.5px solid rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 14px rgba(0, 229, 255, 0.15);
+        border-radius: 10px;
+        padding: 5px 12px;
+      }
+
+      .avatar-frame {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        border: 1.5px solid #00e5ff;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+        background: #040a16;
+        flex-shrink: 0;
+        transition: all 0.15s ease;
+      }
+      .avatar-frame:hover {
+        border-color: #ffffff;
+        box-shadow: 0 0 18px var(--neon-cyan);
+        transform: scale(1.05);
+      }
+
+      .player-avatar-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .avatar-edit-badge {
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        background: rgba(0, 229, 255, 0.9);
+        color: #030816;
+        font-size: 9px;
+        font-weight: 900;
+        width: 13px;
+        height: 13px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+
+      .pilot-identity-col {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .pilot-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .pilot-rank-icon {
+        color: #ffaa00;
+        font-size: 10px;
+      }
+
+      .pilot-callsign-label {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 8.5px;
+        font-weight: 800;
+        color: #64748b;
+        letter-spacing: 1.5px;
+      }
+
+      .pilot-name-display {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 1px;
+      }
+
+      .callsign-controls-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 6px;
+      }
+
+      .btn-profile-action {
+        background: rgba(0, 229, 255, 0.1);
+        border: 1px solid rgba(0, 229, 255, 0.35);
+        color: #00e5ff;
+        border-radius: 6px;
+        padding: 4px 7px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-profile-action:hover {
+        background: rgba(0, 229, 255, 0.25);
+        border-color: #00e5ff;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
       }
 
       .online-pill {
@@ -217,49 +326,81 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        background: rgba(4, 10, 24, 0.7);
-        border: 1px solid rgba(0, 229, 255, 0.25);
-        border-radius: 10px;
-        padding: 12px;
+        background: rgba(4, 10, 24, 0.75);
+        border: 1.5px solid rgba(0, 229, 255, 0.25);
+        border-radius: 12px;
+        padding: 14px;
         height: 440px;
       }
 
       .pilots-list-box {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        max-height: 120px;
+        gap: 5px;
+        max-height: 140px;
         overflow-y: auto;
-        background: rgba(2, 6, 16, 0.6);
+        background: rgba(2, 6, 16, 0.65);
         border: 1px solid rgba(0, 229, 255, 0.15);
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 6px;
       }
 
       .pilot-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: 8px;
         font-family: 'Orbitron', sans-serif;
         font-size: 11px;
         font-weight: 700;
         color: #e2e8f0;
-        padding: 2px 4px;
-        border-radius: 4px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: rgba(6, 14, 30, 0.6);
+        border: 1px solid rgba(0, 229, 255, 0.12);
+        transition: all 0.1s ease;
+      }
+
+      .pilot-row:hover {
+        background: rgba(0, 229, 255, 0.08);
+        border-color: rgba(0, 229, 255, 0.3);
       }
 
       .pilot-row.self {
-        background: rgba(0, 229, 255, 0.1);
+        background: rgba(0, 229, 255, 0.12);
+        border-color: rgba(0, 229, 255, 0.4);
         color: var(--neon-cyan);
+      }
+
+      .pilot-row-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
+        border: 1px solid rgba(0, 229, 255, 0.4);
+        background: #040a16;
+        flex-shrink: 0;
+      }
+
+      .pilot-row-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .pilot-ping-pill {
         font-size: 8px;
-        padding: 1px 4px;
-        border-radius: 3px;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
         background: rgba(0, 255, 136, 0.15);
         color: #00ff88;
-        border: 1px solid rgba(0, 255, 136, 0.3);
+        border: 1px solid rgba(0, 255, 136, 0.35);
+        letter-spacing: 0.5px;
+      }
+      .pilot-ping-pill.lan {
+        background: rgba(0, 229, 255, 0.15);
+        color: #00e5ff;
+        border-color: rgba(0, 229, 255, 0.35);
       }
 
       .lobby-chat-box {
@@ -267,9 +408,9 @@
         flex-direction: column;
         gap: 6px;
         flex: 1;
-        background: rgba(2, 6, 16, 0.6);
+        background: rgba(2, 6, 16, 0.65);
         border: 1px solid rgba(0, 229, 255, 0.15);
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 8px;
         min-height: 0;
       }
@@ -287,7 +428,7 @@
 
       .lobby-chat-input-row {
         display: flex;
-        gap: 4px;
+        gap: 6px;
       }
 
       /* Right Column: Live Matches Browser */
@@ -295,10 +436,10 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        background: rgba(4, 10, 24, 0.7);
-        border: 1px solid rgba(0, 229, 255, 0.25);
-        border-radius: 10px;
-        padding: 12px;
+        background: rgba(4, 10, 24, 0.75);
+        border: 1.5px solid rgba(0, 229, 255, 0.25);
+        border-radius: 12px;
+        padding: 14px;
         height: 440px;
       }
 
@@ -313,7 +454,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        flex: 1;
+        position: relative;
       }
 
       .matches-list-scroll {
@@ -323,6 +464,147 @@
         flex: 1;
         overflow-y: auto;
         padding-right: 4px;
+      }
+
+      /* Radar Scanner Empty State Visual */
+      .matches-empty-radar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 10px;
+        gap: 12px;
+        flex: 1;
+      }
+
+      .radar-scanner-box {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        position: relative;
+        background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(2, 8, 20, 0.95) 75%);
+        border: 2px solid rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 20px rgba(0, 229, 255, 0.25), inset 0 0 15px rgba(0, 229, 255, 0.15);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .radar-binary-bg {
+        position: absolute;
+        font-family: monospace;
+        font-size: 7px;
+        color: rgba(0, 229, 255, 0.18);
+        line-height: 1.1;
+        text-align: center;
+        user-select: none;
+        pointer-events: none;
+        letter-spacing: 1px;
+      }
+
+      .radar-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        pointer-events: none;
+      }
+      .radar-ring.r1 { width: 40px; height: 40px; }
+      .radar-ring.r2 { width: 80px; height: 80px; }
+      .radar-ring.r3 { width: 116px; height: 116px; border-color: rgba(0, 229, 255, 0.5); }
+
+      .radar-crosshair-h {
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        background: rgba(0, 229, 255, 0.3);
+      }
+      .radar-crosshair-v {
+        position: absolute;
+        height: 100%;
+        width: 1px;
+        background: rgba(0, 229, 255, 0.3);
+      }
+
+      .radar-sweep-beam {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, rgba(0, 229, 255, 0.45) 0deg, rgba(0, 229, 255, 0) 65deg, transparent 65deg);
+        animation: radarSweep 3.2s linear infinite;
+        pointer-events: none;
+      }
+
+      @keyframes radarSweep {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      .radar-center-core {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #00e5ff;
+        box-shadow: 0 0 8px #00e5ff;
+        position: absolute;
+        z-index: 2;
+      }
+
+      .radar-empty-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+        color: #cbd5e1;
+        letter-spacing: 1.5px;
+        text-align: center;
+      }
+
+      .radar-empty-sub {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        color: #64748b;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      /* Avatar Picker Modal Cards */
+      .avatar-card-item {
+        background: rgba(4, 12, 28, 0.85);
+        border: 2px solid rgba(0, 229, 255, 0.25);
+        border-radius: 10px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .avatar-card-item:hover {
+        border-color: #00e5ff;
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+        transform: translateY(-2px);
+      }
+      .avatar-card-item.selected {
+        border-color: #00ff88 !important;
+        background: rgba(0, 255, 136, 0.12) !important;
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+      }
+      .avatar-card-item img {
+        width: 64px;
+        height: 64px;
+        border-radius: 6px;
+        background: #030814;
+      }
+      .avatar-card-item span {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        color: #cbd5e1;
+        text-align: center;
       }
 
       .match-row-card {
@@ -1441,7 +1723,7 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
       }
 
-      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal, #solo-difficulty-modal {
+      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal, #solo-difficulty-modal, #avatar-picker-modal {
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
@@ -1690,7 +1972,7 @@
         }
       }
 
-      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
+      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active {
         display: block !important;
         position: fixed !important;
         top: 50% !important;
@@ -2263,27 +2545,36 @@
             <span class="logo-white">WORMHOLE</span>
             <span class="logo-magenta">RESURRECTED</span>
           </div>
-          <div class="header-subtitle">ARCADE TACTICAL WORMHOLE COMBAT</div>
         </div>
 
-        <!-- Top Lobby Navigation Bar -->
+        <!-- Top Lobby Navigation & Profile Bar -->
         <div class="lobby-nav-bar">
-          <div class="pilot-tag-box">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span class="input-label" style="font-size: 10px;">CALLSIGN:</span>
-              <input type="text" class="styled-input" id="input-callsign" value="Ghost-404" maxlength="12" style="width: 120px; padding: 5px 8px; font-size: 11px;" />
-              <button class="btn-join" id="btn-refresh-callsign" title="Generate Random Callsign" style="padding: 5px 8px; font-size: 12px;">🎲</button>
+          <!-- Player Profile Card (Avatar + Callsign + Dice + Edit Pencil) -->
+          <div class="player-profile-card">
+            <div class="avatar-frame" id="btn-change-avatar" title="Tap to Change Pilot Avatar">
+              <img src="/avatars/avatar_1.svg" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" />
+              <div class="avatar-edit-badge">✎</div>
             </div>
+            <div class="pilot-identity-col">
+              <div class="pilot-badge-row">
+                <span class="pilot-rank-icon">⚡</span>
+                <span class="pilot-callsign-label">CALLSIGN</span>
+              </div>
+              <div class="pilot-name-display" id="display-callsign">VortexPrime</div>
+            </div>
+            <div class="callsign-controls-row">
+              <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">✏️</button>
+              <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">🎲</button>
+            </div>
+            <input type="hidden" id="input-callsign" value="VortexPrime" />
           </div>
 
+          <!-- Utility Actions (Options, Sound, Guide, Fullscreen) -->
           <div class="lobby-actions-group">
-            <button class="btn-singleplayer" id="btn-main-engage" style="white-space: nowrap;">
-              <span>⚡</span> SOLO
-            </button>
-            <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual" style="font-size: 16px; padding: 6px 13px; line-height: 1;">📖</button>
-            <button class="btn-util" id="btn-menu-options" title="Options & Keybindings" style="font-size: 16px; padding: 6px 13px; line-height: 1;">⚙</button>
-            <button class="btn-util" id="btn-menu-sound" title="Toggle Sound" style="font-size: 16px; padding: 6px 13px; line-height: 1;">🔊</button>
-            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen" style="font-size: 16px; padding: 6px 13px; line-height: 1;">⛶</button>
+            <button class="btn-util" id="btn-menu-options" title="Options & Keybindings" style="font-size: 16px; padding: 7px 14px; line-height: 1;">⚙</button>
+            <button class="btn-util" id="btn-menu-sound" title="Toggle Sound" style="font-size: 16px; padding: 7px 14px; line-height: 1;">🔊</button>
+            <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual" style="font-size: 16px; padding: 7px 14px; line-height: 1;">📖</button>
+            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen" style="font-size: 16px; padding: 7px 14px; line-height: 1;">⛶</button>
           </div>
         </div>
 
@@ -2291,27 +2582,25 @@
         <div class="dashboard-grid-2col">
           <!-- Col 1: Pilots in Lounge & Lobby Comms Chat -->
           <div class="lobby-comms-panel">
-            <div style="display: flex; align-items: center; margin-bottom: 6px;">
-              <div class="online-pill">
-                <div class="pulse-dot"></div>
-                <span id="lobby-online-count">1 PILOT IN LOUNGE</span>
-              </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+              <div class="section-title" id="lobby-online-count" style="font-size: 11px; margin-bottom: 0; color: var(--neon-cyan);">PILOTS IN LOUNGE (1)</div>
             </div>
             <div class="pilots-list-box" id="lobby-pilots-list">
               <div class="pilot-row self">
-                <span id="lobby-self-name">Ghost-404 (YOU)</span>
-                <span class="pilot-ping-pill">HOST</span>
+                <img src="/avatars/avatar_1.svg" class="pilot-row-avatar" />
+                <span class="pilot-row-name" id="lobby-self-name">VortexPrime (YOU)</span>
+                <span class="pilot-ping-pill">LOCAL</span>
               </div>
             </div>
 
-            <div class="section-title" style="font-size: 11px; margin-top: 2px;">LOBBY COMMS</div>
+            <div class="section-title" style="font-size: 11px; margin-top: 4px; margin-bottom: 2px;">COMMUNICATIONS</div>
             <div class="lobby-chat-box">
               <div class="lobby-chat-log" id="lobby-chat-log">
                 <div class="chat-msg system">Lobby comms initialized. Ready for deployment.</div>
               </div>
               <div class="lobby-chat-input-row">
-                <input type="text" class="styled-input" id="input-lobby-chat" placeholder="Type message..." maxlength="80" style="font-size: 10px; padding: 5px 8px;" />
-                <button class="btn-join" id="btn-lobby-chat-send" style="padding: 5px 10px; font-size: 10px;">SEND</button>
+                <input type="text" class="styled-input" id="input-lobby-chat" placeholder="Type message..." maxlength="80" style="font-size: 10px; padding: 6px 10px; flex: 1;" />
+                <button class="btn-join" id="btn-lobby-chat-send" style="padding: 6px 14px; font-size: 10px; font-weight: 900;">SEND</button>
               </div>
             </div>
           </div>
@@ -2319,28 +2608,88 @@
           <!-- Col 2: Live Match Browser -->
           <div class="matches-browser-panel">
             <div class="matches-browser-header">
-              <div class="section-title" style="font-size: 11px;">LIVE HOSTED MATCHES</div>
+              <div class="section-title" style="font-size: 11px; margin-bottom: 0;">LIVE HOSTED MATCHES</div>
               <div class="matches-search-box">
-                <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 10px; padding: 4px 8px;" />
-                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 4px 8px; font-size: 11px;">🔄</button>
+                <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 10px; padding: 5px 10px 5px 26px; width: 160px;" />
+                <span style="position: absolute; left: 8px; font-size: 11px; color: #64748b; pointer-events: none;">🔍</span>
+                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 5px 8px; font-size: 11px;">🔄</button>
               </div>
             </div>
 
             <!-- Scrollable Live Match List -->
             <div class="matches-list-scroll" id="lobby-matches-list">
-              <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
-                NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
+              <div class="matches-empty-radar-container">
+                <div class="radar-scanner-box">
+                  <div class="radar-binary-bg">0100110 01101111 01110010<br>1100100 1101110 01100101<br>0010101 0111001 01010101<br>1001100 0110101 00101010</div>
+                  <div class="radar-ring r1"></div>
+                  <div class="radar-ring r2"></div>
+                  <div class="radar-ring r3"></div>
+                  <div class="radar-crosshair-h"></div>
+                  <div class="radar-crosshair-v"></div>
+                  <div class="radar-sweep-beam"></div>
+                  <div class="radar-center-core"></div>
+                </div>
+                <div class="radar-empty-title">NO ACTIVE MATCHES FOUND.</div>
+                <div class="radar-empty-sub">TAP <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!</div>
               </div>
             </div>
 
-            <!-- Host Match Action Bar at bottom of matches panel -->
-            <div style="margin-top: auto; padding-top: 6px; border-top: 1px solid rgba(0, 229, 255, 0.15); display: flex; justify-content: flex-end;">
-              <button class="btn-host" id="btn-create-host" style="width: 100%; justify-content: center; padding: 7px 12px; font-size: 11px; white-space: nowrap;">
+            <!-- Action Bar at bottom of matches panel: Host Match + Solo Practice -->
+            <div class="matches-action-footer" style="margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(0, 229, 255, 0.2); display: flex; gap: 10px; align-items: center;">
+              <button class="btn-host" id="btn-create-host" style="flex: 2; justify-content: center; padding: 10px 16px; font-size: 12px; font-weight: 900; white-space: nowrap; background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%); border: 1.5px solid #00e5ff; box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);">
                 <span>+</span> HOST NEW MATCH
+              </button>
+              <button class="btn-singleplayer" id="btn-main-engage" style="flex: 1; justify-content: center; padding: 10px 16px; font-size: 12px; font-weight: 900; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border: 1.5px solid #00ff88; color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);">
+                <span>⚡</span> SOLO PRACTICE
               </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Avatar Selection Modal -->
+    <div id="avatar-picker-modal" style="display: none;">
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SELECT PILOT AVATAR</div>
+      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">CHOOSE YOUR TACTICAL IDENTITY IN SPACE</div>
+
+      <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 440px; margin: 0 auto 16px auto;">
+        <div class="avatar-card-item" data-avatar="avatar_1.svg">
+          <img src="/avatars/avatar_1.svg" alt="Vanguard" />
+          <span>VANGUARD</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_2.svg">
+          <img src="/avatars/avatar_2.svg" alt="Echo Claw" />
+          <span>ECHO CLAW</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_3.svg">
+          <img src="/avatars/avatar_3.svg" alt="Starfire" />
+          <span>STARFIRE</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_4.svg">
+          <img src="/avatars/avatar_4.svg" alt="Cosmo Dave" />
+          <span>COSMO DAVE</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_5.svg">
+          <img src="/avatars/avatar_5.svg" alt="Valkyrie" />
+          <span>VALKYRIE</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_6.svg">
+          <img src="/avatars/avatar_6.svg" alt="Shadow Ace" />
+          <span>SHADOW ACE</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_7.svg">
+          <img src="/avatars/avatar_7.svg" alt="Android Mech" />
+          <span>CYBORG MECH</span>
+        </div>
+        <div class="avatar-card-item" data-avatar="avatar_8.svg">
+          <img src="/avatars/avatar_8.svg" alt="Solaris" />
+          <span>SOLARIS</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center;">
+        <button class="action-btn" id="btn-close-avatar-modal" style="padding: 8px 24px; border-color: #88bbdd; color: #88bbdd;">CLOSE</button>
       </div>
     </div>
 

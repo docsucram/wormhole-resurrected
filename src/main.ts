@@ -61,6 +61,7 @@ export interface LobbyMatch {
 export interface ConnectedPilot {
   id: string;
   callsign: string;
+  avatar?: string;
   isHost?: boolean;
   lastSeen: number;
 }
@@ -84,6 +85,7 @@ class WormholeGame {
   // Local Player
   private player: PlayerShip;
   public playerName = 'BrightNomad';
+  public playerAvatar = localStorage.getItem('wh_avatar') || 'avatar_1.svg';
   public totalMatchWins = 0;
   private localClientId = Math.random().toString(36).substring(2, 9);
   public playerPilotMode: 'human' | BotDifficulty = 'human';
@@ -403,6 +405,7 @@ class WormholeGame {
       this.connectedPilots.set(data.id, {
         id: data.id,
         callsign: data.callsign || 'Pilot',
+        avatar: data.avatar || 'avatar_1.svg',
         lastSeen: Date.now(),
       });
       this.renderConnectedPilots();
@@ -931,6 +934,7 @@ class WormholeGame {
     this.connectedPilots.set(this.localClientId, {
       id: this.localClientId,
       callsign: this.playerName,
+      avatar: this.playerAvatar,
       isHost: true,
       lastSeen: Date.now(),
     });
@@ -938,6 +942,7 @@ class WormholeGame {
       type: 'PRESENCE',
       id: this.localClientId,
       callsign: this.playerName,
+      avatar: this.playerAvatar,
       timestamp: Date.now(),
     });
   }
@@ -969,34 +974,33 @@ class WormholeGame {
     this.sendPresence();
     setInterval(() => this.sendPresence(), 2000);
 
-    // Broadcast hosted match list every 2s while hosting
-    setInterval(() => {
-      if (this.isLanMatchHost && this.currentMatchConfig) {
-        this.broadcastMatches();
-      }
-    }, 2000);
-
-    // Clean up stale pilots & their hosted matches every 4s
+    // Periodically prune offline peers
     setInterval(() => {
       const now = Date.now();
       let changed = false;
       for (const [id, pilot] of this.connectedPilots.entries()) {
-        if (id !== this.localClientId && now - pilot.lastSeen > 20000) {
+        if (id !== this.localClientId && now - pilot.lastSeen > 8000) {
           this.connectedPilots.delete(id);
           changed = true;
         }
       }
       if (changed) {
         this.renderConnectedPilots();
-        // Prune custom matches hosted by pilots who have disconnected
         const activeHostNames = new Set(Array.from(this.connectedPilots.values()).map((p) => p.callsign));
         const prevCount = this.lobbyMatches.length;
-        this.lobbyMatches = this.lobbyMatches.filter((m) => !m.isCustom || activeHostNames.has(m.hostName));
+        this.lobbyMatches = this.lobbyMatches.filter((m) => activeHostNames.has(m.hostName));
         if (this.lobbyMatches.length !== prevCount) {
           this.renderLobbyMatches();
         }
       }
     }, 4000);
+
+    // Broadcast hosted match list every 2s while hosting
+    setInterval(() => {
+      if (this.isLanMatchHost && this.currentMatchConfig) {
+        this.broadcastMatches();
+      }
+    }, 2000);
 
     // Clean up hosted match or notify host if window is closed
     window.addEventListener('beforeunload', () => {
@@ -1031,14 +1035,22 @@ class WormholeGame {
     const pilotsListEl = document.getElementById('lobby-pilots-list');
     const onlineCountEl = document.getElementById('lobby-online-count');
     const selfNameEl = document.getElementById('lobby-self-name');
+    const displayCallsign = document.getElementById('display-callsign');
+    const playerAvatarImg = document.getElementById('player-avatar-img') as HTMLImageElement | null;
 
     if (selfNameEl) {
       selfNameEl.innerText = `${this.playerName} (YOU)`;
     }
+    if (displayCallsign) {
+      displayCallsign.innerText = this.playerName;
+    }
+    if (playerAvatarImg) {
+      playerAvatarImg.src = `/avatars/${this.playerAvatar}`;
+    }
 
     const count = Math.max(1, this.connectedPilots.size);
     if (onlineCountEl) {
-      onlineCountEl.innerText = `${count} ${count === 1 ? 'PILOT' : 'PILOTS'} IN LOUNGE`;
+      onlineCountEl.innerText = `PILOTS IN LOUNGE (${count})`;
     }
 
     if (!pilotsListEl) return;
@@ -1048,7 +1060,8 @@ class WormholeGame {
     const selfRow = document.createElement('div');
     selfRow.className = 'pilot-row self';
     selfRow.innerHTML = `
-      <span>${this.playerName} (YOU)</span>
+      <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" />
+      <span class="pilot-row-name">${this.playerName} (YOU)</span>
       <span class="pilot-ping-pill">LOCAL</span>
     `;
     pilotsListEl.appendChild(selfRow);
@@ -1059,8 +1072,9 @@ class WormholeGame {
       const row = document.createElement('div');
       row.className = 'pilot-row';
       row.innerHTML = `
-        <span>${pilot.callsign}</span>
-        <span class="pilot-ping-pill">LAN</span>
+        <img src="/avatars/${pilot.avatar || 'avatar_1.svg'}" class="pilot-row-avatar" alt="Avatar" />
+        <span class="pilot-row-name">${pilot.callsign}</span>
+        <span class="pilot-ping-pill lan">ONLINE</span>
       `;
       pilotsListEl.appendChild(row);
     }
@@ -1112,8 +1126,19 @@ class WormholeGame {
 
     if (filtered.length === 0) {
       listEl.innerHTML = `
-        <div style="text-align: center; padding: 40px 10px; color: #64748b; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px;">
-          NO ACTIVE LAN MATCHES FOUND.<br><br>CLICK <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!
+        <div class="matches-empty-radar-container">
+          <div class="radar-scanner-box">
+            <div class="radar-binary-bg">0100110 01101111 01110010<br>1100100 1101110 01100101<br>0010101 0111001 01010101<br>1001100 0110101 00101010</div>
+            <div class="radar-ring r1"></div>
+            <div class="radar-ring r2"></div>
+            <div class="radar-ring r3"></div>
+            <div class="radar-crosshair-h"></div>
+            <div class="radar-crosshair-v"></div>
+            <div class="radar-sweep-beam"></div>
+            <div class="radar-center-core"></div>
+          </div>
+          <div class="radar-empty-title">NO ACTIVE MATCHES FOUND.</div>
+          <div class="radar-empty-sub">TAP <strong class="btn-host-from-empty" style="color: var(--neon-cyan); cursor: pointer;">'+ HOST NEW MATCH'</strong> TO CREATE ONE!</div>
         </div>
       `;
       const emptyHostBtn = listEl.querySelector('.btn-host-from-empty') as HTMLElement;
@@ -2350,44 +2375,119 @@ class WormholeGame {
 
   private setupFrontEndUI(): void {
     const callsignInput = document.getElementById('input-callsign') as HTMLInputElement | null;
+    const displayCallsign = document.getElementById('display-callsign');
+    const playerAvatarImg = document.getElementById('player-avatar-img') as HTMLImageElement | null;
+    const hudCallsign = document.getElementById('hud-classic-callsign');
+
+    const updateAllCallsignUI = (name: string) => {
+      this.playerName = name;
+      localStorage.setItem('wh_callsign', this.playerName);
+      if (callsignInput) callsignInput.value = this.playerName;
+      if (displayCallsign) displayCallsign.innerText = this.playerName;
+      if (hudCallsign) hudCallsign.innerText = this.playerName;
+      if (this.tablePlayers[0]) {
+        this.tablePlayers[0]!.name = this.playerName;
+      }
+      this.sendPresence();
+      this.renderConnectedPilots();
+      this.updateTableRosterUI();
+    };
+
+    if (displayCallsign) {
+      displayCallsign.innerText = this.playerName;
+    }
     if (callsignInput) {
       callsignInput.value = this.playerName;
       callsignInput.addEventListener('input', () => {
-        this.playerName = callsignInput.value.trim() || 'Pilot-1';
-        localStorage.setItem('wh_callsign', this.playerName);
-        if (this.tablePlayers[0]) {
-          this.tablePlayers[0]!.name = this.playerName;
-        }
-        const hudName = document.getElementById('hud-classic-callsign');
-        if (hudName) hudName.innerText = this.playerName;
-        this.sendPresence();
-        this.renderConnectedPilots();
-        this.updateTableRosterUI();
+        updateAllCallsignUI(callsignInput.value.trim() || 'Pilot-1');
       });
+    }
+
+    if (playerAvatarImg) {
+      playerAvatarImg.src = `/avatars/${this.playerAvatar}`;
     }
 
     if (this.tablePlayers[0]) {
       this.tablePlayers[0]!.name = this.playerName;
     }
-    const hudCallsign = document.getElementById('hud-classic-callsign');
     if (hudCallsign) hudCallsign.innerText = this.playerName;
 
-    const btnRefreshCallsign = document.getElementById('btn-refresh-callsign');
-    if (btnRefreshCallsign && callsignInput) {
-      btnRefreshCallsign.onclick = () => {
-        this.playerName = WormholeGame.generateRandomCallsign();
-        localStorage.setItem('wh_callsign', this.playerName);
-        callsignInput.value = this.playerName;
-        if (this.tablePlayers[0]) {
-          this.tablePlayers[0]!.name = this.playerName;
+    // Callsign Edit Pencil button
+    const btnEditCallsign = document.getElementById('btn-edit-callsign');
+    if (btnEditCallsign) {
+      btnEditCallsign.onclick = () => {
+        const newName = window.prompt('Enter your pilot callsign:', this.playerName);
+        if (newName && newName.trim()) {
+          updateAllCallsignUI(newName.trim().slice(0, 16));
+          this.sound.playPowerup();
         }
-        if (hudCallsign) hudCallsign.innerText = this.playerName;
-        this.sendPresence();
-        this.renderConnectedPilots();
-        this.updateTableRosterUI();
+      };
+    }
+
+    // Callsign Randomize Dice button
+    const btnRefreshCallsign = document.getElementById('btn-refresh-callsign');
+    if (btnRefreshCallsign) {
+      btnRefreshCallsign.onclick = () => {
+        updateAllCallsignUI(WormholeGame.generateRandomCallsign());
         this.sound.playPowerup();
       };
     }
+
+    // Avatar Selection Modal & Controls
+    const btnChangeAvatar = document.getElementById('btn-change-avatar');
+    const avatarModal = document.getElementById('avatar-picker-modal');
+    const btnCloseAvatarModal = document.getElementById('btn-close-avatar-modal');
+
+    const updateAvatarModalSelection = () => {
+      const cards = document.querySelectorAll('.avatar-card-item');
+      cards.forEach((card) => {
+        const itemAvatar = (card as HTMLElement).dataset.avatar;
+        if (itemAvatar === this.playerAvatar) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+    };
+
+    if (btnChangeAvatar && avatarModal) {
+      btnChangeAvatar.onclick = () => {
+        updateAvatarModalSelection();
+        avatarModal.classList.add('active');
+        avatarModal.style.display = 'block';
+        this.sound.playLaser(1);
+      };
+    }
+
+    if (btnCloseAvatarModal && avatarModal) {
+      btnCloseAvatarModal.onclick = () => {
+        avatarModal.classList.remove('active');
+        avatarModal.style.display = 'none';
+      };
+    }
+
+    // Avatar Selection Grid items
+    const avatarCards = document.querySelectorAll('.avatar-card-item');
+    avatarCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const selectedAvatar = (card as HTMLElement).dataset.avatar;
+        if (selectedAvatar) {
+          this.playerAvatar = selectedAvatar;
+          localStorage.setItem('wh_avatar', this.playerAvatar);
+          if (playerAvatarImg) {
+            playerAvatarImg.src = `/avatars/${this.playerAvatar}`;
+          }
+          updateAvatarModalSelection();
+          if (avatarModal) {
+            avatarModal.classList.remove('active');
+            avatarModal.style.display = 'none';
+          }
+          this.sound.playPowerup();
+          this.sendPresence();
+          this.renderConnectedPilots();
+        }
+      });
+    });
 
     // Lobby Chat Message Input
     const inputLobbyChat = document.getElementById('input-lobby-chat') as HTMLInputElement | null;

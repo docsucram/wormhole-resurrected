@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="bg5" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#123242"/><stop offset="100%" stop-color="#020810"/></radialGradient>
+  </defs>
+  <rect width="100" height="100" fill="url(#bg5)" rx="12"/>
+  <path d="M10,95 Q50,70 90,95 L90,100 L10,100 Z" fill="#102230" stroke="#00e5ff" stroke-width="1.5"/>
+  <path d="M26,30 Q22,70 32,92 L68,92 Q78,70 74,30 Z" fill="#d0e4f0"/>
+  <rect x="44" y="50" width="12" height="20" fill="#e4b292"/>
+  <path d="M36,36 Q34,60 50,64 Q66,60 64,36 Q64,20 50,20 Q36,20 36,36 Z" fill="#f5c8aa"/>
+  <ellipse cx="43" cy="38" rx="3.5" ry="2" fill="#ffffff"/><circle cx="43" cy="38" r="1.8" fill="#00bcd4"/>
+  <ellipse cx="57" cy="38" rx="3.5" ry="2" fill="#ffffff"/><circle cx="57" cy="38" r="1.8" fill="#00bcd4"/>
+  <path d="M48,46 L47,52 L52,52" stroke="#b57b56" stroke-width="1.2" fill="none"/>
+  <path d="M44,57 Q50,60 56,57" stroke="#c2485e" stroke-width="1.8" fill="none"/>
+  <path d="M32,28 Q34,14 50,14 Q66,14 68,28 Q60,18 50,18 Q40,18 32,28 Z" fill="#ffffff"/>
+  <path d="M32,28 Q42,42 46,48 Q38,36 34,28 Z" fill="#e0eef8"/>
+  <path d="M68,28 Q58,42 54,48 Q62,36 66,28 Z" fill="#e0eef8"/>
+</svg>
