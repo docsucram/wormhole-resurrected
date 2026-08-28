@@ -1656,6 +1656,38 @@
           padding-bottom: 8px;
           overflow-x: auto;
         }
+
+        #create-match-modal {
+          max-height: 92vh !important;
+          overflow-y: auto !important;
+          padding: 14px 16px !important;
+          width: 92vw !important;
+          max-width: 440px !important;
+        }
+        #create-match-modal .host-modal-title {
+          font-size: 16px !important;
+          margin-bottom: 2px !important;
+        }
+        #create-match-modal .host-modal-subtitle {
+          font-size: 9px !important;
+          margin-bottom: 8px !important;
+        }
+        #create-match-modal .input-group {
+          margin-bottom: 2px !important;
+        }
+        #create-match-modal .input-label {
+          font-size: 8.5px !important;
+          margin-bottom: 2px !important;
+        }
+        #create-match-modal .styled-select,
+        #create-match-modal .styled-input {
+          padding: 4px 6px !important;
+          font-size: 10px !important;
+        }
+        #create-match-modal .host-test-mode-group,
+        #host-test-mode-group {
+          display: none !important;
+        }
       }
 
       #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
@@ -2314,8 +2346,8 @@
 
     <!-- Host Custom Match Modal -->
     <div id="create-match-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ HOST NEW MATCH</div>
-      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">CONFIGURE MATCH RULES & LOBBY SETTINGS</div>
+      <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ HOST NEW MATCH</div>
+      <div class="host-modal-subtitle" style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">CONFIGURE MATCH RULES & LOBBY SETTINGS</div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 480px; margin: 0 auto;">
         <div class="input-group">
@@ -2327,8 +2359,8 @@
           <div class="input-group">
             <span class="input-label">MATCH MODE:</span>
             <select class="styled-select" id="host-match-type">
-              <option value="FFA" selected>Free-For-All (Standard FFA)</option>
-              <option value="TEAM">Team Battle (Alpha vs Omega)</option>
+              <option value="FFA" selected>Free-For-All</option>
+              <option value="TEAM">Team Battle</option>
             </select>
           </div>
 
@@ -2389,7 +2421,7 @@
           <input type="text" class="styled-input" id="host-match-password" placeholder="Leave empty for public" maxlength="12" />
         </div>
 
-        <div class="input-group" style="margin-top: 2px;">
+        <div class="input-group host-test-mode-group" id="host-test-mode-group" style="margin-top: 2px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; font-weight: 800; color: #ffaa00;">
             <input type="checkbox" id="host-test-mode" style="accent-color: #ffaa00; width: 15px; height: 15px; cursor: pointer;" />
             <span>⚡ ENABLE TEST MODE (Dev Controls & Bot PiP)</span>

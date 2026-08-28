@@ -3557,7 +3557,7 @@ class WormholeGame {
       }
       const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
       const pilotTypeIcon = p.isBot
-        ? `<span class="roster-pilot-icon bot" title="AI Drone" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2h2zm-4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-6 6h4v1.5h-4V17z"/></svg></span>`
+        ? `<span class="roster-pilot-icon bot" title="Computer Bot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20 3H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h6l-2 3v1h8v-1l-2-3h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 10H4V5h16v8z"/><circle cx="12" cy="9" r="1.5"/></svg></span>`
         : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
 
       const waitingBadge = p.isSpectating
