@@ -324,28 +324,35 @@ class WormholeGame {
         seed: Math.floor(Math.random() * 10000),
       };
 
+      const isMultiplayer = this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected;
       const targetPlayer = this.tablePlayers[targetSlot];
-      const isTargetBot = targetPlayer ? targetPlayer.isBot : (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected);
+      const isTargetBot = targetPlayer ? targetPlayer.isBot : false;
 
-      if (isTargetBot || (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected)) {
-        this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetSlot);
+      if (!isMultiplayer) {
+        // Solo Practice / Singleplayer offline: route locally
+        this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetSlot, 0);
+      } else if (this.isLanMatchHost && isTargetBot) {
+        // Host in MP shooting at bot: route into Host's authoritative bot simulation
+        this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetSlot, this.player.slot);
       } else {
-        if (this.isLanMatchHost || this.isLanMatchClient) {
-          if (this.currentMatchConfig) {
-            this.sendLanPacket({
-              type: 'MATCH_PACKET',
-              matchId: this.currentMatchConfig.id,
-              fromSlot: this.player.slot,
-              packet: {
-                type: 'WARP_HAZARD',
-                payload: warpPayload,
-              },
-            });
-          }
-        } else if (this.network.isConnected) {
+        // Connected Client shooting at anyone (Bot or Human) OR Host shooting at Remote Human Peer:
+        // Transmit WARP_HAZARD across network!
+        if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+          this.sendLanPacket({
+            type: 'MATCH_PACKET',
+            matchId: this.currentMatchConfig.id,
+            fromSlot: this.player.slot,
+            packet: {
+              type: 'WARP_HAZARD',
+              payload: warpPayload,
+            },
+          });
+        }
+        if (this.network.isConnected) {
           this.network.sendWarpHazard(warpPayload);
         }
       }
+
       const targetName = this.tablePlayers[targetSlot] ? this.tablePlayers[targetSlot]!.name : `Slot ${targetSlot + 1}`;
       this.addChatLog(`Warped ${POWERUP_NAMES[hazardType] || 'Hazard'} -> ${targetName}'s Wormhole!`, 'player', this.getPlayerColor(this.player.slot));
     };
@@ -738,20 +745,38 @@ class WormholeGame {
           const toSlot = pkt.payload.toSlot;
 
           if (toSlot === this.player.slot && fromSlot !== this.player.slot) {
-            // Hazard is targeted directly at local player!
+            // Hazard is targeted directly at local human player!
             const senderName = this.tablePlayers[fromSlot]?.name || 'Opponent';
             this.showAlert(`INCOMING // ${POWERUP_NAMES[pkt.payload.hazardType] || 'HAZARD'} FROM ${senderName.toUpperCase()}!`);
-            const targetWh = this.wormholes.find((w) => w.slot === fromSlot) || this.wormholes[0] || new Wormhole(senderName, fromSlot, 0, 240);
+            let targetWh = this.wormholes.find((w) => w.slot === fromSlot);
+            if (!targetWh) {
+              const senderPlayer = this.tablePlayers[fromSlot];
+              targetWh = new Wormhole(senderName, fromSlot, 0, 240, true, senderPlayer?.color);
+              this.wormholes.push(targetWh);
+            }
             this.hazardManager.spawnHazard(pkt.payload.hazardType, targetWh, this.player, this.missiles);
             this.gameState.stats.p2HazardsSent++;
             this.addChatLog(`${senderName} sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> Your Realm`, 'system');
             this.sound.playSpecial(1);
-          } else if (this.isLanMatchHost && this.tablePlayers[toSlot]?.isBot) {
-            // Host receives hazard from a human client targeted at an AI bot
-            this.simulatedRealm.receiveHazardFromPlayer1(pkt.payload.hazardType, toSlot);
-            const botName = this.tablePlayers[toSlot]?.name || `Bot ${toSlot}`;
-            const senderName = this.tablePlayers[fromSlot]?.name || `Player ${fromSlot}`;
-            this.addChatLog(`${senderName} sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> ${botName}`, 'system');
+          } else if (this.isLanMatchHost) {
+            if (this.tablePlayers[toSlot]?.isBot) {
+              // Host receives hazard from a human client targeted at an AI bot
+              this.simulatedRealm.receiveHazardFromPlayer1(pkt.payload.hazardType, toSlot, fromSlot);
+              const botName = this.tablePlayers[toSlot]?.name || `Bot ${toSlot}`;
+              const senderName = this.tablePlayers[fromSlot]?.name || `Player ${fromSlot}`;
+              this.addChatLog(`${senderName} sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> ${botName}`, 'system');
+            } else if (toSlot !== this.player.slot && this.tablePlayers[toSlot]) {
+              // Host forwards hazard across network to the destination human client
+              this.sendLanPacket({
+                type: 'MATCH_PACKET',
+                matchId: this.currentMatchConfig.id,
+                fromSlot: fromSlot,
+                packet: {
+                  type: 'WARP_HAZARD',
+                  payload: pkt.payload,
+                },
+              });
+            }
           }
         } else if (pkt.type === 'BOT_DEATH') {
           const deadSlot = pkt.botSlot;

@@ -244,12 +244,12 @@ export class SimulatedRealm {
     }
   }
 
-  public receiveHazardFromPlayer1(powerupType: number, targetSlot = 1): void {
-    // Spawns hazard out of Player 1's wormhole inside the specified bot realm
+  public receiveHazardFromPlayer1(powerupType: number, targetSlot = 1, fromSlot = 0): void {
+    // Spawns hazard out of the sender's wormhole inside the specified bot realm
     const realm = this.botRealms.get(targetSlot) || this.botRealms.get(1);
     if (!realm) return;
 
-    const destWh = realm.wormholes.find((w) => w.slot === 0) || realm.wormholes[0] || this.wormholeToPlayer1;
+    const destWh = realm.wormholes.find((w) => w.slot === fromSlot) || realm.wormholes[0] || this.wormholeToPlayer1;
     realm.hazardManager.spawnHazard(
       powerupType,
       destWh,
