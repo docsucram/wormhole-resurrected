@@ -46,12 +46,12 @@ export class WallCrawler implements Hazard {
     [-10, 16],
   ];
 
-  constructor(x: number, y: number, bound = 420, slot = 1) {
+  constructor(x: number, y: number, bound = 420, slot = 1, customColor?: string) {
     this.x = x;
     this.y = y;
     this.bound = bound;
     this.slot = slot;
-    this.color = (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
     this.isClockwise = Math.random() < 0.5;
 
     // Initial outward trajectory from wormhole toward perimeter wall

@@ -484,6 +484,23 @@ class WormholeGame {
 
           const isCombatInProgress = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
 
+          // Color Collision Resolution: Ensure unique color for newly joined player
+          const usedColors = new Set<string>();
+          for (let i = 0; i < 8; i++) {
+            if (this.tablePlayers[i]) {
+              usedColors.add(this.tablePlayers[i]!.color.toLowerCase());
+            }
+          }
+
+          let requestedColorIdx = (data.colorIndex !== undefined) ? data.colorIndex : (data.color ? PLAYER_COLORS.findIndex((c) => c.primary.toLowerCase() === data.color.toLowerCase()) : slot % PLAYER_COLORS.length);
+          if (requestedColorIdx < 0) requestedColorIdx = slot % PLAYER_COLORS.length;
+
+          let assignedProfile = PLAYER_COLORS[requestedColorIdx] || PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0];
+          if (usedColors.has(assignedProfile.primary.toLowerCase())) {
+            const freeProfile = PLAYER_COLORS.find((c) => !usedColors.has(c.primary.toLowerCase()));
+            if (freeProfile) assignedProfile = freeProfile;
+          }
+
           this.tablePlayers[slot] = {
             slot,
             clientId: data.clientId,
@@ -497,7 +514,7 @@ class WormholeGame {
             isSpectating: isCombatInProgress,
             rank: 0,
             wins: 0,
-            color: PLAYER_COLORS[slot % PLAYER_COLORS.length].primary,
+            color: assignedProfile.primary,
             team: assignedTeam,
           };
 
@@ -505,6 +522,7 @@ class WormholeGame {
           this.simulatedRealm.isRemotePlayer = true;
           this.rebuildTableWormholes();
           this.updateTableRosterUI();
+          this.buildColorSwatches();
 
           if (isCombatInProgress) {
             this.showAlert(`PILOT QUEUED // ${finalPlayerName.toUpperCase()} [WAITING FOR NEXT ROUND]`);
@@ -532,6 +550,8 @@ class WormholeGame {
                 joinedClientId: data.clientId,
                 joinedPlayerName: finalPlayerName,
                 assignedSlot: slot,
+                assignedColor: assignedProfile.primary,
+                assignedColorIndex: PLAYER_COLORS.indexOf(assignedProfile),
                 roster: this.tablePlayers,
                 matchConfig: this.currentMatchConfig,
                 targetWins: this.gameState.targetWins,
@@ -546,10 +566,9 @@ class WormholeGame {
           setTimeout(sendAcceptance, 120);
           setTimeout(sendAcceptance, 300);
 
-          // If we were waiting in staging, notify host
+          // If we were waiting in staging, update ready header
           if (!isCombatInProgress) {
-            const scoreEl = document.getElementById('round-modal-score');
-            if (scoreEl) scoreEl.innerText = `${finalPlayerName.toUpperCase()} READY // CLICK ENGAGE TO START`;
+            this.updateStagingScoreHeader();
           }
         }
       }
@@ -707,6 +726,17 @@ class WormholeGame {
               };
             });
 
+            // If local color was shifted by host, update local player color
+            const myEntry = this.tablePlayers[this.player.slot];
+            if (myEntry && myEntry.color) {
+              const cIdx = PLAYER_COLORS.findIndex((c) => c.primary.toLowerCase() === myEntry.color.toLowerCase());
+              if (cIdx >= 0 && cIdx !== this.selectedColorIndex) {
+                this.selectedColorIndex = cIdx;
+                this.player.colorIndex = cIdx;
+                this.modalHangarView.setColor(cIdx);
+              }
+            }
+
             // Synchronize simulated bot realms
             for (let i = 1; i < 8; i++) {
               const p = this.tablePlayers[i];
@@ -724,6 +754,32 @@ class WormholeGame {
 
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
+            this.buildColorSwatches();
+            this.updateStagingScoreHeader();
+          }
+        } else if (pkt.type === 'COLOR_SELECT') {
+          const fromSlot = pkt.slot ?? data.fromSlot;
+          const targetPlayer = this.tablePlayers[fromSlot];
+          if (targetPlayer) {
+            const usedColors = new Set<string>();
+            for (let i = 0; i < 8; i++) {
+              if (this.tablePlayers[i] && i !== fromSlot) {
+                usedColors.add(this.tablePlayers[i]!.color.toLowerCase());
+              }
+            }
+            let reqIdx = pkt.colorIndex ?? 0;
+            let profile = PLAYER_COLORS[reqIdx] || PLAYER_COLORS[0];
+            if (usedColors.has(profile.primary.toLowerCase())) {
+              const free = PLAYER_COLORS.find((c) => !usedColors.has(c.primary.toLowerCase()));
+              if (free) profile = free;
+            }
+            targetPlayer.color = profile.primary;
+            this.rebuildTableWormholes();
+            this.updateTableRosterUI();
+            this.buildColorSwatches();
+            if (this.isLanMatchHost) {
+              this.broadcastRosterSync();
+            }
           }
         } else if (pkt.type === 'HEALTH_SYNC' || pkt.type === 'SNAPSHOT') {
           const syncSlot = pkt.slot ?? data.fromSlot;
@@ -3580,66 +3636,74 @@ class WormholeGame {
     }
   }
 
+  public updateStagingScoreHeader(): void {
+    const scoreEl = document.getElementById('round-modal-score');
+    if (!scoreEl) return;
+    if (this.gameState.phase === 'STANDBY' || document.getElementById('round-modal')?.classList.contains('active')) {
+      if (this.gameState.phase === 'STANDBY') {
+        const activePilots = this.tablePlayers.filter((p) => p !== null);
+        const maxP = this.currentMatchConfig?.maxPlayers || 8;
+        if (activePilots.length > 2) {
+          scoreEl.innerText = `${activePilots.length} OF ${maxP} PILOTS READY // CLICK ENGAGE TO START`;
+        } else if (activePilots.length === 2) {
+          const other = activePilots.find((p) => !p.isLocal) || activePilots[1];
+          scoreEl.innerText = `${other ? other.name.toUpperCase() : 'OPPONENT'} READY // CLICK ENGAGE TO START`;
+        } else {
+          scoreEl.innerText = `WAITING FOR PILOTS TO JOIN...`;
+        }
+      }
+    }
+  }
+
   public selectColor(colorIndex: number): void {
     const newColor = (colorIndex + PLAYER_COLORS.length) % PLAYER_COLORS.length;
+    const targetProfile = PLAYER_COLORS[newColor];
+
+    // Prevent selecting a color already claimed by another participant in the roster
+    const isClaimedByOther = this.tablePlayers.some(
+      (p) => p !== null && p.slot !== this.player.slot && p.color.toLowerCase() === targetProfile.primary.toLowerCase()
+    );
+    if (isClaimedByOther) {
+      return;
+    }
+
     this.selectedColorIndex = newColor;
     try {
       localStorage.setItem('wh_selected_color', newColor.toString());
     } catch {}
 
-    // 1. Ensure all participant colors are strictly unique
-    // Collect all colors used by player and peers/bots
-    const usedColors = new Set<number>();
-    usedColors.add(newColor); // Local player takes newColor
-
-    for (let i = 1; i < 8; i++) {
-      const p = this.tablePlayers[i];
-      if (!p) continue;
-      // Get current participant's color index
-      let pColorIdx = PLAYER_COLORS.findIndex(
-        (c) => c.primary.toLowerCase() === p.color.toLowerCase()
-      );
-      if (pColorIdx === -1) pColorIdx = p.slot % PLAYER_COLORS.length;
-
-      // If conflict with player's new color or another already-allocated color
-      if (usedColors.has(pColorIdx)) {
-        // Find first free unused color index [0..7]
-        let freeIdx = -1;
-        for (let c = 0; c < PLAYER_COLORS.length; c++) {
-          if (!usedColors.has(c)) {
-            freeIdx = c;
-            break;
-          }
-        }
-        if (freeIdx !== -1) {
-          p.color = PLAYER_COLORS[freeIdx].primary;
-          usedColors.add(freeIdx);
-          // If this is a bot simulated in simulatedRealm, update its botShip slot & color
-          const realm = this.simulatedRealm.botRealms.get(p.slot);
-          if (realm && realm.botShip) {
-            realm.botShip.slot = freeIdx;
-          }
-        }
-      } else {
-        usedColors.add(pColorIdx);
-      }
-    }
-
-    // 2. Update local player ship color & tablePlayer color (preserving seat slot 0)
+    // Update local player ship color & tablePlayer color
     this.player.colorIndex = newColor;
-    if (this.tablePlayers[0]) {
-      this.tablePlayers[0].color = PLAYER_COLORS[newColor].primary;
+    if (this.tablePlayers[this.player.slot]) {
+      this.tablePlayers[this.player.slot]!.color = targetProfile.primary;
     }
 
-    // 3. Update Staging Hangar 3D preview mesh
+    // Update Staging Hangar 3D preview mesh
     this.modalHangarView.setColor(newColor);
 
-    // 4. Update UI color swatches across all screens
-    this.syncColorSelectionUI(newColor);
+    // Update UI color swatches across all screens
+    this.buildColorSwatches();
 
-    // 5. Update Wormholes and Roster UI
+    // Update Wormholes and Roster UI
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
+
+    // Broadcast color update to peers
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      this.broadcastRosterSync();
+    } else if (this.isLanMatchClient && this.currentMatchConfig) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'COLOR_SELECT',
+          slot: this.player.slot,
+          colorIndex: newColor,
+          color: targetProfile.primary,
+        },
+      });
+    }
   }
 
   private buildColorSwatches(): void {
@@ -3652,18 +3716,27 @@ class WormholeGame {
     if (modalMatchColorBar) modalMatchColorBar.innerHTML = '';
 
     PLAYER_COLORS.forEach((profile, index) => {
+      const isClaimedByOther = this.tablePlayers.some(
+        (p) => p !== null && p.slot !== this.player.slot && p.color.toLowerCase() === profile.primary.toLowerCase()
+      );
+
       const createSwatch = (container: HTMLElement | null) => {
         if (!container) return;
         const btn = document.createElement('button');
-        btn.className = `color-swatch-btn ${index === this.selectedColorIndex ? 'active' : ''}`;
+        if (isClaimedByOther) {
+          btn.className = 'color-swatch-btn disabled';
+          btn.title = `${profile.name} (Claimed by another pilot)`;
+        } else {
+          btn.className = `color-swatch-btn ${index === this.selectedColorIndex ? 'active' : ''}`;
+          btn.title = profile.name;
+          btn.onclick = () => {
+            this.selectColor(index);
+            this.sound.playPowerup();
+          };
+        }
         btn.style.backgroundColor = profile.primary;
         btn.style.color = profile.primary;
-        btn.title = profile.name;
         btn.dataset.colorIndex = index.toString();
-        btn.onclick = () => {
-          this.selectColor(index);
-          this.sound.playPowerup();
-        };
         container.appendChild(btn);
       };
 
@@ -3678,7 +3751,9 @@ class WormholeGame {
   private syncColorSelectionUI(selectedIndex: number): void {
     document.querySelectorAll('.color-swatch-btn').forEach((btn) => {
       const idx = parseInt((btn as HTMLElement).dataset.colorIndex || '0', 10);
-      btn.classList.toggle('active', idx === selectedIndex);
+      if (!btn.classList.contains('disabled')) {
+        btn.classList.toggle('active', idx === selectedIndex);
+      }
     });
   }
 
@@ -3974,6 +4049,9 @@ class WormholeGame {
       emptyCard.innerText = `Slot ${occupiedCount + 1}: [Ready for Pilot / Bot]`;
       rosterList.appendChild(emptyCard);
     }
+
+    this.updateStagingScoreHeader();
+    this.buildColorSwatches();
   }
 
   public showAlert(text: string): void {

@@ -25,10 +25,10 @@ export class PortalBeam implements Hazard {
   public beamLength = 1400;
   private life = 5.5; // ~320 frames
 
-  constructor(parentWormhole: Wormhole, slot = 1) {
+  constructor(parentWormhole: Wormhole, slot = 1, customColor?: string) {
     this.parentWormhole = parentWormhole;
     this.slot = slot;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || parentWormhole.color || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
     this.x = parentWormhole.x;
     this.y = parentWormhole.y;
     this.beamAngle = Math.random() * Math.PI * 2;

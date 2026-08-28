@@ -48,12 +48,12 @@ export class GhostPud implements Hazard {
     [-20, -9],
   ];
 
-  constructor(x: number, y: number, angle = 0, slot = 1, bound = 420) {
+  constructor(x: number, y: number, angle = 0, slot = 1, bound = 420, customColor?: string) {
     this.x = x;
     this.y = y;
     this.slot = slot;
     this.bound = bound;
-    this.color = (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
 
     // Authentic speed = 14.0 px/frame initial warp velocity
     this.vx = Math.cos(angle) * 4.5;

@@ -30,12 +30,12 @@ export class Nuke implements Hazard {
   private cycle = 0;
   public bound = 505;
 
-  constructor(x: number, y: number, slot = 1, bound = 505) {
+  constructor(x: number, y: number, slot = 1, bound = 505, customColor?: string) {
     this.x = x;
     this.y = y;
     this.slot = slot;
     this.bound = bound;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
 
     // Drifts slowly inward toward center (0, 0)
     const angle = Math.atan2(-y, -x);

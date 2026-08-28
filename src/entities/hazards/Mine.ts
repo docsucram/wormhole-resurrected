@@ -24,13 +24,13 @@ export class Mine implements Hazard {
   private isArming = true;
   private armTimer = 0.65; // 40 frames
 
-  constructor(x: number, y: number, vx = 0, vy = 0, slot = 1) {
+  constructor(x: number, y: number, vx = 0, vy = 0, slot = 1, customColor?: string) {
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
     this.slot = slot;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
   }
 
   public update(

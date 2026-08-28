@@ -18,7 +18,7 @@ export class UFO implements Hazard {
   public radius = 24;
   public health = 40;
   public maxHealth = 40;
-  public damage = 20;
+  public damage = 16;
   public isAlive = true;
   public color = '#00ffcc';
   public slot = 1;
@@ -28,12 +28,12 @@ export class UFO implements Hazard {
   private cycle = 0;
   public bound = 505;
 
-  constructor(x: number, y: number, slot = 1, bound = 505) {
+  constructor(x: number, y: number, slot = 1, bound = 505, customColor?: string) {
     this.x = x;
     this.y = y;
     this.slot = slot;
     this.bound = bound;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
   }
 
   public update(
@@ -73,8 +73,8 @@ export class UFO implements Hazard {
       this.vy *= -0.5;
     }
 
-    // Firing 3 Heat-Seeker Missiles triad every 2.5s (matching legacy UFOSprite.java lines 45-53)
-    if (this.attackTimer >= 2.5 && dist < 600 && player.isAlive && missiles) {
+    // Firing 3 Heat-Seeker Missiles triad every 3.0s
+    if (this.attackTimer >= 3.0 && dist < 600 && player.isAlive && missiles) {
       this.attackTimer = 0;
       sound.playLaser(0);
 

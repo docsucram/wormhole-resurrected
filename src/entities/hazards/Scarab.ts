@@ -58,7 +58,8 @@ export class Scarab implements Hazard {
     parentWormhole?: Wormhole,
     slot = 1,
     bound = 650,
-    onDeployHazard?: (hazardType: number, sourceWormhole: Wormhole) => void
+    onDeployHazard?: (hazardType: number, sourceWormhole: Wormhole) => void,
+    customColor?: string
   ) {
     this.x = x;
     this.y = y;
@@ -66,7 +67,7 @@ export class Scarab implements Hazard {
     this.slot = slot;
     this.bound = bound;
     this.onDeployHazard = onDeployHazard;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || parentWormhole?.color || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
     this.wanderAngle = Math.random() * Math.PI * 2;
   }
 

@@ -27,12 +27,12 @@ export class Inflator implements Hazard {
   private growthPauseTimer = 0;
   public bound = 650;
 
-  constructor(x: number, y: number, slot = 1, bound = 650) {
+  constructor(x: number, y: number, slot = 1, bound = 650, customColor?: string) {
     this.x = x;
     this.y = y;
     this.slot = slot;
     this.bound = bound;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
   }
 
   public update(

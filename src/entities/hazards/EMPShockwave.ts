@@ -21,11 +21,11 @@ export class EMPShockwave implements Hazard {
   private maxRadius = 350;
   private life = 2.0;
 
-  constructor(x: number, y: number, slot = 1) {
+  constructor(x: number, y: number, slot = 1, customColor?: string) {
     this.x = x;
     this.y = y;
     this.slot = slot;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
   }
 
   public update(

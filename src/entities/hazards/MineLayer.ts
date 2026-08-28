@@ -29,13 +29,13 @@ export class MineLayer implements Hazard {
 
   public bound = 650;
 
-  constructor(x: number, y: number, minesRef: Mine[], slot = 1, bound = 650) {
+  constructor(x: number, y: number, minesRef: Mine[], slot = 1, bound = 650, customColor?: string) {
     this.x = x;
     this.y = y;
     this.minesRef = minesRef;
     this.slot = slot;
     this.bound = bound;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
   }
 
   public update(
@@ -53,7 +53,7 @@ export class MineLayer implements Hazard {
     // Drop mine every 1.0s
     if (this.dropCooldown >= 1.0) {
       this.dropCooldown = 0;
-      this.minesRef.push(new Mine(this.x, this.y, 0, 0, this.slot));
+      this.minesRef.push(new Mine(this.x, this.y, 0, 0, this.slot, this.color));
     }
 
     // Change cardinal direction every 3s

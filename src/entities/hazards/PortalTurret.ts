@@ -46,10 +46,10 @@ export class PortalTurret implements Hazard {
     [-7, 25],
   ];
 
-  constructor(parentWormhole: Wormhole, slot = 1) {
+  constructor(parentWormhole: Wormhole, slot = 1, customColor?: string) {
     this.parentWormhole = parentWormhole;
     this.slot = slot;
-    this.color = PLAYER_COLORS[slot % PLAYER_COLORS.length].primary;
+    this.color = customColor || parentWormhole.color || (PLAYER_COLORS[slot % PLAYER_COLORS.length] || PLAYER_COLORS[0]).primary;
     this.hullAngle = Math.random() * Math.PI * 2;
     this.updatePosition();
   }

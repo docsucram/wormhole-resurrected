@@ -43,23 +43,24 @@ export class HazardManager {
     const slot = sourceWormhole.slot;
     const x = sourceWormhole.x;
     const y = sourceWormhole.y;
+    const hazardColor = sourceWormhole.color;
 
     switch (powerupType) {
       case 6: {
         // Heat Seeker Swarm (12 missiles)
-        HeatSeekerSwarm.spawnSwarm(x, y, missiles, sourceWormhole.color);
+        HeatSeekerSwarm.spawnSwarm(x, y, missiles, hazardColor);
         break;
       }
       case 7: {
         // Portal Turret
-        this.hazards.push(new PortalTurret(sourceWormhole, slot));
+        this.hazards.push(new PortalTurret(sourceWormhole, slot, hazardColor));
         break;
       }
       case 8: {
         // Wormhole Mines (Circle of 8 mines)
         for (let i = 0; i < 8; i++) {
           const a = (i * Math.PI * 2) / 8;
-          this.mines.push(new Mine(x, y, Math.cos(a) * 3.5, Math.sin(a) * 3.5, slot));
+          this.mines.push(new Mine(x, y, Math.cos(a) * 3.5, Math.sin(a) * 3.5, slot, hazardColor));
         }
         break;
       }
@@ -68,7 +69,7 @@ export class HazardManager {
         for (let i = 0; i < 3; i++) {
           const offsetX = (Math.random() - 0.5) * 60;
           const offsetY = (Math.random() - 0.5) * 60;
-          this.hazards.push(new UFO(x + offsetX, y + offsetY, slot, this.arenaBound));
+          this.hazards.push(new UFO(x + offsetX, y + offsetY, slot, this.arenaBound, hazardColor));
         }
         break;
       }
@@ -77,7 +78,7 @@ export class HazardManager {
         for (let i = 0; i < 4; i++) {
           const offsetX = (Math.random() - 0.5) * 60;
           const offsetY = (Math.random() - 0.5) * 60;
-          this.hazards.push(new Inflator(x + offsetX, y + offsetY, slot, this.arenaBound));
+          this.hazards.push(new Inflator(x + offsetX, y + offsetY, slot, this.arenaBound, hazardColor));
         }
         break;
       }
@@ -86,13 +87,13 @@ export class HazardManager {
         for (let i = 0; i < 2; i++) {
           const offsetX = (Math.random() - 0.5) * 50;
           const offsetY = (Math.random() - 0.5) * 50;
-          this.hazards.push(new MineLayer(x + offsetX, y + offsetY, this.mines, slot, this.arenaBound));
+          this.hazards.push(new MineLayer(x + offsetX, y + offsetY, this.mines, slot, this.arenaBound, hazardColor));
         }
         break;
       }
       case 12: {
         // Gunship Cruiser
-        this.hazards.push(new Gunship(x, y, slot, this.arenaBound));
+        this.hazards.push(new Gunship(x, y, slot, this.arenaBound, hazardColor));
         break;
       }
       case 13: {
@@ -113,7 +114,8 @@ export class HazardManager {
                 if (this.onScarabDeploy) {
                   this.onScarabDeploy(stolenType, wh);
                 }
-              }
+              },
+              hazardColor
             )
           );
         }
@@ -121,22 +123,22 @@ export class HazardManager {
       }
       case 14: {
         // Nuke
-        this.hazards.push(new Nuke(x, y, slot, this.arenaBound));
+        this.hazards.push(new Nuke(x, y, slot, this.arenaBound, hazardColor));
         break;
       }
       case 15: {
         // WallCrawler on exact perimeter walls
-        this.hazards.push(new WallCrawler(x, y, this.arenaBound, slot));
+        this.hazards.push(new WallCrawler(x, y, this.arenaBound, slot, hazardColor));
         break;
       }
       case 16: {
         // Sweep Beam
-        this.hazards.push(new PortalBeam(sourceWormhole, slot));
+        this.hazards.push(new PortalBeam(sourceWormhole, slot, hazardColor));
         break;
       }
       case 17: {
         // EMP Shockwave
-        this.hazards.push(new EMPShockwave(x, y, slot));
+        this.hazards.push(new EMPShockwave(x, y, slot, hazardColor));
         break;
       }
       case 18: {
@@ -144,7 +146,7 @@ export class HazardManager {
         const outwardAngle = Math.atan2(y, x) + (Math.random() - 0.5) * 0.5;
         const spawnX = x + Math.cos(outwardAngle) * 60;
         const spawnY = y + Math.sin(outwardAngle) * 60;
-        this.hazards.push(new GhostPud(spawnX, spawnY, outwardAngle, slot, this.arenaBound));
+        this.hazards.push(new GhostPud(spawnX, spawnY, outwardAngle, slot, this.arenaBound, hazardColor));
         break;
       }
       case 19: {
@@ -152,7 +154,7 @@ export class HazardManager {
         for (let i = 0; i < 2; i++) {
           const offsetX = (Math.random() - 0.5) * 50;
           const offsetY = (Math.random() - 0.5) * 50;
-          this.hazards.push(new Artillery(x + offsetX, y + offsetY, slot, this.arenaBound));
+          this.hazards.push(new Artillery(x + offsetX, y + offsetY, slot, this.arenaBound, hazardColor));
         }
         break;
       }

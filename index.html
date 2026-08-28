@@ -1212,6 +1212,22 @@
         color: #000000;
         text-shadow: 0 0 2px #ffffff;
       }
+      .color-swatch-btn.disabled {
+        opacity: 0.22 !important;
+        pointer-events: none !important;
+        cursor: not-allowed !important;
+        filter: grayscale(85%) brightness(0.6) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+      .color-swatch-btn.disabled::after {
+        content: '✕';
+        font-size: 10px;
+        font-weight: 900;
+        color: #ff3344;
+        text-shadow: 0 0 2px #000000;
+      }
 
       .ship-detail-card {
         background: #040916;
@@ -1220,7 +1236,30 @@
         padding: 10px 12px;
         display: flex;
         gap: 12px;
-        align-items: center;
+        text-align: left;
+        margin-bottom: 10px;
+      }
+
+      @media (max-width: 950px), (max-height: 580px), (pointer: coarse) {
+        .manual-layout {
+          flex-direction: row !important;
+        }
+        .manual-tabs {
+          width: 170px !important;
+          flex-direction: column !important;
+          flex-wrap: nowrap !important;
+          border-right: 1px solid rgba(0, 229, 255, 0.25) !important;
+          border-bottom: none !important;
+          padding-right: 8px !important;
+          padding-bottom: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+        }
+        .manual-tab-btn {
+          font-size: 9px !important;
+          padding: 6px 8px !important;
+          white-space: normal !important;
+        }
       }
 
       .hologram-box {
@@ -2197,20 +2236,6 @@
       }
 
       @media (max-width: 950px), (max-height: 580px), (pointer: coarse) {
-        .manual-layout {
-          flex-direction: column;
-        }
-        .manual-tabs {
-          width: 100%;
-          flex-direction: row;
-          flex-wrap: nowrap;
-          border-right: none;
-          border-bottom: 1px solid rgba(0, 229, 255, 0.25);
-          padding-right: 0;
-          padding-bottom: 8px;
-          overflow-x: auto;
-        }
-
         #create-match-modal {
           max-height: 94vh !important;
           overflow-y: auto !important;
@@ -3151,34 +3176,80 @@
 
           <!-- 3. Defensive Powerups -->
           <div class="manual-tab-pane" id="tab-defensive">
-            <div class="manual-card" style="border: 1px solid rgba(255, 170, 0, 0.4); background: rgba(30, 20, 5, 0.75);">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.25); border: 1.5px solid #ffaa00; color: #ffaa00;">★ UPGRADE</span> SHIP UPGRADES (STANDARD VS EXTENDED)</div>
-              <p><strong style="color: #ffaa00;">STANDARD ARSENAL:</strong> Gun Upgrade, Thrust Upgrade, and Retro Thrusters share the classic single golden <strong style="color: #ffaa00;">Ship Upgrade</strong> token in space. The exact enhancement awarded is revealed upon pickup via on-screen telemetry.</p>
-              <p style="margin-top: 8px;"><strong style="color: var(--neon-cyan);">EXTENDED ARSENAL:</strong> Gun, Thrust, and Retros feature separate individual vector glyphs, allowing tactical pilots to visually target specific ship enhancements before grabbing them.</p>
+            <div class="manual-card">
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(255, 170, 0, 0.25); border: 1.5px solid #ffaa00; color: #ffaa00; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L15 8L21 9L17 14L18 20L12 17L6 20L7 14L3 9L9 8L12 2Z" fill="rgba(255,170,0,0.35)"/></svg>
+                  UPGRADE
+                </span>
+                SHIP UPGRADE <span style="font-size: 8px; color: #ffaa00; font-weight: 900; margin-left: 6px; background: rgba(255, 170, 0, 0.15); padding: 1px 5px; border-radius: 3px;">[STANDARD ONLY]</span>
+              </div>
+              <p>Upgrades the ship's guns, thrust, or provides retro thrusters.</p>
             </div>
 
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">GUN</span> GUN UPGRADE <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff3344" stroke-width="2.5"><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  GUN
+                </span>
+                GUN UPGRADE <span style="font-size: 8px; color: #00e5ff; font-weight: 900; margin-left: 6px; background: rgba(0, 229, 255, 0.15); padding: 1px 5px; border-radius: 3px;">[EXTENDED ONLY]</span>
+              </div>
               <p>Adds twin side pulse lasers and unlocks devastating triple spread fire.</p>
             </div>
+
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">THRUST</span> THRUST UPGRADE <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 17 12 12 7 17"/></svg>
+                  THRUST
+                </span>
+                THRUST UPGRADE <span style="font-size: 8px; color: #00e5ff; font-weight: 900; margin-left: 6px; background: rgba(0, 229, 255, 0.15); padding: 1px 5px; border-radius: 3px;">[EXTENDED ONLY]</span>
+              </div>
               <p>Boosts engine acceleration and increases maximum cruising speed.</p>
             </div>
+
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">RETROS</span> RETROS (INERTIAL BRAKING) <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/><polyline points="18 9 12 15 6 9"/></svg>
+                  RETROS
+                </span>
+                RETRO THRUSTERS <span style="font-size: 8px; color: #00e5ff; font-weight: 900; margin-left: 6px; background: rgba(0, 229, 255, 0.15); padding: 1px 5px; border-radius: 3px;">[EXTENDED ONLY]</span>
+              </div>
               <p>Equips reverse thruster damping for pinpoint drift control and sharp combat turns.</p>
             </div>
+
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 51, 0.2); border: 1.5px solid #33ff33; color: #33ff33;">SHIELD</span> INVULNERABILITY SHIELD <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
-              <p>Grants 8 seconds of absolute invincibility. Absorbs heavy collisions, lasers, and nuclear blasts.</p>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(51, 255, 51, 0.2); border: 1.5px solid #33ff33; color: #33ff33; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#33ff33" stroke-width="2.2"><path d="M12 2L3 7V12C3 17.5 7 21.5 12 23C17 21.5 21 17.5 21 12V7L12 2Z" fill="rgba(51,255,51,0.25)"/></svg>
+                  SHIELD
+                </span>
+                INVULNERABILITY SHIELD <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 5px; border-radius: 3px;">[STANDARD & EXTENDED]</span>
+              </div>
+              <p>Grants 8 seconds of absolute invincibility against lasers, hazards, and collisions.</p>
             </div>
+
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">ZAP</span> SCREEN ZAP DISCHARGE <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  ZAP
+                </span>
+                SCREEN ZAP DISCHARGE <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 5px; border-radius: 3px;">[STANDARD & EXTENDED]</span>
+              </div>
               <p>Emits an arena-wide electrical discharge that instantly obliterates all enemy hazards and mines.</p>
             </div>
+
             <div class="manual-card">
-              <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 170, 0.2); border: 1.5px solid #ff33aa; color: #ff33aa;">+HP</span> EXTRA HEALTH REPAIR <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 4px; border-radius: 3px;">[STANDARD & EXTENDED]</span></div>
+              <div class="manual-card-title">
+                <span class="guide-badge" style="background: rgba(255, 51, 170, 0.2); border: 1.5px solid #ff33aa; color: #ff33aa; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff33aa" stroke="#ff33aa" stroke-width="1.5"><path d="M9 3H15V9H21V15H15V21H9V15H3V9H9V3Z" fill="rgba(255,51,170,0.3)"/></svg>
+                  +HP
+                </span>
+                EXTRA HEALTH REPAIR <span style="font-size: 8px; color: #00ffcc; font-weight: 900; margin-left: 6px; background: rgba(0, 255, 204, 0.15); padding: 1px 5px; border-radius: 3px;">[STANDARD & EXTENDED]</span>
+              </div>
               <p>Instantly repairs armor and hull damage (+75 HP).</p>
             </div>
           </div>
@@ -3187,59 +3258,156 @@
           <div class="manual-tab-pane" id="tab-offensive">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 255, 0.2); border: 1.5px solid #00ffff; color: #00ffff;">HS</span> HEAT SEEKER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(0, 255, 255, 0.2); border: 1.5px solid #00ffff; color: #00ffff; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="#00ffff"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>
+                    HS
+                  </span>
+                  HEAT SEEKER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>High-velocity tracking missiles that lock onto enemy ship thermal signatures.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 255, 136, 0.2); border: 1.5px solid #00ff88; color: #00ff88;">TURRET</span> WORMHOLE TURRET <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(0, 255, 136, 0.2); border: 1.5px solid #00ff88; color: #00ff88; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.2"><circle cx="12" cy="12" r="6" fill="rgba(0,255,136,0.25)"/><line x1="12" y1="6" x2="12" y2="1"/><line x1="6" y1="12" x2="1" y2="12"/><line x1="18" y1="12" x2="23" y2="12"/><line x1="12" y1="18" x2="12" y2="23"/></svg>
+                    TURRET
+                  </span>
+                  PORTAL TURRET <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Heavy perimeter battery defending the wormhole orbit with laser barrages.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00;">MINES</span> WORMHOLE MINES <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 170, 0, 0.2); border: 1.5px solid #ffaa00; color: #ffaa00; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2.2"><circle cx="12" cy="12" r="5" fill="rgba(255,170,0,0.3)"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="5" y1="19" x2="19" y2="5"/></svg>
+                    MINES
+                  </span>
+                  WORMHOLE MINES <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Deploys a radial starburst of lethal proximity mines around the wormhole.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 204, 0.2); border: 1.5px solid #ff00cc; color: #ff00cc;">UFO</span> UFO INTERCEPTOR <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 0, 204, 0.2); border: 1.5px solid #ff00cc; color: #ff00cc; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff00cc" stroke-width="2"><ellipse cx="12" cy="13" rx="9" ry="4" fill="rgba(255,0,204,0.25)"/><path d="M8 12C8 9 10 7 12 7C14 7 16 9 16 12"/></svg>
+                    UFO
+                  </span>
+                  UFO INTERCEPTOR <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Agile high-speed hunter that fires 3-way missile spreads at enemy fighters.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344;">INFLATOR</span> INFLATOR <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 51, 68, 0.2); border: 1.5px solid #ff3344; color: #ff3344; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff3344" stroke-width="2.2"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="4" fill="rgba(255,51,68,0.4)"/></svg>
+                    INFLATOR
+                  </span>
+                  INFLATOR <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Expanding cosmic mass that continuously swells and splits into mini-inflators when shot.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 0, 0.2); border: 1.5px solid #ffff00; color: #ffff00;">MINELAYER</span> MINELAYER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 255, 0, 0.2); border: 1.5px solid #ffff00; color: #ffff00; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffff00" stroke-width="2"><polygon points="12 3 21 19 3 19" fill="rgba(255,255,0,0.2)"/><circle cx="12" cy="14" r="2" fill="#ffff00"/></svg>
+                    MINELAYER
+                  </span>
+                  MINELAYER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Patrols the arena dropping dense clusters of explosive proximity mines.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 102, 0, 0.2); border: 1.5px solid #ff6600; color: #ff6600;">GUNSHIP</span> GUNSHIP CORVETTE <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 102, 0, 0.2); border: 1.5px solid #ff6600; color: #ff6600; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff6600" stroke-width="2"><path d="M12 2L4 18L12 15L20 18L12 2Z" fill="rgba(255,102,0,0.2)"/><circle cx="8" cy="15" r="1.5" fill="#ff6600"/><circle cx="16" cy="15" r="1.5" fill="#ff6600"/></svg>
+                    GUNSHIP
+                  </span>
+                  GUNSHIP CORVETTE <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Heavy assault boat equipped with dual 360-degree automated tracking turrets.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(51, 255, 153, 0.2); border: 1.5px solid #33ff99; color: #33ff99;">SCARAB</span> SCARAB SCAVENGER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(51, 255, 153, 0.2); border: 1.5px solid #33ff99; color: #33ff99; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#33ff99" stroke-width="2"><ellipse cx="12" cy="12" rx="6" ry="8" fill="rgba(51,255,153,0.2)"/><line x1="6" y1="8" x2="2" y2="6"/><line x1="18" y1="8" x2="22" y2="6"/><line x1="6" y1="16" x2="2" y2="18"/><line x1="18" y1="16" x2="22" y2="18"/></svg>
+                    SCARAB
+                  </span>
+                  SCARAB SCAVENGER <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Agile scavenger that races across space to steal and destroy floating powerups!</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 51, 0.25); border: 1.5px solid #ff0033; color: #ff0033;">NUKE</span> THERMONUCLEAR NUKE <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 0, 51, 0.25); border: 1.5px solid #ff0033; color: #ff0033; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff0033" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="#ff0033"/><path d="M12 3L9 9H15L12 3Z" fill="#ff0033"/><path d="M4 17L10 14L7 20L4 17Z" fill="#ff0033"/><path d="M20 17L14 14L17 20L20 17Z" fill="#ff0033"/></svg>
+                    NUKE
+                  </span>
+                  THERMONUCLEAR NUKE <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Timed thermonuclear bomb. Detonates with a devastating 90 HP arena shockwave.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 0, 255, 0.2); border: 1.5px solid #ff00ff; color: #ff00ff;">CRAWLER</span> WALLCRAWLER SLED <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 0, 255, 0.2); border: 1.5px solid #ff00ff; color: #ff00ff; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff00ff" stroke-width="2"><rect x="3" y="14" width="18" height="6" rx="2" fill="rgba(255,0,255,0.2)"/><circle cx="12" cy="9" r="4" fill="rgba(255,0,255,0.3)"/><line x1="12" y1="5" x2="12" y2="1"/></svg>
+                    CRAWLER
+                  </span>
+                  WALLCRAWLER SLED <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Mechanical turret sled that clamps to boundary walls and fires laser volleys.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0;">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff;">BEAM</span> SWEEPING BEAM <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(0, 229, 255, 0.2); border: 1.5px solid #00e5ff; color: #00e5ff; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2"><circle cx="4" cy="20" r="3" fill="#00e5ff"/><line x1="4" y1="20" x2="21" y2="3" stroke-width="2.5"/><line x1="4" y1="20" x2="22" y2="9"/><line x1="4" y1="20" x2="15" y2="2"/></svg>
+                    BEAM
+                  </span>
+                  SWEEPING BEAM <span style="font-size: 7px; color: #00ffcc; font-weight: 900; margin-left: 4px;">[STD & EXT]</span>
+                </div>
                 <p>Rotating 10-line vector laser array sweeping from the wormhole across the arena.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff;">EMP</span> EMP SCRAMBLER <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 255, 255, 0.2); border: 1.5px solid #ffffff; color: #ffffff; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/><circle cx="12" cy="12" r="5" stroke-dasharray="2 2"/><circle cx="12" cy="12" r="2" fill="#ffffff"/></svg>
+                    EMP
+                  </span>
+                  EMP SCRAMBLER <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span>
+                </div>
                 <p>Detonates with an electromagnetic pulse that scrambles ship flight avionics.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(153, 102, 255, 0.2); border: 1.5px solid #9966ff; color: #9966ff;">GHOST</span> GHOST-PUD <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(153, 102, 255, 0.2); border: 1.5px solid #9966ff; color: #9966ff; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9966ff" stroke-width="2"><path d="M12 3C7 3 5 7 5 12V21L8.5 18.5L12 21L15.5 18.5L19 21V12C19 7 17 3 12 3Z" fill="rgba(153,102,255,0.25)"/><circle cx="9" cy="10" r="1.5" fill="#ffffff"/><circle cx="15" cy="10" r="1.5" fill="#ffffff"/></svg>
+                    GHOST
+                  </span>
+                  GHOST-PUD <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span>
+                </div>
                 <p>Indestructible wandering entity that reflects weapons fire and can be punted into wormholes.</p>
               </div>
+
               <div class="manual-card" style="margin-bottom: 0; border: 1px solid rgba(255, 51, 170, 0.35); background: rgba(20, 5, 18, 0.85);">
-                <div class="manual-card-title"><span class="guide-badge" style="background: rgba(255, 204, 0, 0.2); border: 1.5px solid #ffcc00; color: #ffcc00;">ARTILLERY</span> HEAVY ARTILLERY <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span></div>
+                <div class="manual-card-title">
+                  <span class="guide-badge" style="background: rgba(255, 204, 0, 0.2); border: 1.5px solid #ffcc00; color: #ffcc00; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2"><circle cx="12" cy="16" r="6" fill="rgba(255,204,0,0.2)"/><line x1="12" y1="10" x2="18" y2="3" stroke-width="3" stroke-linecap="round"/><line x1="6" y1="21" x2="18" y2="21"/></svg>
+                    ARTILLERY
+                  </span>
+                  HEAVY ARTILLERY <span style="font-size: 8px; color: #ff33aa; font-weight: 900; margin-left: 6px; background: rgba(255, 51, 170, 0.15); padding: 1px 4px; border-radius: 3px;">[EXTENDED ONLY]</span>
+                </div>
                 <p>Armored mobile siege turret launching high-damage explosive mortar shells.</p>
               </div>
             </div>
