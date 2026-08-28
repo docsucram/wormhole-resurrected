@@ -2413,61 +2413,60 @@ class WormholeGame {
     }
     if (hudCallsign) hudCallsign.innerText = this.playerName;
 
-    // Callsign Modal Controls
-    const callsignModal = document.getElementById('callsign-modal');
-    const modalInputCallsign = document.getElementById('modal-input-callsign') as HTMLInputElement | null;
-    const btnCallsignConfirm = document.getElementById('btn-callsign-confirm');
-    const btnCallsignCancel = document.getElementById('btn-callsign-cancel');
-
-    const openCallsignModal = () => {
-      if (callsignModal && modalInputCallsign) {
-        modalInputCallsign.value = this.playerName;
-        callsignModal.classList.add('active');
-        callsignModal.style.display = 'block';
-        this.sound.playUIOpenModal();
-        setTimeout(() => modalInputCallsign.focus(), 50);
+    // Inline Callsign Editing in Player Capsule
+    const startInlineCallsignEdit = () => {
+      if (displayCallsign && callsignInput) {
+        callsignInput.value = this.playerName;
+        displayCallsign.style.display = 'none';
+        callsignInput.style.display = 'inline-block';
+        callsignInput.focus();
+        callsignInput.select();
+        this.sound.playUIClick();
       }
     };
 
-    const closeCallsignModal = () => {
-      if (callsignModal) {
-        callsignModal.classList.remove('active');
-        callsignModal.style.display = 'none';
-      }
-    };
-
-    const confirmCallsignChange = () => {
-      if (modalInputCallsign) {
-        const newName = modalInputCallsign.value.trim();
-        if (newName) {
+    const commitInlineCallsignEdit = () => {
+      if (displayCallsign && callsignInput) {
+        const newName = callsignInput.value.trim();
+        if (newName && newName !== this.playerName) {
           updateAllCallsignUI(newName.slice(0, 16));
           this.sound.playUISelect();
         }
+        callsignInput.style.display = 'none';
+        displayCallsign.style.display = 'inline';
       }
-      closeCallsignModal();
     };
 
-    // Callsign Edit Pencil button
+    const cancelInlineCallsignEdit = () => {
+      if (displayCallsign && callsignInput) {
+        callsignInput.value = this.playerName;
+        callsignInput.style.display = 'none';
+        displayCallsign.style.display = 'inline';
+        this.sound.playUIClick();
+      }
+    };
+
+    if (displayCallsign) {
+      displayCallsign.onclick = startInlineCallsignEdit;
+    }
+
     const btnEditCallsign = document.getElementById('btn-edit-callsign');
     if (btnEditCallsign) {
-      btnEditCallsign.onclick = openCallsignModal;
+      btnEditCallsign.onclick = startInlineCallsignEdit;
     }
 
-    if (btnCallsignConfirm) {
-      btnCallsignConfirm.onclick = confirmCallsignChange;
-    }
-
-    if (btnCallsignCancel) {
-      btnCallsignCancel.onclick = () => {
-        closeCallsignModal();
-        this.sound.playUIClick();
-      };
-    }
-
-    if (modalInputCallsign) {
-      modalInputCallsign.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') confirmCallsignChange();
-        if (e.key === 'Escape') closeCallsignModal();
+    if (callsignInput) {
+      callsignInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitInlineCallsignEdit();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelInlineCallsignEdit();
+        }
+      });
+      callsignInput.addEventListener('blur', () => {
+        commitInlineCallsignEdit();
       });
     }
 
