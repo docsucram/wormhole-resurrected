@@ -244,20 +244,57 @@ class WormholeGame {
     // Initialize 8-Player Arena Roster with Slot 0 as Local Player
     this.initTableRoster();
 
-    // Create Isolated Realm 2 for Simulated Player 2 Bot / Remote Human Player
-    this.simulatedRealm.onSendHazardToPlayer1 = (powerupType: number, sourceBotSlot = 1) => {
+    // Authoritative Hazard Routing from Simulated Bot Realms
+    this.simulatedRealm.onSendHazardToParticipant = (powerupType: number, sourceBotSlot: number, targetSlot: number) => {
       const sourceBot = this.tablePlayers[sourceBotSlot];
-      const botName = sourceBot ? sourceBot.name : 'Opponent';
-      this.showAlert(`INCOMING // ${POWERUP_NAMES[powerupType] || 'HAZARD'} FROM ${botName.toUpperCase()}!`);
-      const targetWh = this.wormholes.find((w) => w.slot === sourceBotSlot) || this.wormholes[0] || new Wormhole(botName, sourceBotSlot, 0, initialSize.orbitDistance);
-      this.hazardManager.spawnHazard(
-        powerupType,
-        targetWh,
-        this.player,
-        this.missiles
-      );
-      this.gameState.stats.p2HazardsSent++;
-      this.addChatLog(`${botName} sent ${POWERUP_NAMES[powerupType]} -> Your Realm`, 'bot', this.getPlayerColor(sourceBotSlot));
+      const botName = sourceBot ? sourceBot.name : `Bot ${sourceBotSlot}`;
+
+      if (targetSlot === this.player.slot) {
+        // Target is local host player
+        this.showAlert(`INCOMING // ${POWERUP_NAMES[powerupType] || 'HAZARD'} FROM ${botName.toUpperCase()}!`);
+        const targetWh = this.wormholes.find((w) => w.slot === sourceBotSlot) || this.wormholes[0] || new Wormhole(botName, sourceBotSlot, 0, initialSize.orbitDistance);
+        this.hazardManager.spawnHazard(powerupType, targetWh, this.player, this.missiles);
+        this.gameState.stats.p2HazardsSent++;
+        this.addChatLog(`${botName} sent ${POWERUP_NAMES[powerupType]} -> Your Realm`, 'bot', this.getPlayerColor(sourceBotSlot));
+      } else {
+        const destPlayer = this.tablePlayers[targetSlot];
+        if (destPlayer && destPlayer.isBot) {
+          // Target is another bot on the host
+          const destRealm = this.simulatedRealm.botRealms.get(targetSlot);
+          if (destRealm) {
+            const destWh = destRealm.wormholes.find((w) => w.slot === sourceBotSlot) || destRealm.wormholes[0];
+            destRealm.hazardManager.spawnHazard(powerupType, destWh, destRealm.botShip, destRealm.missiles);
+          }
+        } else {
+          // Target is a remote human client connected over LAN / Web!
+          if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient)) {
+            const warpPayload: WarpPayload = {
+              hazardId: `haz-${Date.now()}-${Math.random()}`,
+              hazardType: powerupType,
+              fromSlot: sourceBotSlot,
+              toSlot: targetSlot,
+              angle: 0,
+              speed: 12.0,
+              seed: Math.floor(Math.random() * 10000),
+            };
+            this.sendLanPacket({
+              type: 'MATCH_PACKET',
+              matchId: this.currentMatchConfig.id,
+              fromSlot: sourceBotSlot,
+              packet: {
+                type: 'WARP_HAZARD',
+                payload: warpPayload,
+              },
+            });
+            const targetName = destPlayer ? destPlayer.name : `Slot ${targetSlot + 1}`;
+            this.addChatLog(`${botName} sent ${POWERUP_NAMES[powerupType]} -> ${targetName}'s Realm`, 'bot', this.getPlayerColor(sourceBotSlot));
+          }
+        }
+      }
+    };
+
+    this.simulatedRealm.onSendHazardToPlayer1 = (powerupType: number, sourceBotSlot = 1) => {
+      this.simulatedRealm.onSendHazardToParticipant!(powerupType, sourceBotSlot, 0);
     };
 
     this.simulatedRealm.onBotDeath = (slot?: number) => {
@@ -614,20 +651,36 @@ class WormholeGame {
         } else if (pkt.type === 'WARP_HAZARD') {
           const fromSlot = pkt.payload.fromSlot;
           const toSlot = pkt.payload.toSlot;
-          const activePlayersCount = this.tablePlayers.filter((p) => p !== null).length;
-          const isTargetedToMe = toSlot === this.player.slot || 
-                                 (activePlayersCount <= 2 && fromSlot !== this.player.slot) ||
-                                 (this.isLanMatchClient && fromSlot === 0) ||
-                                 (this.isLanMatchHost && fromSlot !== 0 && activePlayersCount <= 2);
 
-          if (isTargetedToMe && fromSlot !== this.player.slot) {
-            this.showAlert(`INCOMING // ${POWERUP_NAMES[pkt.payload.hazardType] || 'HAZARD'} FROM OPPONENT!`);
-            const targetWh = this.wormholes.find((w) => w.slot === fromSlot) || this.wormholes[0] || new Wormhole('OPPONENT', fromSlot, 0, 240);
+          if (toSlot === this.player.slot && fromSlot !== this.player.slot) {
+            // Hazard is targeted directly at local player!
+            const senderName = this.tablePlayers[fromSlot]?.name || 'Opponent';
+            this.showAlert(`INCOMING // ${POWERUP_NAMES[pkt.payload.hazardType] || 'HAZARD'} FROM ${senderName.toUpperCase()}!`);
+            const targetWh = this.wormholes.find((w) => w.slot === fromSlot) || this.wormholes[0] || new Wormhole(senderName, fromSlot, 0, 240);
             this.hazardManager.spawnHazard(pkt.payload.hazardType, targetWh, this.player, this.missiles);
             this.gameState.stats.p2HazardsSent++;
-            this.addChatLog(`Opponent sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> Your Realm`, 'system');
+            this.addChatLog(`${senderName} sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> Your Realm`, 'system');
             this.sound.playSpecial(1);
+          } else if (this.isLanMatchHost && this.tablePlayers[toSlot]?.isBot) {
+            // Host receives hazard from a human client targeted at an AI bot
+            this.simulatedRealm.receiveHazardFromPlayer1(pkt.payload.hazardType, toSlot);
+            const botName = this.tablePlayers[toSlot]?.name || `Bot ${toSlot}`;
+            const senderName = this.tablePlayers[fromSlot]?.name || `Player ${fromSlot}`;
+            this.addChatLog(`${senderName} sent ${POWERUP_NAMES[pkt.payload.hazardType]} -> ${botName}`, 'system');
           }
+        } else if (pkt.type === 'BOT_DEATH') {
+          const deadSlot = pkt.botSlot;
+          if (this.tablePlayers[deadSlot]) {
+            this.tablePlayers[deadSlot]!.isAlive = false;
+            this.tablePlayers[deadSlot]!.health = 0;
+          }
+          const botWh = this.wormholes.find((w) => w.slot === deadSlot);
+          if (botWh) {
+            botWh.killSelf(this.particles, this.sound);
+          }
+          this.updateTableRosterUI();
+          this.addChatLog(`${this.tablePlayers[deadSlot]?.name || 'Bot'} was destroyed!`, 'system');
+          this.sound.playExplosion(true);
         } else if (pkt.type === 'PLAYER_DEATH') {
           if (this.isLanMatchHost && this.gameState.phase === 'PLAYING') {
             // Guard: ensure round has been active for at least 1.0s before accepting death
@@ -1855,6 +1908,18 @@ class WormholeGame {
       botWh.killSelf(this.particles, this.sound);
     }
     this.simulatedRealm.handleParticipantElimination(botSlot);
+
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'BOT_DEATH',
+          botSlot: botSlot,
+        },
+      });
+    }
 
     this.updateTableRosterUI();
 
@@ -3711,14 +3776,14 @@ class WormholeGame {
       this.handlePlayerElimination();
     }
 
-    // 2. Update Simulated AI Realms (Only active during PLAYING phase)
-    const isRoundActive = this.gameState.phase === 'PLAYING' && !this.isMatchWaitingForPilots;
-    this.simulatedRealm.update(dt, this.sound, isRoundActive);
+    // 2. Update Simulated AI Realms (Authoritative: ONLY active on Host or Singleplayer during PLAYING phase)
+    const isHostOrSolo = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected);
+    if (isHostOrSolo) {
+      const isRoundActive = this.gameState.phase === 'PLAYING' && !this.isMatchWaitingForPilots;
+      this.simulatedRealm.update(dt, this.sound, isRoundActive);
 
-    if (!this.network.isConnected && !this.isLanMatchClient) {
       let anyOpponentAlive = false;
       let hasOpponents = false;
-
       const roundGraceElapsed = Date.now() - this.roundStartTime > 1000;
 
       for (let i = 1; i < 8; i++) {
@@ -3740,7 +3805,7 @@ class WormholeGame {
         }
       }
 
-      // Continuous Victory Watchdog: If all opponents are eliminated while player lives, guarantee victory modal is displayed!
+      // Continuous Victory Watchdog for Host/Solo: If all opponents are eliminated while player lives
       if (
         this.gameState.phase === 'PLAYING' &&
         !this.isMatchWaitingForPilots &&
@@ -3757,42 +3822,73 @@ class WormholeGame {
     }
 
     // 3. Network snapshot streaming (strictly during active PLAYING phase when ship is alive)
-    if (this.inArena && this.currentMatchConfig && this.gameState.phase === 'PLAYING' && this.player.isAlive && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
+    if (this.inArena && this.currentMatchConfig && this.gameState.phase === 'PLAYING' && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
       this.snapshotTimer += dt;
       if (this.snapshotTimer >= 0.04) {
         this.snapshotTimer = 0;
-        const snap = {
-          x: this.player.x,
-          y: this.player.y,
-          angle: this.player.angle,
-          hp: this.player.health,
-          maxHp: this.player.maxHealth,
-          isAlive: this.player.isAlive,
-          hasRetros: this.player.hasRetros,
-          slot: this.player.slot,
-          hazards: this.hazardManager.hazards.map((h) => ({
-            type: h.powerupType,
-            x: h.x,
-            y: h.y,
-            hp: h.health,
-            radius: h.radius,
-          })),
-          bullets: this.bullets.map((b) => ({ x: b.x, y: b.y, color: b.color })),
-        };
 
-        if (this.isLanMatchHost || this.isLanMatchClient) {
-          this.sendLanPacket({
-            type: 'MATCH_PACKET',
-            matchId: this.currentMatchConfig.id,
-            fromSlot: this.player.slot,
-            packet: {
-              type: 'SNAPSHOT',
-              snapshot: snap,
-            },
-          });
+        if (this.player.isAlive) {
+          const snap = {
+            x: this.player.x,
+            y: this.player.y,
+            angle: this.player.angle,
+            hp: this.player.health,
+            maxHp: this.player.maxHealth,
+            isAlive: this.player.isAlive,
+            hasRetros: this.player.hasRetros,
+            slot: this.player.slot,
+            hazards: this.hazardManager.hazards.map((h) => ({
+              type: h.powerupType,
+              x: h.x,
+              y: h.y,
+              hp: h.health,
+              radius: h.radius,
+            })),
+            bullets: this.bullets.map((b) => ({ x: b.x, y: b.y, color: b.color })),
+          };
+
+          if (this.isLanMatchHost || this.isLanMatchClient) {
+            this.sendLanPacket({
+              type: 'MATCH_PACKET',
+              matchId: this.currentMatchConfig.id,
+              fromSlot: this.player.slot,
+              packet: {
+                type: 'SNAPSHOT',
+                snapshot: snap,
+              },
+            });
+          }
+          if (this.network.isConnected) {
+            this.network.sendSnapshot(snap);
+          }
         }
-        if (this.network.isConnected) {
-          this.network.sendSnapshot(snap);
+
+        // Host authoritatively broadcasts telemetry snapshots for all simulated bots to peers
+        if (this.isLanMatchHost) {
+          for (const [bSlot, realm] of this.simulatedRealm.botRealms.entries()) {
+            const botSnap = {
+              x: realm.botShip.x,
+              y: realm.botShip.y,
+              angle: realm.botShip.angle,
+              hp: realm.botShip.health,
+              maxHp: realm.botShip.maxHealth,
+              isAlive: realm.botShip.isAlive,
+              hasRetros: realm.botShip.hasRetros,
+              slot: bSlot,
+              hazards: [],
+              bullets: realm.bullets.map((b) => ({ x: b.x, y: b.y, color: b.color })),
+            };
+
+            this.sendLanPacket({
+              type: 'MATCH_PACKET',
+              matchId: this.currentMatchConfig.id,
+              fromSlot: bSlot,
+              packet: {
+                type: 'SNAPSHOT',
+                snapshot: botSnap,
+              },
+            });
+          }
         }
       }
     }

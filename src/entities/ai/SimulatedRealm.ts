@@ -72,7 +72,8 @@ export class SimulatedRealm {
   public arenaBound = 505;
   public orbitDistance = 180;
 
-  // Callbacks: (powerupType, sourceBotSlot)
+  // Callbacks: (powerupType, sourceBotSlot, targetSlot)
+  public onSendHazardToParticipant?: (powerupType: number, sourceBotSlot: number, targetSlot: number) => void;
   public onSendHazardToPlayer1?: (powerupType: number, sourceBotSlot?: number) => void;
   public onBotDeath?: (slot?: number) => void;
 
@@ -117,7 +118,9 @@ export class SimulatedRealm {
     const wh = new Wormhole('PLAYER 1', 0, 0, this.orbitDistance, true);
     const hazards = new HazardManager(this.arenaBound);
     hazards.onWarpHazard = (hazardType: number, targetSlot: number) => {
-      if (targetSlot === 0) {
+      if (this.onSendHazardToParticipant) {
+        this.onSendHazardToParticipant(hazardType, slot, targetSlot);
+      } else if (targetSlot === 0) {
         if (this.onSendHazardToPlayer1) this.onSendHazardToPlayer1(hazardType, slot);
       } else {
         const destRealm = this.botRealms.get(targetSlot);
@@ -439,7 +442,9 @@ export class SimulatedRealm {
             bulletAbsorbed = true;
             if (b.isPowerup && b.powerupType >= 6) {
               wh.absorbPowerupShot(b.powerupType, realm.particles, sound);
-              if (wh.slot === 0) {
+              if (this.onSendHazardToParticipant) {
+                this.onSendHazardToParticipant(b.powerupType, realm.slot, wh.slot);
+              } else if (wh.slot === 0) {
                 // Forward hazard into Player 1 realm
                 if (this.onSendHazardToPlayer1) {
                   this.onSendHazardToPlayer1(b.powerupType, realm.slot);
