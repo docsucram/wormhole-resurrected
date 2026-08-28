@@ -2413,16 +2413,62 @@ class WormholeGame {
     }
     if (hudCallsign) hudCallsign.innerText = this.playerName;
 
+    // Callsign Modal Controls
+    const callsignModal = document.getElementById('callsign-modal');
+    const modalInputCallsign = document.getElementById('modal-input-callsign') as HTMLInputElement | null;
+    const btnCallsignConfirm = document.getElementById('btn-callsign-confirm');
+    const btnCallsignCancel = document.getElementById('btn-callsign-cancel');
+
+    const openCallsignModal = () => {
+      if (callsignModal && modalInputCallsign) {
+        modalInputCallsign.value = this.playerName;
+        callsignModal.classList.add('active');
+        callsignModal.style.display = 'block';
+        this.sound.playUIOpenModal();
+        setTimeout(() => modalInputCallsign.focus(), 50);
+      }
+    };
+
+    const closeCallsignModal = () => {
+      if (callsignModal) {
+        callsignModal.classList.remove('active');
+        callsignModal.style.display = 'none';
+      }
+    };
+
+    const confirmCallsignChange = () => {
+      if (modalInputCallsign) {
+        const newName = modalInputCallsign.value.trim();
+        if (newName) {
+          updateAllCallsignUI(newName.slice(0, 16));
+          this.sound.playUISelect();
+        }
+      }
+      closeCallsignModal();
+    };
+
     // Callsign Edit Pencil button
     const btnEditCallsign = document.getElementById('btn-edit-callsign');
     if (btnEditCallsign) {
-      btnEditCallsign.onclick = () => {
-        const newName = window.prompt('Enter your pilot callsign:', this.playerName);
-        if (newName && newName.trim()) {
-          updateAllCallsignUI(newName.trim().slice(0, 16));
-          this.sound.playPowerup();
-        }
+      btnEditCallsign.onclick = openCallsignModal;
+    }
+
+    if (btnCallsignConfirm) {
+      btnCallsignConfirm.onclick = confirmCallsignChange;
+    }
+
+    if (btnCallsignCancel) {
+      btnCallsignCancel.onclick = () => {
+        closeCallsignModal();
+        this.sound.playUIClick();
       };
+    }
+
+    if (modalInputCallsign) {
+      modalInputCallsign.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirmCallsignChange();
+        if (e.key === 'Escape') closeCallsignModal();
+      });
     }
 
     // Callsign Randomize Dice button
@@ -2430,7 +2476,7 @@ class WormholeGame {
     if (btnRefreshCallsign) {
       btnRefreshCallsign.onclick = () => {
         updateAllCallsignUI(WormholeGame.generateRandomCallsign());
-        this.sound.playPowerup();
+        this.sound.playUIRandomize();
       };
     }
 
@@ -2456,7 +2502,7 @@ class WormholeGame {
         updateAvatarModalSelection();
         avatarModal.classList.add('active');
         avatarModal.style.display = 'block';
-        this.sound.playLaser(1);
+        this.sound.playUIOpenModal();
       };
     }
 
@@ -2464,6 +2510,7 @@ class WormholeGame {
       btnCloseAvatarModal.onclick = () => {
         avatarModal.classList.remove('active');
         avatarModal.style.display = 'none';
+        this.sound.playUIClick();
       };
     }
 
@@ -2483,7 +2530,7 @@ class WormholeGame {
             avatarModal.classList.remove('active');
             avatarModal.style.display = 'none';
           }
-          this.sound.playPowerup();
+          this.sound.playUISelect();
           this.sendPresence();
           this.renderConnectedPilots();
         }

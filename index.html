@@ -438,19 +438,22 @@
 
       .lobby-chat-input-row {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         margin-top: auto;
         align-items: center;
+        width: 100%;
+        box-sizing: border-box;
       }
 
       .chat-styled-input {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
         height: 36px;
         box-sizing: border-box;
         background: #040c1a;
         border: 1.5px solid #163658;
         border-radius: 8px;
-        padding: 0 12px;
+        padding: 0 10px;
         font-size: 11px;
         color: #ffffff;
         outline: none;
@@ -461,6 +464,7 @@
       }
 
       .btn-chat-send {
+        flex: 0 0 auto;
         height: 36px;
         box-sizing: border-box;
         background: #091728;
@@ -470,7 +474,7 @@
         font-family: 'Orbitron', sans-serif;
         font-weight: 900;
         font-size: 11px;
-        padding: 0 18px;
+        padding: 0 14px;
         cursor: pointer;
         transition: all 0.15s ease;
         display: flex;
@@ -2216,7 +2220,7 @@
         display: none !important;
       }
 
-      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active {
+      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active, #callsign-modal.active {
         display: block !important;
         position: fixed !important;
         top: 50% !important;
@@ -2845,7 +2849,6 @@
             <div class="comms-section-box">
               <div class="comms-header-row">
                 <span class="comms-title">COMMUNICATIONS</span>
-                <span style="color: #64748b; font-size: 11px;">∨</span>
               </div>
               <div class="lobby-chat-log" id="lobby-chat-log">
                 <div class="chat-msg system">Lobby comms initialized. Ready for deployment.</div>
@@ -2897,6 +2900,21 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Edit Callsign Modal -->
+    <div id="callsign-modal" style="display: none;">
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ EDIT PILOT CALLSIGN</div>
+      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">ENTER YOUR TACTICAL FLIGHT CALLSIGN (MAX 16 CHARS)</div>
+
+      <div style="max-width: 320px; margin: 0 auto 18px auto;">
+        <input type="text" class="styled-input" id="modal-input-callsign" placeholder="Enter Callsign..." maxlength="16" style="width: 100%; box-sizing: border-box; font-size: 14px; font-weight: 700; text-align: center; letter-spacing: 1px;" />
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button class="action-btn" id="btn-callsign-confirm" style="padding: 9px 24px; border-color: #00e5ff; color: #00e5ff; font-weight: 900;">CONFIRM</button>
+        <button class="action-btn" id="btn-callsign-cancel" style="padding: 9px 18px; border-color: #88bbdd; color: #88bbdd;">CANCEL</button>
       </div>
     </div>
 
