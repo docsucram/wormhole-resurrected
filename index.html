@@ -160,6 +160,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
       }
 
       .avatar-frame {
@@ -168,7 +172,6 @@
         border-radius: 8px;
         border: 1.5px solid #00e5ff;
         box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
-        position: relative;
         cursor: pointer;
         overflow: hidden;
         background: #040c1a;
@@ -186,23 +189,6 @@
         height: 100%;
         object-fit: cover;
         display: block;
-      }
-
-      .avatar-edit-badge {
-        position: absolute;
-        bottom: 1px;
-        right: 1px;
-        background: rgba(0, 229, 255, 0.9);
-        color: #030816;
-        font-size: 8px;
-        font-weight: 900;
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
       }
 
       .player-identity-capsule {
@@ -306,7 +292,7 @@
       /* 2-Column Command Hub Grid */
       .dashboard-grid-2col {
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: 340px 1fr;
         gap: 16px;
       }
       @media (max-width: 860px) and (orientation: portrait) {
@@ -323,7 +309,7 @@
         background: transparent;
         border: none;
         padding: 0;
-        height: 440px;
+        height: 460px;
       }
 
       .pilots-section-box {
@@ -338,14 +324,15 @@
         font-weight: 800;
         color: #00e5ff;
         letter-spacing: 1.5px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
 
       .pilots-list-box {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        max-height: 160px;
+        min-height: 94px;
+        max-height: 150px;
         overflow-y: auto;
         background: transparent;
         border: none;
@@ -370,8 +357,8 @@
       }
 
       .pilot-row-avatar {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         border-radius: 6px;
         border: 1.5px solid #163658;
         background: #040c1a;
@@ -418,7 +405,8 @@
         border: 1.5px solid #163658;
         border-radius: 10px;
         padding: 12px;
-        min-height: 0;
+        min-height: 160px;
+        box-sizing: border-box;
       }
 
       .comms-header-row {
@@ -437,6 +425,8 @@
 
       .lobby-chat-log {
         flex: 1;
+        min-height: 50px;
+        max-height: 130px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -449,15 +439,18 @@
       .lobby-chat-input-row {
         display: flex;
         gap: 8px;
-        margin-top: 4px;
+        margin-top: auto;
+        align-items: center;
       }
 
       .chat-styled-input {
         flex: 1;
+        height: 36px;
+        box-sizing: border-box;
         background: #040c1a;
         border: 1.5px solid #163658;
         border-radius: 8px;
-        padding: 8px 12px;
+        padding: 0 12px;
         font-size: 11px;
         color: #ffffff;
         outline: none;
@@ -468,6 +461,8 @@
       }
 
       .btn-chat-send {
+        height: 36px;
+        box-sizing: border-box;
         background: #091728;
         border: 1.5px solid #163658;
         border-radius: 8px;
@@ -475,9 +470,12 @@
         font-family: 'Orbitron', sans-serif;
         font-weight: 900;
         font-size: 11px;
-        padding: 8px 18px;
+        padding: 0 18px;
         cursor: pointer;
         transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .btn-chat-send:hover {
         background: rgba(0, 229, 255, 0.2);
@@ -494,7 +492,193 @@
         border: 1.5px solid #163658;
         border-radius: 10px;
         padding: 14px;
-        height: 440px;
+        height: 460px;
+        box-sizing: border-box;
+      }
+
+      .matches-browser-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .matches-search-box {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        position: relative;
+      }
+
+      .matches-list-scroll {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      /* Polished Tall Action Buttons */
+      .matches-action-footer {
+        margin-top: auto;
+        padding-top: 12px;
+        border-top: 1.5px solid #163658;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .btn-host {
+        flex: 2;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+        background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+        border: 1.5px solid #00e5ff;
+        border-radius: 8px;
+        color: #ffffff;
+        box-shadow: 0 0 18px rgba(0, 229, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .btn-host:hover {
+        background: linear-gradient(135deg, #00c6eb 0%, #0088cc 100%);
+        border-color: #ffffff;
+        box-shadow: 0 0 28px rgba(0, 229, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .btn-singleplayer {
+        flex: 1.3;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+        background: rgba(0, 255, 136, 0.12);
+        border: 1.5px solid #00ff88;
+        border-radius: 8px;
+        color: #00ff88;
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.25), inset 0 1px 0 rgba(0, 255, 136, 0.2);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .btn-singleplayer:hover {
+        background: rgba(0, 255, 136, 0.22);
+        border-color: #ffffff;
+        color: #ffffff;
+        box-shadow: 0 0 26px rgba(0, 255, 136, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+      }
+
+      /* Radar Scanner Empty State Visual */
+      .matches-empty-radar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 10px;
+        gap: 12px;
+        flex: 1;
+      }
+
+      .radar-scanner-box {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        position: relative;
+        background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(2, 8, 20, 0.95) 75%);
+        border: 2px solid rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 20px rgba(0, 229, 255, 0.25), inset 0 0 15px rgba(0, 229, 255, 0.15);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .radar-binary-bg {
+        position: absolute;
+        font-family: monospace;
+        font-size: 7px;
+        color: rgba(0, 229, 255, 0.18);
+        line-height: 1.1;
+        text-align: center;
+        user-select: none;
+        pointer-events: none;
+        letter-spacing: 1px;
+      }
+
+      .radar-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        pointer-events: none;
+      }
+      .radar-ring.r1 { width: 40px; height: 40px; }
+      .radar-ring.r2 { width: 80px; height: 80px; }
+      .radar-ring.r3 { width: 116px; height: 116px; border-color: rgba(0, 229, 255, 0.5); }
+
+      .radar-empty-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+        color: #cbd5e1;
+        letter-spacing: 1.5px;
+        text-align: center;
+      }
+
+      .radar-empty-sub {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        color: #64748b;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      /* Avatar Picker Modal Cards */
+      .avatar-card-item {
+        background: rgba(4, 12, 28, 0.85);
+        border: 2px solid rgba(0, 229, 255, 0.25);
+        border-radius: 10px;
+        padding: 6px;
+        width: 80px;
+        height: 80px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .avatar-card-item:hover {
+        border-color: #00e5ff;
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+        transform: translateY(-2px);
+      }
+      .avatar-card-item.selected {
+        border-color: #00ff88 !important;
+        background: rgba(0, 255, 136, 0.12) !important;
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+      }
+      .avatar-card-item img {
+        width: 68px;
+        height: 68px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #030814;
       }
 
       .matches-browser-header {
@@ -1978,7 +2162,7 @@
         gap: 8px;
       }
 
-      @media (max-width: 680px) {
+      @media (max-width: 950px), (max-height: 580px), (pointer: coarse) {
         .manual-layout {
           flex-direction: column;
         }
@@ -1994,19 +2178,19 @@
         }
 
         #create-match-modal {
-          max-height: 92vh !important;
+          max-height: 94vh !important;
           overflow-y: auto !important;
-          padding: 14px 16px !important;
-          width: 92vw !important;
+          padding: 12px 14px !important;
+          width: 94vw !important;
           max-width: 440px !important;
         }
         #create-match-modal .host-modal-title {
-          font-size: 16px !important;
+          font-size: 15px !important;
           margin-bottom: 2px !important;
         }
         #create-match-modal .host-modal-subtitle {
           font-size: 9px !important;
-          margin-bottom: 8px !important;
+          margin-bottom: 6px !important;
         }
         #create-match-modal .input-group {
           margin-bottom: 2px !important;
@@ -2021,9 +2205,15 @@
           font-size: 10px !important;
         }
         #create-match-modal .host-test-mode-group,
-        #host-test-mode-group {
+        #host-test-mode-group,
+        .host-test-mode-group {
           display: none !important;
         }
+      }
+
+      body.is-mobile #host-test-mode-group,
+      body.is-mobile .host-test-mode-group {
+        display: none !important;
       }
 
       #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active {
@@ -2599,7 +2789,6 @@
           <div class="player-profile-card">
             <div class="avatar-frame" id="btn-change-avatar" title="Tap to Change Pilot Avatar">
               <img src="/avatars/avatar_1.png" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-              <div class="avatar-edit-badge">✎</div>
             </div>
             <div class="player-identity-capsule">
               <div class="pilot-rank-badge" title="Combat Rank: Pilot Prime">
@@ -2716,30 +2905,24 @@
       <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SELECT PILOT AVATAR</div>
       <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">CHOOSE YOUR TACTICAL IDENTITY IN SPACE</div>
 
-      <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 440px; margin: 0 auto 16px auto;">
-        <div class="avatar-card-item" data-avatar="avatar_1.png">
-          <img src="/avatars/avatar_1.png" alt="Vanguard" onerror="this.src='/avatars/avatar_1.svg'" />
-          <span>VANGUARD</span>
+      <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 320px; margin: 0 auto 16px auto;">
+        <div class="avatar-card-item" data-avatar="avatar_1.png" title="Avatar 1">
+          <img src="/avatars/avatar_1.png" alt="Avatar 1" onerror="this.src='/avatars/avatar_1.svg'" />
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_2.png">
-          <img src="/avatars/avatar_2.png" alt="Echo Claw" onerror="this.src='/avatars/avatar_2.svg'" />
-          <span>ECHO CLAW</span>
+        <div class="avatar-card-item" data-avatar="avatar_2.png" title="Avatar 2">
+          <img src="/avatars/avatar_2.png" alt="Avatar 2" onerror="this.src='/avatars/avatar_2.svg'" />
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_3.png">
-          <img src="/avatars/avatar_3.png" alt="Starfire" onerror="this.src='/avatars/avatar_3.svg'" />
-          <span>STARFIRE</span>
+        <div class="avatar-card-item" data-avatar="avatar_3.png" title="Avatar 3">
+          <img src="/avatars/avatar_3.png" alt="Avatar 3" onerror="this.src='/avatars/avatar_3.svg'" />
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_4.png">
-          <img src="/avatars/avatar_4.png" alt="Cosmo Dave" onerror="this.src='/avatars/avatar_4.svg'" />
-          <span>COSMO DAVE</span>
+        <div class="avatar-card-item" data-avatar="avatar_4.png" title="Avatar 4">
+          <img src="/avatars/avatar_4.png" alt="Avatar 4" onerror="this.src='/avatars/avatar_4.svg'" />
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_5.png">
-          <img src="/avatars/avatar_5.png" alt="Valkyrie" onerror="this.src='/avatars/avatar_5.svg'" />
-          <span>VALKYRIE</span>
+        <div class="avatar-card-item" data-avatar="avatar_5.png" title="Avatar 5">
+          <img src="/avatars/avatar_5.png" alt="Avatar 5" onerror="this.src='/avatars/avatar_5.svg'" />
         </div>
-        <div class="avatar-card-item" data-avatar="avatar_6.png">
-          <img src="/avatars/avatar_6.png" alt="Shadow Ace" onerror="this.src='/avatars/avatar_6.svg'" />
-          <span>SHADOW ACE</span>
+        <div class="avatar-card-item" data-avatar="avatar_6.png" title="Avatar 6">
+          <img src="/avatars/avatar_6.png" alt="Avatar 6" onerror="this.src='/avatars/avatar_6.svg'" />
         </div>
       </div>
 

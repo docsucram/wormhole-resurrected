@@ -2600,6 +2600,11 @@ class WormholeGame {
     btnCreateHost.onclick = () => {
       if (createModal) {
         (document.getElementById('host-match-name') as HTMLInputElement).value = `${this.playerName}'s Match`;
+        const isMobileDevice = this.isMobile || ('ontouchstart' in window) || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) || window.innerWidth <= 950 || window.innerHeight <= 600;
+        const testGroup = document.getElementById('host-test-mode-group');
+        if (testGroup) {
+          testGroup.style.display = isMobileDevice ? 'none' : 'block';
+        }
         createModal.classList.add('active');
         createModal.style.display = 'block';
       }
@@ -2625,7 +2630,8 @@ class WormholeGame {
         const botDiff = (document.getElementById('host-bot-diff') as HTMLSelectElement).value as BotDifficulty | 'none';
         const passInput = (document.getElementById('host-match-password') as HTMLInputElement).value.trim();
         const testModeCheck = document.getElementById('host-test-mode') as HTMLInputElement | null;
-        const isTestMode = testModeCheck ? testModeCheck.checked : false;
+        const isMobileDevice = this.isMobile || ('ontouchstart' in window) || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) || window.innerWidth <= 950 || window.innerHeight <= 600;
+        const isTestMode = isMobileDevice ? false : (testModeCheck ? testModeCheck.checked : false);
 
         const maxSlots = sizeSelect === 'SMALL' ? 2 : sizeSelect === 'MEDIUM' ? 4 : sizeSelect === 'LARGE' ? 6 : 8;
 
