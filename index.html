@@ -1473,7 +1473,7 @@
         height: 78vh;
         padding: 16px 20px;
         box-sizing: border-box;
-        display: flex;
+        display: none !important;
         flex-direction: column;
         text-align: left;
       }
@@ -1610,8 +1610,17 @@
         }
       }
 
-      #match-modal.active, #disconnect-modal.active, #manual-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
+      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #options-modal.active, #solo-difficulty-modal.active {
         display: block !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        animation: modalPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      #manual-modal.active {
+        display: flex !important;
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;

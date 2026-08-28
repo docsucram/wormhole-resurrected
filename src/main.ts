@@ -2380,11 +2380,25 @@ class WormholeGame {
       }
     };
     const closeManual = () => {
-      document.getElementById('manual-modal')?.classList.remove('active');
+      const m = document.getElementById('manual-modal');
+      if (m) m.classList.remove('active');
       this.manualHangarView.stopPreview();
     };
-    document.getElementById('btn-close-manual')?.addEventListener('click', closeManual);
-    document.getElementById('btn-close-manual-top')?.addEventListener('click', closeManual);
+    const modalEl = document.getElementById('manual-modal');
+    if (modalEl) {
+      modalEl.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.id === 'btn-close-manual' || target.id === 'btn-close-manual-top' || target.closest('#btn-close-manual-top') || target.closest('#btn-close-manual')) {
+          e.stopPropagation();
+          e.preventDefault();
+          closeManual();
+        }
+      });
+    }
+    const btnCloseTop = document.getElementById('btn-close-manual-top');
+    if (btnCloseTop) btnCloseTop.onclick = closeManual;
+    const btnCloseBottom = document.getElementById('btn-close-manual');
+    if (btnCloseBottom) btnCloseBottom.onclick = closeManual;
 
     // Manual tab switching
     const manualTabBtns = document.querySelectorAll('.manual-tab-btn');
