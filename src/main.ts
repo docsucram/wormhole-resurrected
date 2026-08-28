@@ -683,22 +683,7 @@ class WormholeGame {
               this.broadcastRosterSync();
 
               if (this.gameState.phase === 'PLAYING') {
-                const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-                if (isTeamMode) {
-                  this.checkTeamRoundStatus();
-                } else {
-                  let opponentsRemaining = false;
-                  for (let i = 1; i < 8; i++) {
-                    if (this.tablePlayers[i] && this.tablePlayers[i]!.isAlive) {
-                      opponentsRemaining = true;
-                      break;
-                    }
-                  }
-                  if (!opponentsRemaining) {
-                    this.gameState.registerPlayer1Kill();
-                    this.showVictoryModal();
-                  }
-                }
+                this.checkMatchRoundStatus();
               }
             }
           }
@@ -814,69 +799,102 @@ class WormholeGame {
             if (Date.now() - this.roundStartTime < 1000) {
               return;
             }
-            if (pkt.slot !== this.player.slot && this.tablePlayers[pkt.slot] && this.tablePlayers[pkt.slot]!.isAlive) {
-              this.tablePlayers[pkt.slot]!.isAlive = false;
-              this.tablePlayers[pkt.slot]!.health = 0;
-              const victimWh = this.wormholes.find((w) => w.slot === pkt.slot);
+            const deadSlot = pkt.slot;
+            if (deadSlot !== this.player.slot && this.tablePlayers[deadSlot] && this.tablePlayers[deadSlot]!.isAlive) {
+              this.tablePlayers[deadSlot]!.isAlive = false;
+              this.tablePlayers[deadSlot]!.health = 0;
+              const victimWh = this.wormholes.find((w) => w.slot === deadSlot);
               if (victimWh) {
                 victimWh.killSelf(this.particles, this.sound);
               }
-              this.gameState.registerPlayer1Kill();
-              this.addChatLog('Opponent ship was destroyed!', 'system');
+              this.updateTableRosterUI();
+              const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
+              this.addChatLog(`${deadName}'s ship was destroyed!`, 'system');
+              this.sound.playExplosion(true);
+
+              // Broadcast elimination to all clients
               this.sendLanPacket({
                 type: 'MATCH_PACKET',
                 matchId: this.currentMatchConfig.id,
                 fromSlot: this.player.slot,
                 packet: {
-                  type: 'KILL_EVENT',
-                  victimSlot: pkt.slot,
-                  killerSlot: this.player.slot,
-                  p1Score: this.gameState.player1Score,
-                  p2Score: this.gameState.player2Score,
+                  type: 'PLAYER_ELIMINATED',
+                  slot: deadSlot,
                 },
               });
-              if (this.gameState.player1Score < this.gameState.targetWins) {
-                this.showVictoryModal();
-              }
+
+              // Check if only one remaining pilot/team survives
+              this.checkMatchRoundStatus();
             }
           }
+        } else if (pkt.type === 'PLAYER_ELIMINATED') {
+          const deadSlot = pkt.slot;
+          if (this.tablePlayers[deadSlot]) {
+            this.tablePlayers[deadSlot]!.isAlive = false;
+            this.tablePlayers[deadSlot]!.health = 0;
+          }
+          const victimWh = this.wormholes.find((w) => w.slot === deadSlot);
+          if (victimWh) {
+            victimWh.killSelf(this.particles, this.sound);
+          }
+          this.updateTableRosterUI();
+          const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
+          this.addChatLog(`${deadName}'s ship was destroyed!`, 'system');
+          this.sound.playExplosion(true);
         } else if (pkt.type === 'KILL_EVENT') {
           this.gameState.player1Score = pkt.p1Score;
           this.gameState.player2Score = pkt.p2Score;
+          if (pkt.roster && Array.isArray(pkt.roster)) {
+            for (let i = 0; i < pkt.roster.length; i++) {
+              if (pkt.roster[i] && this.tablePlayers[i]) {
+                this.tablePlayers[i]!.wins = pkt.roster[i].wins;
+                this.tablePlayers[i]!.isAlive = pkt.roster[i].isAlive;
+                this.tablePlayers[i]!.health = pkt.roster[i].health;
+              }
+            }
+          }
           if (this.gameState.onScoreUpdate) {
             this.gameState.onScoreUpdate(pkt.p1Score, pkt.p2Score);
           }
+          this.updateTableRosterUI();
 
-          if (pkt.victimSlot !== undefined && pkt.victimSlot !== this.player.slot) {
-            const victimWh = this.wormholes.find((w) => w.slot === pkt.victimSlot);
-            if (victimWh) {
-              victimWh.killSelf(this.particles, this.sound);
+          const winnerRef = pkt.winnerRef !== undefined ? pkt.winnerRef : (pkt.winnerSlot !== undefined ? pkt.winnerSlot : (pkt.victimSlot === this.player.slot ? (pkt.killerSlot ?? 0) : this.player.slot));
+          let isLocalWin = false;
+          let isTeamWin = false;
+          let winnerName = pkt.winnerName || 'WINNER';
+
+          if (typeof winnerRef === 'number') {
+            isLocalWin = (winnerRef === this.player.slot);
+            if (this.tablePlayers[winnerRef]) {
+              winnerName = this.tablePlayers[winnerRef]!.name;
             }
-            if (this.tablePlayers[pkt.victimSlot]) {
-              this.tablePlayers[pkt.victimSlot]!.isAlive = false;
-              this.tablePlayers[pkt.victimSlot]!.health = 0;
-            }
+          } else if (winnerRef === 'TEAM_A') {
+            isLocalWin = (this.tablePlayers[this.player.slot]?.team === 'A');
+            isTeamWin = true;
+          } else if (winnerRef === 'TEAM_B') {
+            isLocalWin = (this.tablePlayers[this.player.slot]?.team === 'B');
+            isTeamWin = true;
           }
 
-          const isLocalVictim = pkt.victimSlot === this.player.slot;
-          const isP1 = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
-          const roundWinner: 'PLAYER 1' | 'PLAYER 2' = isLocalVictim ? (isP1 ? 'PLAYER 2' : 'PLAYER 1') : (isP1 ? 'PLAYER 1' : 'PLAYER 2');
-
-          if (pkt.p1Score >= this.gameState.targetWins || pkt.p2Score >= this.gameState.targetWins) {
-            this.gameState.finishMatchManually(roundWinner);
+          const maxWins = Math.max(...this.tablePlayers.filter(p => !!p).map(p => p!.wins), pkt.p1Score, pkt.p2Score);
+          if (maxWins >= this.gameState.targetWins) {
+            this.gameState.finishMatchManually(isLocalWin ? 'PLAYER 1' : 'PLAYER 2');
           } else {
             this.gameState.phase = 'ROUND_OVER';
             this.gameState.roundOverTimer = 4.0;
-            this.gameState.roundWinner = roundWinner;
-            if (isLocalVictim) {
-              // Local player died - ensure defeat modal is displayed
-              if (!document.getElementById('round-modal')?.classList.contains('active')) {
-                this.handlePlayerElimination();
-              }
+            this.gameState.roundWinner = isLocalWin ? 'PLAYER 1' : 'PLAYER 2';
+            if (isLocalWin) {
+              this.showVictoryModal(
+                isTeamWin ? `${winnerName} VICTORIOUS!` : 'ROUND VICTORY!',
+                isTeamWin ? 'ALL ENEMY SQUADRON SHIPS ELIMINATED' : 'ALL OPPONENT SHIPS ELIMINATED'
+              );
             } else {
-              this.showVictoryModal();
+              this.showDefeatModal(
+                isTeamWin ? `${winnerName} VICTORIOUS` : `${winnerName.toUpperCase()} WON THE ROUND`,
+                'YOUR SHIP WAS DESTROYED'
+              );
             }
-            if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(roundWinner, pkt.p1Score, pkt.p2Score);
+            if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(this.gameState.roundWinner, pkt.p1Score, pkt.p2Score);
             if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('ROUND_OVER');
           }
         } else if (pkt.type === 'MATCH_START') {
@@ -1905,43 +1923,154 @@ class WormholeGame {
     };
   }
 
-  private checkTeamRoundStatus(): boolean {
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-    if (!isTeamMode) return false;
+  public checkMatchRoundStatus(): boolean {
+    if (this.gameState.phase !== 'PLAYING') return false;
 
-    let teamA_Alive = false;
-    let teamB_Alive = false;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+
+    if (isTeamMode) {
+      let teamA_Alive = false;
+      let teamB_Alive = false;
+      for (let i = 0; i < 8; i++) {
+        const p = this.tablePlayers[i];
+        if (p && p.isAlive && !p.isSpectating) {
+          if (p.team === 'A') teamA_Alive = true;
+          if (p.team === 'B') teamB_Alive = true;
+        }
+      }
+
+      if (!teamB_Alive && teamA_Alive) {
+        this.concludeRoundWithWinner('TEAM_A');
+        return true;
+      } else if (!teamA_Alive && teamB_Alive) {
+        this.concludeRoundWithWinner('TEAM_B');
+        return true;
+      } else if (!teamA_Alive && !teamB_Alive) {
+        this.concludeRoundWithWinner('DRAW');
+        return true;
+      }
+      return false;
+    }
+
+    // FFA Mode: Check alive combatants
+    const aliveCombatants: TablePlayer[] = [];
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
-      if (p && p.isAlive) {
-        if (p.team === 'A') teamA_Alive = true;
-        if (p.team === 'B') teamB_Alive = true;
+      if (p && p.isAlive && !p.isSpectating) {
+        aliveCombatants.push(p);
       }
     }
 
-    const myTeam = this.tablePlayers[this.player.slot]?.team || 'A';
-
-    if (!teamB_Alive) {
-      // Team Alpha wins!
-      this.gameState.registerPlayer1Kill();
-      if (myTeam === 'A') {
-        this.showVictoryModal('TEAM ALPHA VICTORIOUS!', 'ALL ENEMY OMEGA SHIPS ELIMINATED');
-      } else {
-        this.showDefeatModal('TEAM OMEGA DEFEATED', 'ALL SQUADRON SHIPS ELIMINATED');
-      }
-      return true;
-    } else if (!teamA_Alive) {
-      // Team Omega wins!
-      this.gameState.registerPlayer2Kill();
-      if (myTeam === 'B') {
-        this.showVictoryModal('TEAM OMEGA VICTORIOUS!', 'ALL ENEMY ALPHA SHIPS ELIMINATED');
-      } else {
-        this.showDefeatModal('TEAM ALPHA DEFEATED', 'ALL ALLIED SHIPS ELIMINATED');
-      }
-      return true;
+    // If more than 1 pilot is still alive, the match MUST CONTINUE!
+    if (aliveCombatants.length > 1) {
+      return false;
     }
 
-    return false;
+    // Round concludes when 1 or 0 pilots remain
+    if (aliveCombatants.length === 1) {
+      const winner = aliveCombatants[0]!;
+      this.concludeRoundWithWinner(winner.slot);
+      return true;
+    } else {
+      this.concludeRoundWithWinner('DRAW');
+      return true;
+    }
+  }
+
+  private concludeRoundWithWinner(winnerRef: number | 'TEAM_A' | 'TEAM_B' | 'DRAW'): void {
+    if (this.gameState.phase === 'ROUND_OVER' || (this.gameState.phase as string) === 'MATCH_OVER') return;
+
+    let winnerName = 'UNKNOWN PILOT';
+    let isLocalWin = false;
+    let isTeamWin = false;
+    let winnerSlot = -1;
+
+    if (typeof winnerRef === 'number') {
+      winnerSlot = winnerRef;
+      const winnerPlayer = this.tablePlayers[winnerSlot];
+      if (winnerPlayer) {
+        winnerPlayer.wins += 1;
+        winnerName = winnerPlayer.name;
+      }
+      if (winnerSlot === 0) {
+        this.gameState.player1Score = (winnerPlayer?.wins ?? (this.gameState.player1Score + 1));
+      } else if (winnerSlot === 1) {
+        this.gameState.player2Score = (winnerPlayer?.wins ?? (this.gameState.player2Score + 1));
+      } else if (winnerPlayer) {
+        if (winnerSlot % 2 === 0) this.gameState.player1Score += 1;
+        else this.gameState.player2Score += 1;
+      }
+      isLocalWin = (winnerSlot === this.player.slot);
+    } else if (winnerRef === 'TEAM_A') {
+      this.gameState.player1Score += 1;
+      for (let i = 0; i < 8; i++) {
+        if (this.tablePlayers[i]?.team === 'A') this.tablePlayers[i]!.wins += 1;
+      }
+      winnerName = 'TEAM ALPHA';
+      isLocalWin = (this.tablePlayers[this.player.slot]?.team === 'A');
+      isTeamWin = true;
+    } else if (winnerRef === 'TEAM_B') {
+      this.gameState.player2Score += 1;
+      for (let i = 0; i < 8; i++) {
+        if (this.tablePlayers[i]?.team === 'B') this.tablePlayers[i]!.wins += 1;
+      }
+      winnerName = 'TEAM OMEGA';
+      isLocalWin = (this.tablePlayers[this.player.slot]?.team === 'B');
+      isTeamWin = true;
+    } else {
+      winnerName = 'DRAW';
+    }
+
+    if (this.gameState.onScoreUpdate) {
+      this.gameState.onScoreUpdate(this.gameState.player1Score, this.gameState.player2Score);
+    }
+    this.updateTableRosterUI();
+
+    // Broadcast round/match conclusion packet across LAN if Host
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'KILL_EVENT',
+          winnerRef: winnerRef,
+          winnerSlot: winnerSlot,
+          winnerName: winnerName,
+          p1Score: this.gameState.player1Score,
+          p2Score: this.gameState.player2Score,
+          roster: this.tablePlayers,
+        },
+      });
+    } else if (this.network.isConnected && this.network.isHost) {
+      this.network.sendKillEvent(winnerSlot === 0 ? 1 : 0, winnerSlot, this.gameState.player1Score, this.gameState.player2Score);
+    }
+
+    // Check if match won
+    const maxWins = Math.max(...this.tablePlayers.filter(p => !!p).map(p => p!.wins), this.gameState.player1Score, this.gameState.player2Score);
+    if (maxWins >= this.gameState.targetWins) {
+      this.gameState.finishMatchManually(isLocalWin ? 'PLAYER 1' : 'PLAYER 2');
+      return;
+    }
+
+    this.gameState.phase = 'ROUND_OVER';
+    this.gameState.roundOverTimer = 4.0;
+    this.gameState.roundWinner = isLocalWin ? 'PLAYER 1' : 'PLAYER 2';
+
+    if (isLocalWin) {
+      this.showVictoryModal(
+        isTeamWin ? `${winnerName} VICTORIOUS!` : 'ROUND VICTORY!',
+        isTeamWin ? 'ALL ENEMY SQUADRON SHIPS ELIMINATED' : 'ALL OPPONENT SHIPS ELIMINATED'
+      );
+    } else {
+      this.showDefeatModal(
+        isTeamWin ? `${winnerName} VICTORIOUS` : `${winnerName.toUpperCase()} WON THE ROUND`,
+        'YOUR SHIP WAS DESTROYED'
+      );
+    }
+
+    if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(this.gameState.roundWinner, this.gameState.player1Score, this.gameState.player2Score);
+    if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('ROUND_OVER');
   }
 
   private handlePlayerElimination(): void {
@@ -1955,6 +2084,7 @@ class WormholeGame {
       this.tablePlayers[this.player.slot]!.health = 0;
       this.tablePlayers[this.player.slot]!.isAlive = false;
     }
+    this.updateTableRosterUI();
 
     // Trigger bot taunt on player elimination
     const activeBot = this.tablePlayers.find((p) => p && p.isBot && p.isAlive);
@@ -1962,36 +2092,24 @@ class WormholeGame {
       this.triggerBotKillChat(activeBot.name, activeBot.slot);
     }
 
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-
-    if (isTeamMode) {
-      this.updateTableRosterUI();
-      const roundOver = this.checkTeamRoundStatus();
-      if (!roundOver) {
-        // Teammates are still fighting! Keep in spectator standby
-        this.showAlert('SHIP DESTROYED // STANDBY AS TEAM FIGHTS');
-        this.addChatLog('Your ship was destroyed! Spectating active teammates...', 'system');
-      }
-      return;
-    }
-
-    // FFA Mode Elimination:
-    // 1. Register opponent kill so stats & scores are synchronized across all elements
+    // Notify peers / Host
     if (this.isLanMatchHost) {
-      this.gameState.registerPlayer2Kill();
       if (this.currentMatchConfig) {
         this.sendLanPacket({
           type: 'MATCH_PACKET',
           matchId: this.currentMatchConfig.id,
           fromSlot: this.player.slot,
           packet: {
-            type: 'KILL_EVENT',
-            victimSlot: this.player.slot,
-            killerSlot: 1,
-            p1Score: this.gameState.player1Score,
-            p2Score: this.gameState.player2Score,
+            type: 'PLAYER_ELIMINATED',
+            slot: this.player.slot,
           },
         });
+      }
+      // Check if this elimination ends the round on the host!
+      const isRoundOver = this.checkMatchRoundStatus();
+      if (!isRoundOver) {
+        // Other players/bots are still fighting! Show spectator banner
+        this.showAlert('SHIP DESTROYED // SPECTATING ACTIVE BATTLE');
       }
     } else if (this.isLanMatchClient) {
       if (this.currentMatchConfig) {
@@ -2005,17 +2123,15 @@ class WormholeGame {
           },
         });
       }
-    } else if (!this.network.isConnected || this.network.isHost) {
-      this.gameState.registerPlayer2Kill();
-      if (this.network.isConnected && this.network.isHost) {
-        this.network.sendKillEvent(0, 1, this.gameState.player1Score, this.gameState.player2Score);
-      }
+      // Client waits in spectator mode until Host sends KILL_EVENT / ROUND_OVER
+      this.showAlert('SHIP DESTROYED // SPECTATING ACTIVE BATTLE');
     } else {
-      this.network.sendPlayerDeath(1);
+      // Solo Mode or legacy fallback
+      const isRoundOver = this.checkMatchRoundStatus();
+      if (!isRoundOver) {
+        this.showAlert('SHIP DESTROYED // SPECTATING ACTIVE BATTLE');
+      }
     }
-
-    // 2. Open round-modal
-    this.showDefeatModal();
   }
 
   public showDefeatModal(customTitle = 'YOU DIED', customSubtitle = 'YOUR SHIP WAS DESTROYED'): void {
@@ -2046,10 +2162,20 @@ class WormholeGame {
       }
     }
 
-    const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
-    const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
-    const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
-    scoreEl.innerText = `${myWins} - ${oppWins}`;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    if (scoreEl) {
+      if (isTeamMode) {
+        scoreEl.innerText = `ALPHA: ${this.gameState.player1Score}  |  OMEGA: ${this.gameState.player2Score}`;
+      } else {
+        const topStandings = this.tablePlayers
+          .filter(p => !!p)
+          .sort((a, b) => b!.wins - a!.wins)
+          .slice(0, 4)
+          .map(p => `${p!.name}: ${p!.wins}`)
+          .join(' | ');
+        scoreEl.innerText = topStandings || `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+      }
+    }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
     roundModal.classList.add('active');
@@ -2078,10 +2204,20 @@ class WormholeGame {
       killerEl.innerText = '';
       killerEl.style.display = 'none';
     }
-    const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
-    const myWins = isP1Local ? this.gameState.player1Score : this.gameState.player2Score;
-    const oppWins = isP1Local ? this.gameState.player2Score : this.gameState.player1Score;
-    scoreEl.innerText = `${myWins} - ${oppWins}`;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    if (scoreEl) {
+      if (isTeamMode) {
+        scoreEl.innerText = `ALPHA: ${this.gameState.player1Score}  |  OMEGA: ${this.gameState.player2Score}`;
+      } else {
+        const topStandings = this.tablePlayers
+          .filter(p => !!p)
+          .sort((a, b) => b!.wins - a!.wins)
+          .slice(0, 4)
+          .map(p => `${p!.name}: ${p!.wins}`)
+          .join(' | ');
+        scoreEl.innerText = topStandings || `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+      }
+    }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
     roundModal.classList.add('active');
@@ -2129,32 +2265,8 @@ class WormholeGame {
 
     this.updateTableRosterUI();
 
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-    if (isTeamMode) {
-      this.checkTeamRoundStatus();
-      return;
-    }
-
-    // Check if any opponent remains alive (FFA Mode)
-    let opponentsRemaining = false;
-    for (let i = 1; i < 8; i++) {
-      if (this.tablePlayers[i] && this.tablePlayers[i]!.isAlive) {
-        opponentsRemaining = true;
-        break;
-      }
-    }
-
-    if (!opponentsRemaining) {
-      if (!this.network.isConnected || this.network.isHost) {
-        this.gameState.registerPlayer1Kill();
-        if (this.network.isConnected && this.network.isHost) {
-          this.network.sendKillEvent(1, 0, this.gameState.player1Score, this.gameState.player2Score);
-        }
-      }
-      if ((this.gameState.phase as string) !== 'MATCH_OVER') {
-        this.showVictoryModal();
-      }
-    }
+    // Check if only one remaining pilot/team survives
+    this.checkMatchRoundStatus();
   }
 
   public startNextRound(): void {
@@ -4262,7 +4374,7 @@ class WormholeGame {
         !document.getElementById('match-modal')?.classList.contains('active') &&
         !document.getElementById('spawner-modal')?.classList.contains('active')
       ) {
-        this.showVictoryModal();
+        this.checkMatchRoundStatus();
       }
     }
 
