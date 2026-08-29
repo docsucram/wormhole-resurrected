@@ -43,6 +43,7 @@ export class PlayerShip {
   public shieldTime = 0; // seconds remaining
   public shotCooldown = 0;
   public specialCooldown = 0;
+  public onPowerupLaunched?: (type: number) => void;
   public heatSeekerRounds = 3;
   private hsRegenTimer = 20.0;
 
@@ -419,6 +420,9 @@ export class PlayerShip {
 
     bullets.push(pBullet);
     sound.playSpecial(1);
+    if (this.onPowerupLaunched) {
+      this.onPowerupLaunched(pType);
+    }
   }
 
   private triggerSpecial(sound: SoundEngine, missiles: HeatSeekerMissile[]): void {
@@ -488,6 +492,9 @@ export class PlayerShip {
         this.powerupInventory.push(type);
         const itemName = POWERUP_NAMES[type] || 'HAZARD';
         popups.push(new TextPopup(this.x, this.y, `+ ${itemName} [F]`, '#ff00ff'));
+        sound.playPowerup();
+      } else {
+        popups.push(new TextPopup(this.x, this.y, 'INVENTORY FULL', '#ff3344'));
         sound.playPowerup();
       }
     }

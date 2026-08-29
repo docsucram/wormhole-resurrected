@@ -140,7 +140,7 @@ export class PortalTurret implements Hazard {
 
     // Ship body collision
     if (Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'Turret Laser' });
       this.takeDamage(20, particles, sound);
     }
 

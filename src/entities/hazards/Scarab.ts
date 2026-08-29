@@ -195,7 +195,7 @@ export class Scarab implements Hazard {
 
     // Player contact collision
     if (player.isAlive && Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'Scarab' });
       this.takeDamage(20, particles, sound, powerups);
     }
 

@@ -85,6 +85,16 @@ export class BotController {
   private seenHazardTimestamps: Map<Hazard, number> = new Map();
   private prevHazardPositions: Map<Hazard, { x: number; y: number; time: number; vx: number; vy: number }> = new Map();
 
+  // AI Brain Telemetry & Real-time Debug Vectors
+  public debugState = 'IDLE';
+  public debugTargetPos: { x: number; y: number } | null = null;
+  public debugThreatPos: { x: number; y: number } | null = null;
+  public debugThreatRadius = 0;
+
+  // Perimeter avoidance configuration
+  public static globalAvoidPerimeter = true;
+  public avoidPerimeter = true;
+
   constructor(difficulty: BotDifficulty = 'medium') {
     this.difficulty = difficulty;
     this.launchCooldown = 1.0 + Math.random() * 2.0;
@@ -210,11 +220,17 @@ export class BotController {
     targetY: number,
     targetVx: number,
     targetVy: number,
-    bulletSpeed: number
+    bulletSpeed: number,
+    originVx = 0,
+    originVy = 0
   ): { x: number; y: number } {
+    // Relative velocity accounting for inherited ship velocity (bullets inherit 0.25 of ship velocity)
+    const relVx = targetVx - originVx * 0.25;
+    const relVy = targetVy - originVy * 0.25;
+
     const rx = targetX - originX;
     const ry = targetY - originY;
-    const targetSpeedSq = targetVx * targetVx + targetVy * targetVy;
+    const targetSpeedSq = relVx * relVx + relVy * relVy;
     const bulletSpeedSq = bulletSpeed * bulletSpeed;
 
     if (targetSpeedSq < 0.01) {
@@ -222,7 +238,7 @@ export class BotController {
     }
 
     const a = targetSpeedSq - bulletSpeedSq;
-    const b = 2 * (rx * targetVx + ry * targetVy);
+    const b = 2 * (rx * relVx + ry * relVy);
     const c = rx * rx + ry * ry;
 
     let t = 0;
@@ -240,7 +256,9 @@ export class BotController {
       }
     }
 
-    const clampedT = Math.max(0, Math.min(t, 1.2)); // Up to 1.2s lead window
+    // t is in frames (ticks). Clamp to realistic intercept window of up to 60 frames (1.0 second)
+    const fallbackT = Math.hypot(rx, ry) / bulletSpeed;
+    const clampedT = Math.max(0, Math.min(t > 0 ? t : fallbackT, 60));
     return {
       x: targetX + targetVx * clampedT,
       y: targetY + targetVy * clampedT,
@@ -328,19 +346,27 @@ export class BotController {
     hazards: Hazard[],
     cfg: DifficultyConfig
   ): void {
-    // Reset inputs
+    // Reset inputs & telemetry
     this.currentInput.fire = false;
     this.currentInput.secondaryFire = false;
     this.currentInput.tertiaryFire = false;
     this.currentInput.up = false;
 
+    this.debugState = 'ORBITAL PATROL';
+    this.debugTargetPos = null;
+    this.debugThreatPos = null;
+    this.debugThreatRadius = 0;
+
     const bound = 370;
 
-    // 1. EMERGENCY: Evade perimeter walls & corners
-    if (Math.abs(botShip.x) > bound || Math.abs(botShip.y) > bound) {
-      this.targetAngle = Math.atan2(-botShip.y, -botShip.x);
-      this.currentInput.up = true;
-      return;
+    // 1. EMERGENCY: Evade perimeter walls & corners (Easy / Novice ONLY)
+    if (this.difficulty === 'easy' && this.avoidPerimeter && BotController.globalAvoidPerimeter) {
+      if (Math.abs(botShip.x) > bound || Math.abs(botShip.y) > bound) {
+        this.debugState = 'AVOID PERIMETER';
+        this.targetAngle = Math.atan2(-botShip.y, -botShip.x);
+        this.currentInput.up = true;
+        return;
+      }
     }
 
     // 2. EMERGENCY: Evade hostile incoming bullets
@@ -348,6 +374,9 @@ export class BotController {
       if (b.ownerSlot !== botShip.slot) {
         const dist = Math.hypot(b.x - botShip.x, b.y - botShip.y);
         if (dist < 110) {
+          this.debugState = 'EVADE BULLETS';
+          this.debugThreatPos = { x: b.x, y: b.y };
+          this.debugThreatRadius = 14;
           const bAngle = Math.atan2(botShip.y - b.y, botShip.x - b.x);
           this.targetAngle = bAngle + Math.PI / 2;
           this.currentInput.up = true;
@@ -364,6 +393,9 @@ export class BotController {
         if (nukeObj.countdown !== undefined && nukeObj.countdown <= 3.2) {
           const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
           if (dist < 460) {
+            this.debugState = 'EVADE NUKE BLAST';
+            this.debugThreatPos = { x: h.x, y: h.y };
+            this.debugThreatRadius = 240;
             // Immediate escape vector directly away from detonating nuclear core
             this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
             this.currentInput.up = true;
@@ -380,6 +412,9 @@ export class BotController {
       const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
       const safeDist = h.radius + (h.powerupType === 10 ? 90 : (this.difficulty === 'insane' ? 75 : this.difficulty === 'hard' ? 65 : this.difficulty === 'medium' ? 55 : 40));
       if (dist < safeDist) {
+        this.debugState = `EVADE HAZARD (#${h.powerupType})`;
+        this.debugThreatPos = { x: h.x, y: h.y };
+        this.debugThreatRadius = h.radius;
         // Immediate escape vector directly away from hazard body
         this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
         this.currentInput.up = true;
@@ -392,8 +427,6 @@ export class BotController {
     }
 
     // 2.6 PREDICTIVE RAMMING ANTICIPATION & DEFENSIVE EVASION (Insane, Hard, & Medium AI)
-    // Projects forward flight trajectory to detect impending collisions with Mines, Inflators, Puds, and Asteroids.
-    // Uses rapid pulse fire to pop the threat and tangent thrust bursts to divert around it.
     if (this.difficulty === 'insane' || this.difficulty === 'hard' || this.difficulty === 'medium') {
       const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
       const lookAheadFrames = this.difficulty === 'insane' ? 28 : (this.difficulty === 'hard' ? 24 : 18);
@@ -417,6 +450,9 @@ export class BotController {
           const collisionMargin = h.radius + (this.difficulty === 'insane' ? 38 : this.difficulty === 'hard' ? 30 : 22);
 
           if (perpDist < collisionMargin) {
+            this.debugState = `PREDICTIVE EVADE (#${h.powerupType})`;
+            this.debugThreatPos = { x: h.x, y: h.y };
+            this.debugThreatRadius = h.radius;
             // Imminent impact trajectory detected!
             const hazAngle = Math.atan2(toHazY, toHazX);
             const side = (toHazX * travelDirY - toHazY * travelDirX) >= 0 ? -1 : 1;
@@ -444,288 +480,18 @@ export class BotController {
       }
     }
 
-    // 3. HIGH PRIORITY COMBAT THREAT: Active Inflator Suppression & Destruction
-    // Inflators (Type 10) expand continuously and will overwhelm the arena if left unchecked.
-    // Lock on, maintain safe standoff distance (160px - 240px), and pump sustained laser fire until destroyed!
-    const activeInflator = hazards.find(
-      (h) => h.isAlive && h.powerupType === 10 && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 480
-    );
-
-    if (activeInflator) {
-      const infDist = Math.hypot(activeInflator.x - botShip.x, activeInflator.y - botShip.y);
-      const toInfAngle = Math.atan2(activeInflator.y - botShip.y, activeInflator.x - botShip.x);
-
-      // Add difficulty-calibrated aim precision
-      const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * (cfg.aimErrorRad * 0.35);
-      this.targetAngle = toInfAngle + jitter;
-
-      let angleDiff = this.targetAngle - botShip.angle;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-
-      // Safe standoff distance kiting: keep 160-240px distance
-      const minSafeDistance = Math.max(160, activeInflator.radius + 75);
-      if (infDist < minSafeDistance) {
-        // Too close to expanding inflator! Back away while keeping distance
-        this.targetAngle = Math.atan2(botShip.y - activeInflator.y, botShip.x - activeInflator.x);
-        this.currentInput.up = true;
-      } else if (infDist > minSafeDistance + 60) {
-        // Approach into optimal laser range
-        this.currentInput.up = true;
-      } else {
-        // In sweet spot range: maintain steady firing stance
-        this.currentInput.up = false;
-      }
-
-      // Continuously fire pulse cannons into the inflator until it is completely popped
-      if (Math.abs(angleDiff) < 0.45) {
-        if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, infDist)) {
-          this.currentInput.fire = true;
-        }
-      }
-      return;
-    }
-
-    // 4. TACTICAL SPECIAL ABILITY ACTIVATION (tertiaryFire)
-    if (botShip.specialCooldown <= 0 && Math.random() < cfg.specialAbilityChance) {
-      // Turtle (1): Turtle Cannon defensive blast when swarmed or low HP
-      if (botShip.specialType === 1) {
-        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 180);
-        if (nearThreats.length >= 2 || botShip.health <= 60) {
-          this.currentInput.tertiaryFire = true;
-        }
-      }
-      // ShapeShifter (2): Phase shift when under heavy fire
-      else if (botShip.specialType === 2) {
-        const hostileBulletsNear = bullets.filter((b) => b.ownerSlot !== botShip.slot && Math.hypot(b.x - botShip.x, b.y - botShip.y) < 120);
-        if (hostileBulletsNear.length >= 2) {
-          this.currentInput.tertiaryFire = true;
-        }
-      }
-      // HeatSeeker (3): Launch salvo if target aligned
-      else if (botShip.specialType === 3 && botShip.heatSeekerRounds > 0) {
-        const targetThreat = hazards.find((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 320);
-        if (targetThreat || wormholes.length > 0) {
-          this.currentInput.tertiaryFire = true;
-        }
-      }
-      // Flagship (4): Activate tractor beam if powerups exist in arena
-      else if (botShip.specialType === 4 && powerups.length > 0 && !botShip.isAttractorActive) {
-        this.currentInput.tertiaryFire = true;
-      }
-    }
-
-    // 4. POWERUP HARVESTING VS WORMHOLE SHOOTING
-    // Hard/Insane AI wait until 6 powerups spawn; Moderate (Medium) AI waits until 5 powerups spawn
-    // to build a rich battlefield flood rather than chasing solitary items (unless needing emergency HP).
-    const validPowerups = powerups.filter((p) => p.isAlive);
-    const isApexAi = this.difficulty === 'hard' || this.difficulty === 'insane';
-    const isMediumAi = this.difficulty === 'medium';
-    const isLowHealth = botShip.health < botShip.maxHealth * 0.55;
-    const hasHealthPowerup = validPowerups.some((p) => p.type === 5);
-    const needsUrgentHealth = isLowHealth && hasHealthPowerup;
-
-    const minPowerupsThreshold = isApexAi ? 6 : (isMediumAi ? 5 : 1);
-    const preferShootingWormhole =
-      (isApexAi || isMediumAi) &&
-      validPowerups.length < minPowerupsThreshold &&
-      !needsUrgentHealth &&
-      wormholes.length > 0;
-
-    if (!this.isUnloadingBarrage && !preferShootingWormhole && validPowerups.length > 0) {
-      let bestPup: Powerup | null = null;
-      let bestScore = -Infinity;
-      const activeThreatCount = hazards.filter((h) => h.isAlive && h.powerupType !== 16).length;
-
-      for (const pup of validPowerups) {
-        const dist = Math.hypot(pup.x - botShip.x, pup.y - botShip.y);
-        if (dist > cfg.powerupPerceptionRadius) continue;
-
-        // Rule: DO NOT go for health (+HP, type 5) if already at full health!
-        if (pup.type === 5 && botShip.health >= botShip.maxHealth) {
-          continue;
-        }
-
-        // Rule: DO NOT go for ZAP (type 4) if there are no enemies/hazards in the arena!
-        if (pup.type === 4 && activeThreatCount === 0) {
-          continue;
-        }
-
-        let score = 500 - dist;
-
-        // Urgent health / defensive pickups when damaged
-        const healthPct = botShip.health / (botShip.maxHealth || 200);
-        if (healthPct < 0.60) {
-          if (pup.type === 5) {
-            // Insane AI focuses aggressively on health when low
-            score += this.difficulty === 'insane' ? 2500 : 450;
-          }
-          if (pup.type === 3) score += 300; // SHIELD
-          if (pup.type === 4 && activeThreatCount > 0) score += 350; // ZAP
-        }
-
-        // Essential ship upgrades
-        if (pup.type === 0 && (botShip.bulletLevel ?? 1) < 3) score += 180; // GUN
-        if (pup.type === 1) score += 120; // THRUST
-        if (pup.type === 2 && !botShip.hasRetros) score += 200; // RETROS
-
-        // Intercept powerup if a Scarab (hazard type 17) is heading for it
-        const competingScarab = hazards.find((h) => h.isAlive && h.powerupType === 17 && Math.hypot(h.x - pup.x, h.y - pup.y) < 220);
-        if (competingScarab) score += 250;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestPup = pup;
-        }
-      }
-
-      if (bestPup) {
-        const rawDist = Math.hypot(bestPup.x - botShip.x, bestPup.y - botShip.y);
-        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
-
-        // Calculate trajectory intercept point for moving powerups
-        const leadWeight = this.difficulty === 'insane' ? 1.4 : this.difficulty === 'hard' ? 1.0 : this.difficulty === 'medium' ? 0.6 : 0.0;
-        const leadFrames = Math.min(rawDist / Math.max(currentSpeed, 4.5), 38.0) * leadWeight;
-        const targetX = bestPup.x + (bestPup.vx || 0) * leadFrames;
-        const targetY = bestPup.y + (bestPup.vy || 0) * leadFrames;
-
-        // Path around any obstacle hazards blocking the way to the intercept point
-        this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
-
-        // Retro Braking: If bot has retros and is close, release thrust to stop drifting past it
-        if (botShip.hasRetros && rawDist < 70 && currentSpeed > 1.8) {
-          this.currentInput.up = false;
-        } else if (rawDist > 35 || currentSpeed < 2.0) {
-          this.currentInput.up = true;
-        }
-
-        // STRICT TRIGGER DISCIPLINE: Never shoot when pursuing powerups!
-        this.currentInput.fire = false;
-        return;
-      }
-    }
-
-    // 5. DEFEND AGAINST HOSTILE HAZARDS & CLEAR MINEFIELDS / MINELAYERS
-    if (hazards.length > 0) {
-      let targetHazard: Hazard | null = null;
-      let minThreatDist = Infinity;
-
-      for (const h of hazards) {
-        if (!h.isAlive || h.powerupType === 16) continue;
-
-        const isMine = h.powerupType === 8;
-        const isMineLayer = h.powerupType === 11;
-        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
-
-        // Expanded engagement range for MineLayers (crucial to eliminate before arena gets flooded) and Mines
-        const maxRange = isMineLayer && isApex ? 480 : isMine ? (isApex ? 320 : 240) : cfg.hazardEngagementRadius;
-
-        // Human-like Target Acquisition Reaction Delay
-        const firstSeen = this.seenHazardTimestamps.get(h) ?? this.totalTime;
-        if (this.totalTime - firstSeen < ((isMine || isMineLayer) ? cfg.reactionDelay * 0.4 : cfg.reactionDelay)) {
-          continue; // Has not reacted to this newly emerged hazard yet!
-        }
-
-        // AI ignores Nuke in its first 2 seconds
-        if (h.powerupType === 14) {
-          const nukeObj = h as unknown as { countdown?: number };
-          if (nukeObj.countdown !== undefined && nukeObj.countdown > 6.0) {
-            continue;
-          }
-        }
-
-        const d = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-        // Weighted threat distance: MineLayers and Mines are prioritized heavily
-        const threatScore = isMineLayer ? d * 0.45 : isMine ? d * 0.65 : d;
-        if (d < maxRange && threatScore < minThreatDist) {
-          minThreatDist = threatScore;
-          targetHazard = h;
-        }
-      }
-
-      if (targetHazard) {
-        const actualDist = Math.hypot(targetHazard.x - botShip.x, targetHazard.y - botShip.y);
-        const bulletSpeed = 10.0;
-        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
-        const hazData = this.prevHazardPositions.get(targetHazard) || { vx: (targetHazard as any).vx || 0, vy: (targetHazard as any).vy || 0 };
-
-        let leadX = targetHazard.x;
-        let leadY = targetHazard.y;
-
-        if (isApex) {
-          // Exact predictive interception calculation for moving UFOs, Scarabs, Gunships, etc.
-          const intercept = this.calculatePredictiveIntercept(
-            botShip.x,
-            botShip.y,
-            targetHazard.x,
-            targetHazard.y,
-            hazData.vx,
-            hazData.vy,
-            bulletSpeed
-          );
-          leadX = intercept.x;
-          leadY = intercept.y;
-        } else if (this.difficulty === 'medium') {
-          // Linear lead calculation
-          const timeToHit = Math.min(1.0, actualDist / (bulletSpeed * 60));
-          leadX = targetHazard.x + hazData.vx * timeToHit * 60;
-          leadY = targetHazard.y + hazData.vy * timeToHit * 60;
-        }
-
-        const baseAngle = Math.atan2(leadY - botShip.y, leadX - botShip.x);
-
-        // Add difficulty-scaled aim jitter
-        const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * cfg.aimErrorRad;
-        this.targetAngle = baseAngle + jitter;
-
-        let angleDiff = this.targetAngle - botShip.angle;
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-
-        // Inertial Drift Maneuvers for Hard & Insane AI
-        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
-        if (isApex && currentSpeed > 2.0) {
-          const moveAngle = Math.atan2(botShip.vy, botShip.vx);
-          let travelAimDiff = Math.abs(this.targetAngle - moveAngle);
-          while (travelAimDiff > Math.PI) travelAimDiff = Math.abs(travelAimDiff - 2 * Math.PI);
-
-          // If moving fast and pivoting > 45 degrees to target, glide on inertia and drift-fire!
-          if (travelAimDiff > 0.75 && actualDist > 130) {
-            this.currentInput.up = false;
-          } else if (actualDist > 160) {
-            this.currentInput.up = true;
-          }
-        } else if (actualDist > 160) {
-          this.currentInput.up = true;
-        }
-
-        // Retro Braking for Hard/Insane near arena perimeter
-        if (isApex && botShip.hasRetros && (Math.abs(botShip.x) > 310 || Math.abs(botShip.y) > 310) && currentSpeed > 2.5) {
-          this.currentInput.up = false;
-        }
-
-        // Fire if aligned and NO powerups are in line-of-fire
-        if (Math.abs(angleDiff) < (isApex ? 0.40 : 0.35) && actualDist < cfg.hazardEngagementRadius) {
-          if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, actualDist)) {
-            this.currentInput.fire = true;
-          }
-        }
-        return;
-      }
-    }
-
-    // 6. LAUNCH STORED HAZARDS: Stockpile and burst launch into opponent wormholes
+    // 3. LAUNCH STORED HAZARDS: Stockpile and burst launch into opponent wormholes (High Priority)
     const invCount = botShip.powerupInventory.length;
     let shouldLaunch = this.isUnloadingBarrage;
 
     if (invCount > 0 && wormholes.length > 0) {
       if (!shouldLaunch && this.launchCooldown <= 0) {
         if (this.difficulty === 'insane') {
-          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 5.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 5.0);
+          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 5.0) || (invCount >= 1 && powerups.length === 0 && this.inventoryHoldTimer >= 5.0);
         } else if (this.difficulty === 'hard') {
-          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 8.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0);
+          shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 8.0) || (invCount >= 1 && powerups.length === 0 && this.inventoryHoldTimer >= 8.0);
         } else if (this.difficulty === 'medium') {
-          shouldLaunch = invCount >= 4 || (invCount >= 3 && this.inventoryHoldTimer >= 7.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 5.0);
+          shouldLaunch = invCount >= 4 || (invCount >= 3 && this.inventoryHoldTimer >= 7.0) || (invCount >= 1 && powerups.length === 0 && this.inventoryHoldTimer >= 5.0);
         } else {
           shouldLaunch = true;
         }
@@ -750,49 +516,351 @@ export class BotController {
         const targetX = wh.x + whVx * timeToHitFrames;
         const targetY = wh.y + whVy * timeToHitFrames;
 
+        this.debugState = `LAUNCH HAZARD (#${botShip.powerupInventory[0]})`;
+        this.debugTargetPos = { x: targetX, y: targetY };
+
         this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
         let angleDiff = this.targetAngle - botShip.angle;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        // Pacing & Standoff Distance Control
-        const toWhDirX = (wh.x - botShip.x) / Math.max(1, rawDist);
-        const toWhDirY = (wh.y - botShip.y) / Math.max(1, rawDist);
-        const closingVelocity = (botShip.vx - whVx) * toWhDirX + (botShip.vy - whVy) * toWhDirY;
-
-        if (rawDist > 250) {
+        if (rawDist > 260) {
           this.currentInput.up = true;
-        } else if (rawDist < 175) {
+        } else if (rawDist < 140) {
           this.currentInput.up = false;
-        } else {
-          if (closingVelocity > 1.2) {
-            this.currentInput.up = false;
-          } else if (closingVelocity < -0.6) {
-            this.currentInput.up = true;
+        }
+
+        if (Math.abs(angleDiff) < (isApex ? 0.35 : 0.25) && rawDist < 420 && rawDist > 80) {
+          this.currentInput.secondaryFire = true;
+          this.launchCooldown = isApex ? 0.25 : (this.difficulty === 'medium' ? 0.45 : 0.70);
+          this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
+        }
+        return;
+      }
+    }
+
+    // 4. COMBAT & DESTROY HOSTILE HAZARDS (Prioritized OVER shooting the wormhole for Hard & Insane)
+    // 4.1 Active Inflator Suppression & Destruction (Type 10)
+    const activeInflator = hazards.find(
+      (h) => h.isAlive && h.powerupType === 10 && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 480
+    );
+
+    if (activeInflator) {
+      this.debugState = 'SUPPRESS INFLATOR';
+      this.debugTargetPos = { x: activeInflator.x, y: activeInflator.y };
+      this.debugThreatPos = { x: activeInflator.x, y: activeInflator.y };
+      this.debugThreatRadius = activeInflator.radius;
+
+      const infDist = Math.hypot(activeInflator.x - botShip.x, activeInflator.y - botShip.y);
+      const toInfAngle = Math.atan2(activeInflator.y - botShip.y, activeInflator.x - botShip.x);
+
+      const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * (cfg.aimErrorRad * 0.35);
+      this.targetAngle = toInfAngle + jitter;
+
+      let angleDiff = this.targetAngle - botShip.angle;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+      const minSafeDistance = Math.max(160, activeInflator.radius + 75);
+      if (infDist < minSafeDistance) {
+        this.targetAngle = Math.atan2(botShip.y - activeInflator.y, botShip.x - activeInflator.x);
+        this.currentInput.up = true;
+      } else if (infDist > minSafeDistance + 60) {
+        this.currentInput.up = true;
+      } else {
+        this.currentInput.up = false;
+      }
+
+      if (Math.abs(angleDiff) < 0.45) {
+        if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, infDist)) {
+          this.currentInput.fire = true;
+        }
+      }
+      return;
+    }
+
+    // 4.2 Defend against & destroy hostile hazards (MineLayers, Mines, UFOs, Scarabs, Gunships, etc.)
+    if (hazards.length > 0) {
+      let targetHazard: Hazard | null = null;
+      let minThreatDist = Infinity;
+
+      for (const h of hazards) {
+        if (!h.isAlive || h.powerupType === 16) continue;
+
+        const isMine = h.powerupType === 8;
+        const isMineLayer = h.powerupType === 11;
+        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+
+        const maxRange = isMineLayer && isApex ? 520 : isMine ? (isApex ? 340 : 240) : cfg.hazardEngagementRadius;
+
+        const firstSeen = this.seenHazardTimestamps.get(h) ?? this.totalTime;
+        if (this.totalTime - firstSeen < ((isMine || isMineLayer) ? cfg.reactionDelay * 0.4 : cfg.reactionDelay)) {
+          continue;
+        }
+
+        // AI ignores Nuke in its first 2 seconds
+        if (h.powerupType === 14) {
+          const nukeObj = h as unknown as { countdown?: number };
+          if (nukeObj.countdown !== undefined && nukeObj.countdown > 6.0) {
+            continue;
           }
         }
 
-        if (Math.abs(angleDiff) < (isApex ? 0.35 : 0.28) && rawDist < 440 && rawDist > 120) {
-          if (this.launchCooldown <= 0) {
-            this.currentInput.secondaryFire = true;
-            this.currentInput.fire = false;
-            // Rapid-fire sequence to empty all powerups down to 0
-            this.launchCooldown = this.difficulty === 'insane' ? 0.16 : this.difficulty === 'hard' ? 0.25 : this.difficulty === 'medium' ? 0.45 : 0.9;
-            if (invCount <= 1) {
-              this.launchCooldown = cfg.launchCooldownTime;
-              this.targetWormholeIndex = (this.targetWormholeIndex + 1) % wormholes.length;
-              this.inventoryHoldTimer = 0;
-              this.isUnloadingBarrage = false;
-            }
+        const d = Math.hypot(h.x - botShip.x, h.y - botShip.y);
+        const threatScore = isMineLayer ? d * 0.45 : isMine ? d * 0.65 : d;
+        if (d < maxRange && threatScore < minThreatDist) {
+          minThreatDist = threatScore;
+          targetHazard = h;
+        }
+      }
+
+      if (targetHazard) {
+        const actualDist = Math.hypot(targetHazard.x - botShip.x, targetHazard.y - botShip.y);
+        const bulletSpeed = 10.0;
+        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+        const hazData = this.prevHazardPositions.get(targetHazard) || { vx: (targetHazard as any).vx || 0, vy: (targetHazard as any).vy || 0 };
+
+        let leadX = targetHazard.x;
+        let leadY = targetHazard.y;
+
+        if (isApex) {
+          const intercept = this.calculatePredictiveIntercept(
+            botShip.x,
+            botShip.y,
+            targetHazard.x,
+            targetHazard.y,
+            hazData.vx,
+            hazData.vy,
+            bulletSpeed,
+            botShip.vx,
+            botShip.vy
+          );
+          leadX = intercept.x;
+          leadY = intercept.y;
+        } else if (this.difficulty === 'medium') {
+          const timeToHit = Math.min(1.0, actualDist / (bulletSpeed * 60));
+          leadX = targetHazard.x + hazData.vx * timeToHit * 60;
+          leadY = targetHazard.y + hazData.vy * timeToHit * 60;
+        }
+
+        this.debugState = `ENGAGE HAZARD (#${targetHazard.powerupType})`;
+        this.debugTargetPos = { x: leadX, y: leadY };
+        this.debugThreatPos = { x: targetHazard.x, y: targetHazard.y };
+        this.debugThreatRadius = targetHazard.radius;
+
+        const baseAngle = Math.atan2(leadY - botShip.y, leadX - botShip.x);
+        const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * cfg.aimErrorRad;
+        this.targetAngle = baseAngle + jitter;
+
+        let angleDiff = this.targetAngle - botShip.angle;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
+        if (isApex && currentSpeed > 2.0) {
+          const moveAngle = Math.atan2(botShip.vy, botShip.vx);
+          let travelAimDiff = Math.abs(this.targetAngle - moveAngle);
+          while (travelAimDiff > Math.PI) travelAimDiff = Math.abs(travelAimDiff - 2 * Math.PI);
+
+          if (travelAimDiff > 0.75 && actualDist > 130) {
+            this.currentInput.up = false;
+          } else if (actualDist > 160) {
+            this.currentInput.up = true;
+          }
+        } else if (actualDist > 160) {
+          this.currentInput.up = true;
+        }
+
+        const fireTolerance = this.difficulty === 'insane' ? 0.20 : (this.difficulty === 'hard' ? 0.28 : 0.35);
+        if (Math.abs(angleDiff) < fireTolerance && actualDist < cfg.hazardEngagementRadius) {
+          if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, actualDist)) {
+            this.currentInput.fire = true;
           }
         }
         return;
       }
     }
 
-    // 7. ATTACK ORBITAL WORMHOLE: Shoot primary lasers to spawn fresh powerups
+    // 4.3 Ghost-Pud Punting (Easy / Novice ONLY - disabled for Medium, Hard, Insane)
+    if (this.difficulty === 'easy') {
+      const activeGhostPud = hazards.find((h) => h.isAlive && h.powerupType === 18);
+      if (activeGhostPud && wormholes.length > 0) {
+        const targetWh = wormholes[this.targetWormholeIndex % wormholes.length];
+        const pudDist = Math.hypot(activeGhostPud.x - botShip.x, activeGhostPud.y - botShip.y);
+
+        if (pudDist < 360) {
+          this.debugState = 'PUNT GHOST-PUD';
+          this.debugTargetPos = { x: activeGhostPud.x, y: activeGhostPud.y };
+          this.debugThreatPos = { x: activeGhostPud.x, y: activeGhostPud.y };
+          this.debugThreatRadius = activeGhostPud.radius;
+
+          const toWhAngle = Math.atan2(targetWh.y - activeGhostPud.y, targetWh.x - activeGhostPud.x);
+          const standoffDist = 110;
+          const alignSpotX = activeGhostPud.x - Math.cos(toWhAngle) * standoffDist;
+          const alignSpotY = activeGhostPud.y - Math.sin(toWhAngle) * standoffDist;
+
+          const distToAlignSpot = Math.hypot(alignSpotX - botShip.x, alignSpotY - botShip.y);
+
+          if (distToAlignSpot > 45) {
+            this.targetAngle = this.findClearNavigationAngle(botShip, alignSpotX, alignSpotY, hazards);
+            this.currentInput.up = true;
+          } else {
+            const toPudAngle = Math.atan2(activeGhostPud.y - botShip.y, activeGhostPud.x - botShip.x);
+            this.targetAngle = toPudAngle;
+
+            let angleDiff = this.targetAngle - botShip.angle;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+            if (Math.abs(angleDiff) < 0.28) {
+              if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, pudDist)) {
+                this.currentInput.fire = true;
+              }
+            }
+          }
+          return;
+        }
+      }
+    }
+
+    // 5. POWERUP HARVESTING vs WORMHOLE SHOOTING
+    // Hard (Ace) and Insane (Cyborg) wait until at least 5-6 powerups spawn in the arena before sweeping the field,
+    // unless low health forces an emergency heal or no wormholes exist.
+    const allAlivePowerups = powerups.filter((p) => p.isAlive);
+    const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+    const isMedium = this.difficulty === 'medium';
+    const isLowHealth = botShip.health < botShip.maxHealth * 0.55;
+    const hasEmergencyDefensive = allAlivePowerups.some((p) => (p.type === 3 || p.type === 4 || p.type === 5));
+    const needsUrgentHealth = isLowHealth && hasEmergencyDefensive;
+
+    const minPowerupThreshold = this.difficulty === 'insane' ? 6 : (this.difficulty === 'hard' ? 5 : (isMedium ? 4 : 1));
+    const shouldHarvestPowerups = (allAlivePowerups.length >= minPowerupThreshold || needsUrgentHealth || wormholes.length === 0);
+
+    if (shouldHarvestPowerups) {
+      const visiblePowerups = allAlivePowerups.filter((p) => {
+        const d = Math.hypot(p.x - botShip.x, p.y - botShip.y);
+        return d < cfg.powerupPerceptionRadius;
+      });
+
+      if (visiblePowerups.length > 0) {
+        let bestPup: Powerup | null = null;
+        let minScore = Infinity;
+
+        for (const pup of visiblePowerups) {
+          const d = Math.hypot(pup.x - botShip.x, pup.y - botShip.y);
+          let score = d;
+
+          // Cluster / Proximity Bonus: heavily prioritize powerups that are clustered near other powerups
+          let clusterBonus = 0;
+          for (const other of allAlivePowerups) {
+            if (other !== pup) {
+              const distToOther = Math.hypot(other.x - pup.x, other.y - pup.y);
+              if (distToOther < 180) {
+                clusterBonus += (180 - distToOther) * 0.65;
+              }
+            }
+          }
+          score -= clusterBonus;
+
+          // Defensive items (Repair, Shield, Zap)
+          if (pup.type === 3 || pup.type === 4 || pup.type === 5) {
+            score *= (isLowHealth ? 0.35 : 0.65);
+          }
+
+          // Avoid powerups sitting dangerously close to deadly hazards
+          let nearHazard = false;
+          for (const h of hazards) {
+            if (h.isAlive && Math.hypot(h.x - pup.x, h.y - pup.y) < (h.radius + 35)) {
+              nearHazard = true;
+              break;
+            }
+          }
+          if (nearHazard) score *= 2.5;
+
+          if (score < minScore) {
+            minScore = score;
+            bestPup = pup;
+          }
+        }
+
+        if (bestPup) {
+          const directDist = Math.hypot(bestPup.x - botShip.x, bestPup.y - botShip.y);
+
+          // Exit collect powerup mode if the remaining powerup is isolated far away (> 350px) and arena count is low
+          const isIsolatedFar = allAlivePowerups.length < 3 && directDist > 340 && !needsUrgentHealth && wormholes.length > 0;
+
+          if (!isIsolatedFar) {
+            this.debugState = `COLLECT PUP (#${bestPup.type})`;
+            this.debugTargetPos = { x: bestPup.x, y: bestPup.y };
+
+            const navAngle = this.findClearNavigationAngle(botShip, bestPup.x, bestPup.y, hazards);
+            const targetDirX = Math.cos(navAngle);
+            const targetDirY = Math.sin(navAngle);
+
+            const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
+            const dotToTarget = currentSpeed > 0.05 ? (botShip.vx * targetDirX + botShip.vy * targetDirY) / currentSpeed : 0;
+            const lateralSpeed = currentSpeed > 0.05 ? Math.abs(botShip.vx * (-targetDirY) + botShip.vy * targetDirX) : 0;
+
+            if (isApex) {
+              // Proportional Navigation & Drift Vector Compensation:
+              // Scale desired speed by distance to prevent overshoot
+              const targetSpeed = Math.min(5.2, Math.max(2.4, directDist * 0.032));
+              const desVx = targetDirX * targetSpeed;
+              const desVy = targetDirY * targetSpeed;
+
+              // Correction vector to cancel lateral drift and thrust toward target
+              const corrX = desVx - botShip.vx;
+              const corrY = desVy - botShip.vy;
+              const corrMag = Math.hypot(corrX, corrY);
+
+              if (corrMag > 0.45) {
+                this.targetAngle = Math.atan2(corrY, corrX);
+              } else {
+                this.targetAngle = navAngle;
+              }
+
+              let angleDiff = this.targetAngle - botShip.angle;
+              while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+              while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+              // Thrust modulation:
+              // Coast cleanly if already heading straight into the powerup at sufficient speed
+              const isMovingFastTowards = directDist < 95 && dotToTarget > 0.82 && currentSpeed > 2.0 && lateralSpeed < 1.1;
+              if (isMovingFastTowards || directDist < 26) {
+                this.currentInput.up = false;
+              } else if (Math.abs(angleDiff) < 0.45) {
+                this.currentInput.up = true;
+              } else {
+                this.currentInput.up = false;
+              }
+            } else {
+              this.targetAngle = navAngle;
+              let angleDiff = this.targetAngle - botShip.angle;
+              while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+              while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+              if (Math.abs(angleDiff) < 0.6) {
+                if (directDist > 25 && !(directDist < 60 && currentSpeed > 3.0)) {
+                  this.currentInput.up = true;
+                } else {
+                  this.currentInput.up = false;
+                }
+              } else {
+                this.currentInput.up = false;
+              }
+            }
+
+            this.currentInput.fire = false;
+            return;
+          }
+        }
+      }
+    }
+
+    // 6. ATTACK ORBITAL WORMHOLE: Shoot primary lasers to spawn fresh powerups
     if (wormholes.length > 0) {
-      const wh = wormholes[this.targetWormholeIndex % wormholes.length] || wormholes[0];
+      const whIndex = this.targetWormholeIndex % wormholes.length;
+      const wh = wormholes[whIndex];
 
       // Wormhole orbital velocity & predictive lead calculation
       const whOrbitAngle = Math.atan2(wh.y, wh.x);
@@ -801,12 +869,14 @@ export class BotController {
       const whVy = Math.cos(whOrbitAngle) * whSpeed;
 
       const rawDist = Math.hypot(wh.x - botShip.x, wh.y - botShip.y);
-      const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
       const bulletSpeed = 10.0;
       const timeToHitFrames = isApex ? (rawDist / bulletSpeed) : 0;
 
       const targetX = wh.x + whVx * timeToHitFrames;
       const targetY = wh.y + whVy * timeToHitFrames;
+
+      this.debugState = 'ATTACK WORMHOLE';
+      this.debugTargetPos = { x: targetX, y: targetY };
 
       this.targetAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
       let angleDiff = this.targetAngle - botShip.angle;
@@ -822,10 +892,8 @@ export class BotController {
       if (rawDist > 250) {
         this.currentInput.up = true;
       } else if (rawDist < 175) {
-        // Too close to event horizon: release thrust
         this.currentInput.up = false;
       } else {
-        // In sweet spot (175px - 250px): match pace with orbiting wormhole
         if (closingVelocity > 1.2) {
           this.currentInput.up = false;
         } else if (closingVelocity < -0.6) {
@@ -842,9 +910,99 @@ export class BotController {
       return;
     }
 
-    // 8. GRACEFUL ORBITAL PATROL
+    // 7. GRACEFUL ORBITAL PATROL
+    this.debugState = 'ORBITAL PATROL';
     this.targetAngle += (Math.random() - 0.5) * 0.3;
     this.currentInput.up = true;
   }
-}
 
+  public drawDebug(renderer: any, botShip: PlayerShip): void {
+    if (!botShip || !botShip.isAlive || !renderer || !renderer.ctx) return;
+    const ctx = renderer.ctx;
+    ctx.save();
+
+    // 1. Draw Aim / Lead Line & Crosshair (Cyan)
+    if (this.debugTargetPos) {
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.6)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(botShip.x, botShip.y);
+      ctx.lineTo(this.debugTargetPos.x, this.debugTargetPos.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Target Crosshair
+      const tx = this.debugTargetPos.x;
+      const ty = this.debugTargetPos.y;
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+      ctx.moveTo(tx - 9, ty); ctx.lineTo(tx + 9, ty);
+      ctx.moveTo(tx, ty - 9); ctx.lineTo(tx, ty + 9);
+      ctx.stroke();
+    }
+
+    // 2. Draw Threat Line & Danger Bubble (Red/Orange)
+    if (this.debugThreatPos) {
+      ctx.strokeStyle = 'rgba(255, 51, 68, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(botShip.x, botShip.y);
+      ctx.lineTo(this.debugThreatPos.x, this.debugThreatPos.y);
+      ctx.stroke();
+
+      // Threat danger radius
+      ctx.strokeStyle = 'rgba(255, 51, 68, 0.4)';
+      ctx.fillStyle = 'rgba(255, 51, 68, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(this.debugThreatPos.x, this.debugThreatPos.y, Math.max(16, this.debugThreatRadius || 24), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 3. Draw Velocity / Steering Vector (Green)
+    const speed = Math.hypot(botShip.vx, botShip.vy);
+    if (speed > 0.2) {
+      const headingLen = Math.min(60, Math.max(20, speed * 8));
+      const hx = botShip.x + (botShip.vx / speed) * headingLen;
+      const hy = botShip.y + (botShip.vy / speed) * headingLen;
+      ctx.strokeStyle = '#00ff88';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(botShip.x, botShip.y);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+    }
+
+    // 4. Floating Tactical State Billboard over ship
+    const label = `[AI ${this.difficulty.toUpperCase()}]: ${this.debugState}`;
+    ctx.font = 'bold 8.5px "Orbitron", monospace, sans-serif';
+    const textWidth = ctx.measureText(label).width;
+    const boxX = botShip.x - textWidth / 2 - 5;
+    const boxY = botShip.y - 30;
+    const boxW = textWidth + 10;
+    const boxH = 14;
+
+    ctx.fillStyle = 'rgba(2, 6, 18, 0.88)';
+    ctx.strokeStyle = this.debugState.includes('EVAD') ? '#ff3344' : this.debugState.includes('COLLECT') ? '#00ff88' : this.debugState.includes('LAUNCH') ? '#ff00ff' : '#00e5ff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (typeof (ctx as any).roundRect === 'function') {
+      (ctx as any).roundRect(boxX, boxY, boxW, boxH, 3);
+    } else {
+      ctx.rect(boxX, boxY, boxW, boxH);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, botShip.x, boxY + boxH / 2);
+
+    ctx.restore();
+  }
+}

@@ -50,6 +50,23 @@ export class InputManager {
     }
   }
 
+  public getKeyPrompt(action: InputAction, isMobile: boolean): string {
+    if (isMobile) {
+      if (action === 'fire') return '[FIRE]';
+      if (action === 'secondaryFire') return '[LAUNCH]';
+      if (action === 'tertiaryFire') return '[SPECIAL]';
+      if (action === 'up') return '[STEER]';
+    }
+    const keys = this.bindings[action];
+    if (!keys || keys.length === 0) return '[KEY]';
+    const primary = keys[0];
+    if (primary === 'Space') return '[SPACE]';
+    if (primary.startsWith('Key')) return `[${primary.slice(3)}]`;
+    if (primary.startsWith('Arrow')) return `[${primary.slice(5).toUpperCase()}]`;
+    if (primary === 'ShiftLeft' || primary === 'ShiftRight') return '[SHIFT]';
+    return `[${primary.toUpperCase()}]`;
+  }
+
   private loadSettings(): void {
     try {
       const saved = localStorage.getItem('wh_keybindings');

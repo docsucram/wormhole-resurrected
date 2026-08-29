@@ -413,7 +413,7 @@ export class SimulatedRealm {
 
         if (b.ownerSlot !== realm.botShip.slot && realm.botShip.isAlive) {
           if (Collision.testCircleCircle(b.x, b.y, b.size, realm.botShip.x, realm.botShip.y, 16)) {
-            realm.botShip.takeDamage(b.damage, realm.particles, sound);
+            realm.botShip.takeDamage(b.damage, realm.particles, sound, { weapon: 'Pulse Cannon', slot: b.ownerSlot });
             realm.bullets.splice(i, 1);
             continue;
           }
@@ -487,7 +487,7 @@ export class SimulatedRealm {
         }
 
         if (realm.botShip.isAlive && Collision.testCircleCircle(m.x, m.y, 6, realm.botShip.x, realm.botShip.y, 16)) {
-          realm.botShip.takeDamage(m.damage, realm.particles, sound);
+          realm.botShip.takeDamage(m.damage, realm.particles, sound, { weapon: 'Heat Seeker' });
           realm.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
           realm.missiles.splice(i, 1);
           continue;
@@ -505,7 +505,8 @@ export class SimulatedRealm {
     y: number,
     w: number,
     h: number,
-    targetSlot = 1
+    targetSlot = 1,
+    showAiBrainOverlay = false
   ): void {
     const ctx = renderer.ctx;
     ctx.save();
@@ -595,6 +596,11 @@ export class SimulatedRealm {
 
       // Bot Ship
       realm.botShip.draw(renderer);
+
+      // AI Brain Debug Overlay
+      if (showAiBrainOverlay && realm.botShip.isAlive) {
+        realm.botController.drawDebug(renderer, realm.botShip);
+      }
     }
 
     for (const rb of this.remoteBullets) {

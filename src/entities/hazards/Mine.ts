@@ -21,8 +21,8 @@ export class Mine implements Hazard {
   public slot = 1;
   public powerupType = 8;
   private cycle = 0;
-  private isArming = true;
-  private armTimer = 0.65; // 40 frames
+  public isArming = true;
+  public armTimer = 0.65; // 40 frames
 
   constructor(x: number, y: number, vx = 0, vy = 0, slot = 1, customColor?: string) {
     this.x = x;
@@ -57,7 +57,7 @@ export class Mine implements Hazard {
 
     // Check collision with player
     if (!this.isArming && Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'Mine' });
       this.takeDamage(10, particles, sound);
       return false;
     }

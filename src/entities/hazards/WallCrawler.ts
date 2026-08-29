@@ -226,7 +226,7 @@ export class WallCrawler implements Hazard {
 
     // Collision with player
     if (Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'WallCrawler' });
       this.takeDamage(30, particles, sound);
     }
 

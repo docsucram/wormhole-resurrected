@@ -25,6 +25,13 @@ export class Powerup {
     this.y = y;
     this.type = type;
     this.name = POWERUP_NAMES[type] || 'POWERUP';
+
+    // Zap (4) and Extra Health (5) have 50% of standard lifespan (40.0s vs 80.0s)
+    if (type === 4 || type === 5) {
+      this.maxLife = 40.0;
+      this.life = 40.0;
+    }
+
     const defaultSpeed = 4.5 + Math.random() * 3.0; // Authentic high velocity matching legacy PowerupSprite.java (270 - 450 px/sec)
     const defaultAngle = Math.random() * Math.PI * 2;
     this.vx = vx !== undefined ? vx : Math.cos(defaultAngle) * defaultSpeed;

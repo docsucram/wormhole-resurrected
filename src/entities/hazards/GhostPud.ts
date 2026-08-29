@@ -87,7 +87,7 @@ export class GhostPud implements Hazard {
 
     // Collision with player
     if (Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'Ghost-Pud' });
       // Bounce off ship
       this.vx = (this.x - player.x) * 0.15;
       this.vy = (this.y - player.y) * 0.15;

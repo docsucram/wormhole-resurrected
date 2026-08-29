@@ -93,7 +93,7 @@ export class UFO implements Hazard {
     }
 
     if (Collision.testCircleCircle(this.x, this.y, this.radius, player.x, player.y, 16)) {
-      player.takeDamage(this.damage, particles, sound);
+      player.takeDamage(this.damage, particles, sound, { weapon: 'UFO Plasma' });
       this.takeDamage(20, particles, sound);
     }
 

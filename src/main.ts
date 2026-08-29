@@ -15,6 +15,7 @@ import { HazardManager } from './entities/hazards/HazardManager';
 import { SimulatedRealm } from './entities/ai/SimulatedRealm';
 import { BotController, BotDifficulty } from './entities/ai/BotController';
 import { GameStateManager } from './core/GameState';
+import { TutorialManager } from './core/TutorialManager';
 import { HangarView } from './ui/HangarView';
 import { NetworkManager, WarpPayload } from './net/NetworkManager';
 import { GlobalRelay } from './net/GlobalRelay';
@@ -153,6 +154,12 @@ class WormholeGame {
   private lastTime = 0;
   private roundStartTime = 0;
 
+  // Diagnostics, AI Overlay, & Test Control Flags
+  public showAiBrainOverlay = false;
+  public isGodModeEnabled = false;
+  public isSoloTestModeEnabled = false;
+  public tutorialManager = new TutorialManager();
+
   // Mobile device adaptation flag
   public isMobile = false;
 
@@ -229,6 +236,7 @@ class WormholeGame {
       this.selectedColorIndex
     );
     this.player.onDeath = () => this.handlePlayerElimination();
+    this.player.onPowerupLaunched = () => this.tutorialManager.onOffensiveLaunched();
 
     this.manualHangarView.setColor(this.selectedColorIndex);
     this.modalHangarView.setColor(this.selectedColorIndex);
@@ -873,7 +881,8 @@ class WormholeGame {
             botWh.killSelf(this.particles, this.sound);
           }
           this.updateTableRosterUI();
-          this.addChatLog(`${this.tablePlayers[deadSlot]?.name || 'Bot'} was destroyed!`, 'system');
+          const cause = pkt.cause ? ` [Cause: ${pkt.cause}]` : '';
+          this.addChatLog(`${this.tablePlayers[deadSlot]?.name || 'Bot'} was destroyed!${cause}`, 'system');
           this.sound.playExplosion(true);
         } else if (pkt.type === 'PLAYER_DEATH') {
           if (this.isLanMatchHost && this.gameState.phase === 'PLAYING') {
@@ -891,7 +900,8 @@ class WormholeGame {
               }
               this.updateTableRosterUI();
               const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
-              this.addChatLog(`${deadName}'s ship was destroyed!`, 'system');
+              const cause = pkt.cause ? ` [Cause: ${pkt.cause}]` : '';
+              this.addChatLog(`${deadName}'s ship was destroyed!${cause}`, 'system');
               this.sound.playExplosion(true);
 
               // Broadcast elimination to all clients
@@ -902,6 +912,7 @@ class WormholeGame {
                 packet: {
                   type: 'PLAYER_ELIMINATED',
                   slot: deadSlot,
+                  cause: pkt.cause,
                 },
               });
 
@@ -921,7 +932,8 @@ class WormholeGame {
           }
           this.updateTableRosterUI();
           const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
-          this.addChatLog(`${deadName}'s ship was destroyed!`, 'system');
+          const cause = pkt.cause ? ` [Cause: ${pkt.cause}]` : '';
+          this.addChatLog(`${deadName}'s ship was destroyed!${cause}`, 'system');
           this.sound.playExplosion(true);
         } else if (pkt.type === 'KILL_EVENT') {
           this.gameState.player1Score = pkt.p1Score;
@@ -1424,6 +1436,14 @@ class WormholeGame {
     this.respawnPlayer();
     this.simulatedRealm.resetForNewRound();
     this.gameState.startMatch(match.targetWins, false);
+
+    const isSolo = !this.isLanMatchHost && !this.isLanMatchClient && !this.network.isConnected;
+    if (isSolo && match.botDifficulty === 'easy') {
+      this.tutorialManager.start();
+    } else {
+      this.tutorialManager.stop();
+    }
+
     this.addChatLog(`Engaged Match: ${match.name} // Staging Active`, 'system');
 
     // Display Tactical Match Staging Screen
@@ -1716,6 +1736,9 @@ class WormholeGame {
 
   private setDeckActive(active: boolean, reason?: string): void {
     this.inArena = !active;
+    if (active) {
+      this.tutorialManager.stop();
+    }
     const deck = document.getElementById('screen-front-end')!;
     const hud = document.getElementById('ui-overlay')!;
 
@@ -2178,8 +2201,8 @@ class WormholeGame {
       );
     } else {
       this.showDefeatModal(
-        isTeamWin ? `${winnerName} VICTORIOUS` : `${winnerName.toUpperCase()} WON THE ROUND`,
-        'YOUR SHIP WAS DESTROYED'
+        'YOU DIED',
+        isTeamWin ? `${winnerName} VICTORIOUS` : (winnerSlot >= 0 && this.tablePlayers[winnerSlot] ? `${this.tablePlayers[winnerSlot]!.name.toUpperCase()} WON THE ROUND` : 'YOUR SHIP WAS DESTROYED')
       );
     }
 
@@ -2192,7 +2215,8 @@ class WormholeGame {
       return;
     }
 
-    this.addChatLog('Your ship was destroyed!', 'system');
+    const cause = this.player.lastDamagedBy?.weapon ? ` [Cause: ${this.player.lastDamagedBy.weapon}]` : '';
+    this.addChatLog(`Your ship was destroyed!${cause}`, 'system');
 
     if (this.tablePlayers[this.player.slot]) {
       this.tablePlayers[this.player.slot]!.health = 0;
@@ -2226,6 +2250,7 @@ class WormholeGame {
           packet: {
             type: 'PLAYER_ELIMINATED',
             slot: this.player.slot,
+            cause: this.player.lastDamagedBy?.weapon,
           },
         });
       }
@@ -2244,6 +2269,7 @@ class WormholeGame {
           packet: {
             type: 'PLAYER_DEATH',
             slot: this.player.slot,
+            cause: this.player.lastDamagedBy?.weapon,
           },
         });
       }
@@ -2357,7 +2383,9 @@ class WormholeGame {
 
     const botPlayer = this.tablePlayers[botSlot];
     const botName = botPlayer ? botPlayer.name : 'Opponent';
-    this.addChatLog(`${botName} was destroyed!`, 'system');
+    const realm = this.simulatedRealm.botRealms.get(botSlot);
+    const cause = realm?.botShip.lastDamagedBy?.weapon ? ` [Cause: ${realm.botShip.lastDamagedBy.weapon}]` : '';
+    this.addChatLog(`${botName} was destroyed!${cause}`, 'system');
     this.triggerBotDeathChat(botName, botSlot);
     this.sound.playExplosion(true);
 
@@ -2819,10 +2847,16 @@ class WormholeGame {
 
     // Solo Practice Button (Opens AI Combat Directive Difficulty Picker)
     const soloModal = document.getElementById('solo-difficulty-modal');
+    const createModal = document.getElementById('create-match-modal');
     let selectedSoloDiff: BotDifficulty = 'medium';
 
     document.getElementById('btn-main-engage')!.onclick = () => {
+      if (createModal && (createModal.classList.contains('active') || createModal.style.display === 'block')) {
+        return;
+      }
       if (soloModal) {
+        const soloTestToggle = document.getElementById('solo-test-mode-toggle') as HTMLInputElement | null;
+        if (soloTestToggle) soloTestToggle.checked = false;
         soloModal.classList.add('active');
         soloModal.style.display = 'block';
       }
@@ -2850,7 +2884,9 @@ class WormholeGame {
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
       if (target && target.classList.contains('btn-host-from-empty')) {
-        const createModal = document.getElementById('create-match-modal');
+        if (soloModal && (soloModal.classList.contains('active') || soloModal.style.display === 'block')) {
+          return;
+        }
         if (createModal) {
           createModal.classList.add('active');
           createModal.style.display = 'block';
@@ -2869,6 +2905,8 @@ class WormholeGame {
     const btnSoloConfirm = document.getElementById('btn-solo-confirm');
     if (btnSoloConfirm && soloModal) {
       btnSoloConfirm.onclick = () => {
+        const soloTestToggle = document.getElementById('solo-test-mode-toggle') as HTMLInputElement | null;
+        this.isSoloTestModeEnabled = !!(soloTestToggle && soloTestToggle.checked);
         soloModal.classList.remove('active');
         soloModal.style.display = 'none';
         this.joinLobbyMatch({
@@ -2889,9 +2927,11 @@ class WormholeGame {
     }
 
     // Host New Match Modal Triggers
-    const createModal = document.getElementById('create-match-modal');
     const btnCreateHost = document.getElementById('btn-create-host')!;
     btnCreateHost.onclick = () => {
+      if (soloModal && (soloModal.classList.contains('active') || soloModal.style.display === 'block')) {
+        return;
+      }
       if (createModal) {
         (document.getElementById('host-match-name') as HTMLInputElement).value = `${this.playerName}'s Match`;
         const isMobileDevice = this.isMobile || ('ontouchstart' in window) || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) || window.innerWidth <= 950 || window.innerHeight <= 600;
@@ -3120,7 +3160,7 @@ class WormholeGame {
       });
 
       document.addEventListener('click', (e) => {
-        if (!emojiPicker.contains(e.target as Node) && e.target !== btnEmote) {
+        if (!emojiPicker.contains(e.target as Node) && !btnEmote.contains(e.target as Node)) {
           emojiPicker.classList.remove('active');
         }
       });
@@ -3668,6 +3708,53 @@ class WormholeGame {
     const spawnerModal = document.getElementById('spawner-modal');
     const targetSelect = document.getElementById('spawner-target-select') as HTMLSelectElement | null;
 
+    // 1. Draggable / Movable Test Panel
+    const dragHeader = document.getElementById('spawner-modal-header');
+    if (dragHeader && spawnerModal) {
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let initialLeft = 0;
+      let initialTop = 0;
+
+      const onPointerDown = (e: PointerEvent) => {
+        if ((e.target as HTMLElement).id === 'btn-close-spawner-top') return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = spawnerModal.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        try {
+          dragHeader.setPointerCapture(e.pointerId);
+        } catch (_) {}
+      };
+
+      const onPointerMove = (e: PointerEvent) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const newLeft = Math.max(10, Math.min(window.innerWidth - spawnerModal.offsetWidth - 10, initialLeft + dx));
+        const newTop = Math.max(10, Math.min(window.innerHeight - spawnerModal.offsetHeight - 10, initialTop + dy));
+        spawnerModal.style.left = `${newLeft}px`;
+        spawnerModal.style.top = `${newTop}px`;
+      };
+
+      const onPointerUp = (e: PointerEvent) => {
+        if (isDragging) {
+          isDragging = false;
+          try {
+            dragHeader.releasePointerCapture(e.pointerId);
+          } catch (_) {}
+        }
+      };
+
+      dragHeader.addEventListener('pointerdown', onPointerDown);
+      dragHeader.addEventListener('pointermove', onPointerMove);
+      dragHeader.addEventListener('pointerup', onPointerUp);
+      dragHeader.addEventListener('pointercancel', onPointerUp);
+    }
+
     const populateTargets = () => {
       if (!targetSelect) return;
       const prevVal = targetSelect.value;
@@ -3715,9 +3802,87 @@ class WormholeGame {
       };
     }
 
+    // 2. Overlays & Diagnostics Toggles
+    const brainToggle = document.getElementById('spawner-ai-brain-toggle') as HTMLInputElement | null;
+    if (brainToggle) {
+      brainToggle.checked = this.showAiBrainOverlay;
+      brainToggle.onchange = () => {
+        this.showAiBrainOverlay = brainToggle.checked;
+        this.showAlert(this.showAiBrainOverlay ? 'AI BRAIN OVERLAY // ACTIVE' : 'AI BRAIN OVERLAY // DISABLED');
+        this.addChatLog(`[TEST] AI Brain Overlay ${this.showAiBrainOverlay ? 'Enabled' : 'Disabled'}`, 'system');
+      };
+    }
+
+    const godToggle = document.getElementById('spawner-godmode-toggle') as HTMLInputElement | null;
+    if (godToggle) {
+      godToggle.checked = this.isGodModeEnabled;
+      godToggle.onchange = () => {
+        this.isGodModeEnabled = godToggle.checked;
+        this.showAlert(this.isGodModeEnabled ? 'GOD MODE // INFINITE HP ACTIVE' : 'GOD MODE // DISABLED');
+        this.addChatLog(`[TEST] God Mode ${this.isGodModeEnabled ? 'Enabled' : 'Disabled'}`, 'system');
+      };
+    }
+
+    const perimeterToggle = document.getElementById('spawner-perimeter-toggle') as HTMLInputElement | null;
+    const perimeterStatus = document.getElementById('spawner-perimeter-status');
+    if (perimeterToggle) {
+      perimeterToggle.checked = BotController.globalAvoidPerimeter;
+      perimeterToggle.onchange = () => {
+        BotController.globalAvoidPerimeter = perimeterToggle.checked;
+        if (this.playerBotController) {
+          this.playerBotController.avoidPerimeter = perimeterToggle.checked;
+        }
+        if (perimeterStatus) {
+          perimeterStatus.innerText = perimeterToggle.checked ? 'ENABLED' : 'DISABLED';
+          perimeterStatus.style.color = perimeterToggle.checked ? '#00ff88' : '#ff3344';
+        }
+        this.showAlert(perimeterToggle.checked ? 'AI PERIMETER AVOIDANCE // ENABLED' : 'AI PERIMETER AVOIDANCE // DISABLED');
+        this.addChatLog(`[TEST] AI Perimeter Avoidance ${perimeterToggle.checked ? 'Enabled' : 'Disabled'}`, 'system');
+      };
+    }
+
+    // 3. Clear Arena Hazards
+    const btnClear = document.getElementById('btn-drill-clear');
+    if (btnClear) {
+      btnClear.onclick = () => {
+        const targetSlot = parseInt(targetSelect?.value || '0', 10);
+        if (targetSlot === 0) {
+          this.hazardManager.hazards = [];
+          this.hazardManager.mines = [];
+          this.missiles = [];
+          this.bullets = [];
+          this.sound.playZap();
+          this.particles.createExplosion(0, 0, '#ffffff', 40);
+          this.showAlert('ARENA CLEARED // ALL HAZARDS REMOVED');
+          this.addChatLog('[TEST] Cleared all arena hazards', 'system');
+        } else {
+          const realm = this.simulatedRealm.botRealms.get(targetSlot);
+          if (realm) {
+            realm.hazardManager.hazards = [];
+            realm.hazardManager.mines = [];
+            realm.missiles = [];
+            realm.bullets = [];
+            realm.particles.createExplosion(0, 0, '#ffffff', 40);
+            const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
+            this.showAlert(`ARENA CLEARED // ${oppName.toUpperCase()}`);
+            this.addChatLog(`[TEST] Cleared all hazards in ${oppName}'s realm`, 'system');
+          }
+        }
+      };
+    }
+
     const openSpawner = () => {
       populateTargets();
       if (pilotSelect) pilotSelect.value = this.playerPilotMode;
+      if (brainToggle) brainToggle.checked = this.showAiBrainOverlay;
+      if (godToggle) godToggle.checked = this.isGodModeEnabled;
+      if (perimeterToggle) {
+        perimeterToggle.checked = BotController.globalAvoidPerimeter;
+        if (perimeterStatus) {
+          perimeterStatus.innerText = BotController.globalAvoidPerimeter ? 'ENABLED' : 'DISABLED';
+          perimeterStatus.style.color = BotController.globalAvoidPerimeter ? '#00ff88' : '#ff3344';
+        }
+      }
       spawnerModal?.classList.add('active');
     };
     const closeSpawner = () => {
@@ -3736,7 +3901,7 @@ class WormholeGame {
     const btnCloseSpawnerTop = document.getElementById('btn-close-spawner-top');
     if (btnCloseSpawnerTop) btnCloseSpawnerTop.onclick = closeSpawner;
 
-    // Wormhole Powerup Ejection buttons
+    // 4. Wormhole Powerup Ejection buttons
     const pupBtns = document.querySelectorAll('#spawner-pups-grid .pup-eject-btn');
     pupBtns.forEach((btn) => {
       (btn as HTMLButtonElement).onclick = () => {
@@ -3745,7 +3910,6 @@ class WormholeGame {
         const name = rawType >= 0 ? (POWERUP_NAMES[rawType] || `POWERUP #${rawType}`) : 'RANDOM POWERUP';
 
         if (targetSlot === 0) {
-          // Eject from local player's wormhole
           const wh = this.wormholes[0];
           if (wh) {
             wh.forceEjectPowerup(this.powerups, this.particles, this.sound, rawType >= 0 ? rawType : undefined);
@@ -3757,7 +3921,6 @@ class WormholeGame {
           this.showAlert(`EJECTED // ${name.toUpperCase()} FROM WORMHOLE`);
           this.addChatLog(`[TEST] Ejected ${name} from Wormhole`, 'system');
         } else {
-          // Eject into chosen opponent's realm
           this.simulatedRealm.receiveHazardFromPlayer1(rawType >= 0 ? rawType : 0, targetSlot);
           const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
           this.showAlert(`SPAWNED // ${name.toUpperCase()} -> ${oppName.toUpperCase()}`);
@@ -3767,14 +3930,15 @@ class WormholeGame {
       };
     });
 
+    // 5. Direct Hazard Spawner Grid
     const grid = document.getElementById('spawner-btn-grid');
     if (grid) {
       grid.innerHTML = '';
       for (let type = 6; type <= 19; type++) {
         const btn = document.createElement('button');
         btn.className = 'arena-btn';
-        btn.style.padding = '6px 6px';
-        btn.style.fontSize = '9.5px';
+        btn.style.padding = '5px 6px';
+        btn.style.fontSize = '9px';
         btn.style.textAlign = 'left';
         btn.style.display = 'flex';
         btn.style.justifyContent = 'space-between';
@@ -3786,13 +3950,11 @@ class WormholeGame {
         btn.onclick = () => {
           const targetSlot = parseInt(targetSelect?.value || '0', 10);
           if (targetSlot === 0) {
-            // Spawn directly in local player's realm
             const targetWh = this.wormholes[0] || new Wormhole('TARGET', 1, 0, 240);
             this.hazardManager.spawnHazard(type, targetWh, this.player, this.missiles);
             this.showAlert(`SPAWNED // ${name} -> YOUR REALM`);
             this.addChatLog(`[TEST] Spawned ${name} in Your Realm`, 'system');
           } else {
-            // Spawn in chosen opponent's realm
             this.simulatedRealm.receiveHazardFromPlayer1(type, targetSlot);
             const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
             this.showAlert(`SPAWNED // ${name} -> ${oppName.toUpperCase()}`);
@@ -4200,9 +4362,10 @@ class WormholeGame {
       }
     }
 
-    // Toggle PiP mini-cam bot feed visibility & Test controls (Active for solo play or when Host enabled Test Mode)
+    // Toggle PiP mini-cam bot feed visibility & Test controls (Active for solo play if test mode enabled, or when Host enabled Test Mode)
     const isHostTestMode = this.isLanMatchHost && !!this.currentMatchConfig?.isTestMode;
-    const showTestFeatures = isSolo || isHostTestMode;
+    const isSoloTestMode = isSolo && this.isSoloTestModeEnabled;
+    const showTestFeatures = isSoloTestMode || isHostTestMode;
 
     const btnSpawner = document.getElementById('btn-match-spawner');
     if (btnSpawner) {
@@ -4212,7 +4375,7 @@ class WormholeGame {
     const pipCard = document.getElementById('pip-camera-card');
     if (pipCard) {
       const hasBots = botCount > 0 || this.simulatedRealm.botRealms.size > 0;
-      pipCard.style.display = (showTestFeatures && hasBots) ? 'flex' : 'none';
+      pipCard.style.display = (hasBots || isSolo || occupiedCount > 1) && !this.isMobile ? 'flex' : 'none';
     }
 
     const pipNameEl = document.getElementById('pip-opponent-name');
@@ -4555,6 +4718,12 @@ class WormholeGame {
       this.recordUserActivity();
     }
 
+    // God Mode infinite HP cheat for testing
+    if (this.isGodModeEnabled && this.player) {
+      this.player.health = this.player.maxHealth;
+      this.player.isAlive = true;
+    }
+
     // AI Autopilot mode for Player 1 ship (configured via Test Hazards menu)
     if (this.playerPilotMode !== 'human' && this.player.isAlive) {
       if (!this.playerBotController) {
@@ -4652,6 +4821,18 @@ class WormholeGame {
         !document.getElementById('spawner-modal')?.classList.contains('active')
       ) {
         this.checkMatchRoundStatus();
+      }
+
+      // Continuous Defeat Watchdog for Host/Solo: If Player 1 is eliminated during PLAYING phase
+      if (
+        this.gameState.phase === 'PLAYING' &&
+        !this.isMatchWaitingForPilots &&
+        roundGraceElapsed &&
+        (!this.player.isAlive || this.player.health <= 0) &&
+        !document.getElementById('round-modal')?.classList.contains('active') &&
+        !document.getElementById('match-modal')?.classList.contains('active')
+      ) {
+        this.handlePlayerElimination();
       }
     }
 
@@ -4781,6 +4962,7 @@ class WormholeGame {
         ) {
           this.gameState.stats.p1PowerupsCollected++;
           const isZap = this.player.givePowerup(pup.type, this.sound, this.popups);
+          this.tutorialManager.onPowerupCollected(pup.type);
           if (isZap) {
             this.screenFlash = 1.0;
             this.particles.createExplosion(this.player.x, this.player.y, '#ffffff', 30);
@@ -4792,6 +4974,7 @@ class WormholeGame {
           this.powerups.splice(i, 1);
         }
       }
+      this.tutorialManager.update(dt, this.powerups, this.player);
     }
 
     // 7. Update Bullets
@@ -4831,7 +5014,7 @@ class WormholeGame {
 
       if (b.ownerSlot !== this.player.slot && this.player.isAlive) {
         if (Collision.testCircleCircle(b.x, b.y, b.size, this.player.x, this.player.y, 16)) {
-          this.player.takeDamage(b.damage, this.particles, this.sound);
+          this.player.takeDamage(b.damage, this.particles, this.sound, { weapon: 'Pulse Cannon', slot: b.ownerSlot });
           this.bullets.splice(i, 1);
           continue;
         }
@@ -4937,7 +5120,7 @@ class WormholeGame {
       }
 
       if (this.player.isAlive && Collision.testCircleCircle(m.x, m.y, 6, this.player.x, this.player.y, 16)) {
-        this.player.takeDamage(m.damage, this.particles, this.sound);
+        this.player.takeDamage(m.damage, this.particles, this.sound, { weapon: 'Heat Seeker' });
         this.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
         this.missiles.splice(i, 1);
         continue;
@@ -5195,6 +5378,11 @@ class WormholeGame {
           pop.draw(this.renderer);
         }
 
+        // AI Brain Telemetry & Overlay for Player 1 Autopilot
+        if (this.showAiBrainOverlay && this.playerPilotMode !== 'human' && this.playerBotController && this.player.isAlive) {
+          this.playerBotController.drawDebug(this.renderer, this.player);
+        }
+
         this.renderer.popCamera();
 
         // =========================================================
@@ -5286,6 +5474,72 @@ class WormholeGame {
             ctxScreen.restore();
           }
         }
+
+        // =========================================================
+        // PASS 5: OFF-SCREEN POWERUP INDICATORS (Mobile Mode)
+        // =========================================================
+        if (this.isMobile) {
+          const pupMargin = 20;
+          for (const pup of this.powerups) {
+            if (!pup.isAlive) continue;
+
+            const screenX = cx + (pup.x - this.camX) * this.zoom;
+            const screenY = cy + (pup.y - this.camY) * this.zoom;
+
+            const isOffscreen =
+              screenX < pupMargin || screenX > w - pupMargin ||
+              screenY < pupMargin || screenY > h - pupMargin;
+
+            if (isOffscreen) {
+              const angle = Math.atan2(screenY - cy, screenX - cx);
+              const cos = Math.cos(angle);
+              const sin = Math.sin(angle);
+
+              const halfW = cx - pupMargin;
+              const halfH = cy - pupMargin;
+
+              const scaleX = cos !== 0 ? Math.abs(halfW / cos) : Infinity;
+              const scaleY = sin !== 0 ? Math.abs(halfH / sin) : Infinity;
+              const scale = Math.min(scaleX, scaleY);
+
+              const dotX = cx + cos * scale;
+              const dotY = cy + sin * scale;
+
+              const pupCol = pup.color || '#00e5ff';
+              const dotPulse = 0.85 + Math.sin(Date.now() * 0.008 + pup.type) * 0.15;
+
+              ctxScreen.save();
+              ctxScreen.shadowColor = pupCol;
+              ctxScreen.shadowBlur = 8;
+              ctxScreen.fillStyle = pupCol;
+              ctxScreen.beginPath();
+              ctxScreen.arc(dotX, dotY, 4 * dotPulse, 0, Math.PI * 2);
+              ctxScreen.fill();
+
+              // Subtle white center dot
+              ctxScreen.fillStyle = '#ffffff';
+              ctxScreen.beginPath();
+              ctxScreen.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+              ctxScreen.fill();
+              ctxScreen.restore();
+            }
+          }
+        }
+
+        // =========================================================
+        // PASS 6: SOLO PRACTICE TUTORIAL OVERLAY
+        // =========================================================
+        this.tutorialManager.draw(
+          this.renderer,
+          this.player,
+          this.wormholes,
+          this.powerups,
+          this.camX,
+          this.camY,
+          this.zoom,
+          this.isMobile,
+          this.input
+        );
       }
     } catch (err) {
       console.error('Render error:', err);
@@ -5305,7 +5559,7 @@ class WormholeGame {
         this.pipRenderer.beginFrame('#020612');
         const pipW = this.pipRenderer.width;
         const pipH = this.pipRenderer.height;
-        this.simulatedRealm.drawMiniView(this.pipRenderer, 0, 0, pipW, pipH, this.selectedOpponentSlot);
+        this.simulatedRealm.drawMiniView(this.pipRenderer, 0, 0, pipW, pipH, this.selectedOpponentSlot, this.showAiBrainOverlay);
         this.pipRenderer.endFrame();
       }
     }
