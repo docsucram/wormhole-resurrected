@@ -248,6 +248,23 @@ class WormholeGame {
     const initialParticleScale = savedParticleScale !== null ? parseFloat(savedParticleScale) : 1.0;
     this.particles.durationScale = initialParticleScale;
 
+    // Apply persisted Mobile Touch Customizations
+    const mobileTouchRoot = document.getElementById('mobile-touch-root');
+    if (mobileTouchRoot) {
+      const savedSouthpaw = localStorage.getItem('wh_opt_touch_southpaw');
+      if (savedSouthpaw === 'true') {
+        mobileTouchRoot.classList.add('southpaw');
+      }
+      const savedTouchScale = localStorage.getItem('wh_opt_touch_scale');
+      if (savedTouchScale !== null) {
+        mobileTouchRoot.style.setProperty('--touch-btn-scale', savedTouchScale);
+      }
+      const savedTouchOpacity = localStorage.getItem('wh_opt_touch_opacity');
+      if (savedTouchOpacity !== null) {
+        mobileTouchRoot.style.setProperty('--touch-btn-opacity', savedTouchOpacity);
+      }
+    }
+
     // Initialize 8-Player Arena Roster with Slot 0 as Local Player
     this.initTableRoster();
 
@@ -3324,6 +3341,70 @@ class WormholeGame {
       chkAnalogThrust.onchange = () => {
         this.input.enableAnalogThrust = chkAnalogThrust.checked;
         try { localStorage.setItem('wh_opt_analog_thrust', chkAnalogThrust.checked.toString()); } catch {}
+      };
+    }
+
+    // Touch Customization Controls (Persistent)
+    const mobileTouchRoot = document.getElementById('mobile-touch-root');
+
+    // 1. Southpaw / Left-Handed Layout
+    const chkSouthpaw = document.getElementById('chk-opt-touch-southpaw') as HTMLInputElement | null;
+    const savedSouthpaw = localStorage.getItem('wh_opt_touch_southpaw');
+    if (chkSouthpaw && mobileTouchRoot) {
+      if (savedSouthpaw !== null) {
+        chkSouthpaw.checked = savedSouthpaw === 'true';
+        mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
+      }
+      chkSouthpaw.onchange = () => {
+        mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
+        try { localStorage.setItem('wh_opt_touch_southpaw', chkSouthpaw.checked.toString()); } catch {}
+      };
+    }
+
+    // 2. Touch Button Scale (70% to 140%)
+    const touchScaleSlider = document.getElementById('opt-touch-scale-slider') as HTMLInputElement | null;
+    const touchScaleVal = document.getElementById('opt-touch-scale-val');
+    const savedTouchScale = localStorage.getItem('wh_opt_touch_scale');
+    const initialTouchScale = savedTouchScale !== null ? parseFloat(savedTouchScale) : 1.0;
+    if (touchScaleSlider && mobileTouchRoot) {
+      touchScaleSlider.value = initialTouchScale.toString();
+      mobileTouchRoot.style.setProperty('--touch-btn-scale', initialTouchScale.toString());
+      if (touchScaleVal) touchScaleVal.innerText = `${Math.round(initialTouchScale * 100)}%`;
+      touchScaleSlider.oninput = () => {
+        const v = parseFloat(touchScaleSlider.value);
+        if (touchScaleVal) touchScaleVal.innerText = `${Math.round(v * 100)}%`;
+        mobileTouchRoot.style.setProperty('--touch-btn-scale', v.toString());
+        try { localStorage.setItem('wh_opt_touch_scale', v.toString()); } catch {}
+      };
+    }
+
+    // 3. Touch Button Opacity (30% to 100%)
+    const touchOpacitySlider = document.getElementById('opt-touch-opacity-slider') as HTMLInputElement | null;
+    const touchOpacityVal = document.getElementById('opt-touch-opacity-val');
+    const savedTouchOpacity = localStorage.getItem('wh_opt_touch_opacity');
+    const initialTouchOpacity = savedTouchOpacity !== null ? parseFloat(savedTouchOpacity) : 1.0;
+    if (touchOpacitySlider && mobileTouchRoot) {
+      touchOpacitySlider.value = initialTouchOpacity.toString();
+      mobileTouchRoot.style.setProperty('--touch-btn-opacity', initialTouchOpacity.toString());
+      if (touchOpacityVal) touchOpacityVal.innerText = `${Math.round(initialTouchOpacity * 100)}%`;
+      touchOpacitySlider.oninput = () => {
+        const v = parseFloat(touchOpacitySlider.value);
+        if (touchOpacityVal) touchOpacityVal.innerText = `${Math.round(v * 100)}%`;
+        mobileTouchRoot.style.setProperty('--touch-btn-opacity', v.toString());
+        try { localStorage.setItem('wh_opt_touch_opacity', v.toString()); } catch {}
+      };
+    }
+
+    // 4. Touch Haptics Toggle
+    const chkHaptics = document.getElementById('chk-opt-touch-haptics') as HTMLInputElement | null;
+    if (chkHaptics) {
+      chkHaptics.checked = this.input.enableHaptics;
+      chkHaptics.onchange = () => {
+        this.input.enableHaptics = chkHaptics.checked;
+        if (chkHaptics.checked) {
+          this.input.triggerHaptic(20);
+        }
+        try { localStorage.setItem('wh_opt_touch_haptics', chkHaptics.checked.toString()); } catch {}
       };
     }
 

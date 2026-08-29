@@ -2718,6 +2718,10 @@
       }
 
       /* Mobile Touch Action Pads */
+      #mobile-touch-root {
+        --touch-btn-scale: 1;
+        --touch-btn-opacity: 1;
+      }
       .mob-touch-steer-zone {
         position: fixed;
         top: 0;
@@ -2726,6 +2730,11 @@
         height: 100vh;
         pointer-events: auto;
         touch-action: none;
+      }
+
+      #mobile-touch-root.southpaw .mob-touch-steer-zone {
+        left: auto;
+        right: 0;
       }
 
       #touch-stick-base {
@@ -2762,6 +2771,17 @@
         gap: 12px;
         pointer-events: auto;
         touch-action: none;
+        transform: scale(var(--touch-btn-scale, 1));
+        transform-origin: bottom right;
+        opacity: var(--touch-btn-opacity, 1);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+      }
+
+      #mobile-touch-root.southpaw .mob-touch-actions {
+        right: auto;
+        left: 18px;
+        flex-direction: row-reverse;
+        transform-origin: bottom left;
       }
       .touch-btn {
         width: 60px;
@@ -3718,18 +3738,69 @@
 
           <!-- 4. Touch & Mobile Controls (Analog Touch Thrust in its own section) -->
           <div class="opt-tab-pane" id="opt-tab-touch" style="display: none;">
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 12px 14px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 12px;">
+            <!-- Analog Touch Thrust -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
               <div>
                 <div style="font-size: 12px; font-weight: 800; color: #ffffff;">ANALOG TOUCH THRUST</div>
-                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 3px;">Dynamically scale ship thrust acceleration by virtual thumbstick drag distance rather than instant max throttle</div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Dynamically scale ship thrust acceleration by virtual thumbstick drag distance rather than instant max throttle</div>
               </div>
-              <input type="checkbox" id="chk-opt-analog-thrust" checked style="width: 20px; height: 20px; accent-color: var(--neon-cyan); cursor: pointer;" />
+              <input type="checkbox" id="chk-opt-analog-thrust" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
+            </div>
+
+            <!-- Left-Handed / Southpaw Mode -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">LEFT-HANDED LAYOUT (SOUTHPAW)</div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Swaps the steering joystick to the right side and action triggers to the left side</div>
+              </div>
+              <input type="checkbox" id="chk-opt-touch-southpaw" style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
+            </div>
+
+            <!-- Virtual Button Size (Scale) -->
+            <div style="background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div>
+                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">TOUCH BUTTON SIZE</div>
+                  <div style="font-size: 10px; color: #94a3b8;">Scale on-screen triggers for thumb comfort and screen reach</div>
+                </div>
+                <span id="opt-touch-scale-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 9px; font-weight: 800; color: #64748b;">70%</span>
+                <input type="range" id="opt-touch-scale-slider" min="0.7" max="1.4" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+                <span style="font-size: 9px; font-weight: 800; color: #64748b;">140%</span>
+              </div>
+            </div>
+
+            <!-- Virtual Button Opacity -->
+            <div style="background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div>
+                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">TOUCH BUTTON OPACITY</div>
+                  <div style="font-size: 10px; color: #94a3b8;">Adjust HUD trigger transparency to minimize arena visual obstruction</div>
+                </div>
+                <span id="opt-touch-opacity-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 9px; font-weight: 800; color: #64748b;">30%</span>
+                <input type="range" id="opt-touch-opacity-slider" min="0.3" max="1.0" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+                <span style="font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
+              </div>
+            </div>
+
+            <!-- Haptic Vibration Feedback -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">HAPTIC VIBRATION FEEDBACK</div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Subtle tactile phone vibration when pressing triggers or taking damage</div>
+              </div>
+              <input type="checkbox" id="chk-opt-touch-haptics" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <div class="manual-card">
               <div class="manual-card-title">🕹 VIRTUAL FLIGHT CONTROLS</div>
-              <p><strong style="color: var(--neon-cyan);">DYNAMIC JOYSTICK:</strong> Touch and drag anywhere on the left half of the display to position and steer the analog flight thumbstick.</p>
-              <p style="margin-top: 8px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap the capacitive buttons on the right side for Pulse Lasers [FIRE], Stored Hazard Launch [HAZARD], and Special Ability [SPECIAL].</p>
+              <p><strong style="color: var(--neon-cyan);">DYNAMIC JOYSTICK:</strong> Touch and drag on the steering half of the screen to position and steer the analog flight thumbstick.</p>
+              <p style="margin-top: 8px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap the capacitive buttons for Pulse Lasers [FIRE], Stored Hazard Launch [HAZARD], and Special Ability [SPECIAL].</p>
             </div>
           </div>
 

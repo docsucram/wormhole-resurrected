@@ -34,11 +34,20 @@ export class InputManager {
   public gamepadIndex: number | null = null;
   public deadzone = 0.25;
   public enableAnalogThrust = true;
+  public enableHaptics = true;
 
   constructor() {
     this.loadSettings();
     this.setupListeners();
     this.setupGamepadListeners();
+  }
+
+  public triggerHaptic(duration = 15): void {
+    if (this.enableHaptics && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(duration);
+      } catch {}
+    }
   }
 
   private loadSettings(): void {
@@ -54,6 +63,10 @@ export class InputManager {
       const savedAnalog = localStorage.getItem('wh_opt_analog_thrust');
       if (savedAnalog !== null) {
         this.enableAnalogThrust = savedAnalog === 'true';
+      }
+      const savedHaptics = localStorage.getItem('wh_opt_touch_haptics');
+      if (savedHaptics !== null) {
+        this.enableHaptics = savedHaptics === 'true';
       }
     } catch {
       this.bindings = { ...DEFAULT_BINDINGS };
@@ -252,6 +265,7 @@ export class InputManager {
       e.stopPropagation();
       this.setTouchAction(action, true);
       el.classList.add('touch-active');
+      this.triggerHaptic(15);
     };
 
     const endHandler = (e: Event) => {
