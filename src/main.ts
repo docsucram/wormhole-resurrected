@@ -3332,6 +3332,16 @@ class WormholeGame {
       btnFsPause.onclick = () => this.toggleFullscreen();
     }
 
+    // Auto-enter fullscreen on mobile/touch gesture
+    const autoFsHandler = () => {
+      const isTouchOrMobile = this.isMobile || ('ontouchstart' in window) || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) || window.innerWidth <= 950 || window.innerHeight <= 580;
+      if (isTouchOrMobile) {
+        this.tryEnterFullscreen();
+      }
+    };
+    window.addEventListener('touchstart', autoFsHandler, { passive: true, once: true });
+    window.addEventListener('pointerdown', autoFsHandler, { passive: true, once: true });
+
     // Pause Menu Handlers
     document.getElementById('btn-pause-resume')!.onclick = () => {
       document.getElementById('pause-modal')?.classList.remove('active');
@@ -4706,6 +4716,29 @@ class WormholeGame {
       mobChatInput.onkeydown = (e) => {
         if (e.key === 'Enter') sendMobChat();
       };
+    }
+  }
+
+  public tryEnterFullscreen(): void {
+    const doc = document as any;
+    const docEl = document.documentElement as any;
+    const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+    if (!isFullscreen) {
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          (screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      } catch {}
     }
   }
 

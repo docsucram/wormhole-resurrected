@@ -2598,55 +2598,280 @@
         z-index: 25;
       }
 
-      /* Mobile / Compact Landscape Lobby Layout (Zero Scroll) */
-      body.is-mobile .header-subtitle {
-        display: none !important;
-      }
-      body.is-mobile .header-logo {
-        font-size: 24px !important;
-        letter-spacing: 4px !important;
-      }
-      body.is-mobile .main-card {
-        padding: 8px 12px !important;
-        gap: 6px !important;
-        max-height: 98vh !important;
-        height: 98vh !important;
-        overflow: hidden !important;
-      }
-      body.is-mobile .lobby-nav-bar {
-        padding: 4px 10px !important;
-        gap: 6px !important;
-      }
-      body.is-mobile .dashboard-grid-2col {
-        grid-template-columns: 240px 1fr !important;
-        gap: 8px !important;
-        flex: 1;
-        min-height: 0;
-      }
-      body.is-mobile .lobby-comms-panel,
-      body.is-mobile .matches-browser-panel {
-        height: 100% !important;
-        min-height: 0 !important;
-        padding: 8px !important;
-        gap: 6px !important;
-      }
-      body.is-mobile .pilots-list-box {
-        max-height: 60px !important;
-      }
-      body.is-mobile .lobby-chat-box {
-        padding: 4px 6px !important;
-        flex: 1;
-        min-height: 0;
-      }
-      body.is-mobile .matches-list-scroll {
-        max-height: calc(100% - 32px) !important;
-        flex: 1;
-        min-height: 0;
-      }
-      body.is-mobile .btn-singleplayer,
-      body.is-mobile .btn-host {
-        padding: 5px 8px !important;
-        font-size: 10px !important;
+      /* Mobile / Compact Landscape Lobby Layout (Zero Overflow & Pinned Controls) */
+      @media (max-height: 560px), (max-width: 950px) and (orientation: landscape) {
+        #screen-front-end {
+          height: 100vh !important;
+          height: 100dvh !important;
+          width: 100vw !important;
+          overflow: hidden !important;
+          padding: 0 !important;
+        }
+
+        .main-card {
+          width: 100vw !important;
+          max-width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          max-height: 100vh !important;
+          max-height: 100dvh !important;
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 4px 10px 6px 10px !important;
+          gap: 4px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
+        }
+
+        .lobby-top-header {
+          padding: 0 !important;
+          min-height: 34px !important;
+          height: 34px !important;
+          margin-bottom: 2px !important;
+        }
+
+        .header-subtitle {
+          display: none !important;
+        }
+
+        .header-logo {
+          font-size: 16px !important;
+          letter-spacing: 2px !important;
+          line-height: 1 !important;
+        }
+
+        .avatar-frame {
+          width: 32px !important;
+          height: 32px !important;
+          border-radius: 6px !important;
+        }
+
+        .player-identity-capsule {
+          height: 32px !important;
+          padding: 2px 6px !important;
+          gap: 4px !important;
+        }
+
+        .pilot-rank-badge svg {
+          width: 16px !important;
+          height: 18px !important;
+        }
+
+        .pilot-callsign-label {
+          font-size: 7px !important;
+        }
+
+        .pilot-name-display {
+          font-size: 10.5px !important;
+          max-width: 90px !important;
+        }
+
+        .callsign-controls-row {
+          gap: 2px !important;
+        }
+
+        .callsign-controls-row .btn-profile-action {
+          width: 24px !important;
+          height: 24px !important;
+        }
+
+        .callsign-controls-row .btn-profile-action svg {
+          width: 12px !important;
+          height: 12px !important;
+        }
+
+        .btn-util {
+          width: 28px !important;
+          height: 28px !important;
+          font-size: 12px !important;
+          border-radius: 6px !important;
+        }
+
+        .btn-util svg {
+          width: 14px !important;
+          height: 14px !important;
+        }
+
+        .dashboard-grid-2col {
+          grid-template-columns: 210px 1fr !important;
+          gap: 8px !important;
+          flex: 1 !important;
+          min-height: 0 !important;
+          height: calc(100% - 38px) !important;
+          overflow: hidden !important;
+        }
+
+        .lobby-comms-panel {
+          height: 100% !important;
+          min-height: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          overflow: hidden !important;
+        }
+
+        .pilots-section-title {
+          font-size: 9.5px !important;
+          margin-bottom: 0 !important;
+        }
+
+        .pilots-list-box {
+          min-height: 32px !important;
+          max-height: 50px !important;
+          overflow-y: auto !important;
+          gap: 3px !important;
+        }
+
+        .pilot-row {
+          padding: 2px 5px !important;
+          font-size: 9.5px !important;
+        }
+
+        .pilot-row-avatar {
+          width: 16px !important;
+          height: 16px !important;
+        }
+
+        .pilot-ping-pill {
+          font-size: 8px !important;
+          padding: 1px 4px !important;
+        }
+
+        .comms-section-box {
+          flex: 1 !important;
+          min-height: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 2px !important;
+        }
+
+        .comms-header-row {
+          margin-bottom: 0 !important;
+        }
+
+        .comms-title {
+          font-size: 9.5px !important;
+        }
+
+        .lobby-chat-log {
+          flex: 1 !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          overflow-y: auto !important;
+          font-size: 9.5px !important;
+          padding: 3px 5px !important;
+          gap: 2px !important;
+        }
+
+        .lobby-chat-input-row {
+          height: 24px !important;
+          gap: 4px !important;
+        }
+
+        .chat-styled-input {
+          font-size: 9.5px !important;
+          padding: 2px 6px !important;
+          height: 24px !important;
+        }
+
+        .btn-chat-send {
+          font-size: 8.5px !important;
+          padding: 0 6px !important;
+          height: 24px !important;
+        }
+
+        .matches-browser-panel {
+          height: 100% !important;
+          min-height: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          overflow: hidden !important;
+        }
+
+        .matches-browser-header {
+          height: 26px !important;
+          min-height: 26px !important;
+          margin-bottom: 0 !important;
+        }
+
+        .matches-browser-header .section-title {
+          font-size: 10px !important;
+        }
+
+        .matches-search-box input {
+          font-size: 9.5px !important;
+          padding: 2px 6px 2px 20px !important;
+          width: 120px !important;
+          height: 24px !important;
+        }
+
+        .matches-search-box svg {
+          left: 5px !important;
+          width: 9px !important;
+          height: 9px !important;
+        }
+
+        #btn-refresh-matches {
+          padding: 2px 5px !important;
+          height: 24px !important;
+        }
+
+        .matches-list-scroll {
+          flex: 1 !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+        }
+
+        .matches-empty-radar-container {
+          padding: 2px !important;
+          gap: 2px !important;
+          margin: auto 0 !important;
+        }
+
+        .radar-scanner-box {
+          width: 55px !important;
+          height: 55px !important;
+          margin: 0 auto !important;
+        }
+
+        .radar-empty-title {
+          font-size: 9.5px !important;
+          margin-top: 1px !important;
+        }
+
+        .radar-empty-sub {
+          font-size: 8.5px !important;
+          margin-top: 0 !important;
+        }
+
+        .matches-action-footer {
+          margin-top: auto !important;
+          padding-top: 3px !important;
+          border-top: 1px solid #163658 !important;
+          display: flex !important;
+          gap: 6px !important;
+          align-items: center !important;
+          min-height: 32px !important;
+        }
+
+        .btn-host {
+          padding: 6px 10px !important;
+          font-size: 10.5px !important;
+          height: 30px !important;
+        }
+
+        .btn-singleplayer {
+          padding: 6px 10px !important;
+          font-size: 10px !important;
+          height: 30px !important;
+        }
       }
 
       /* Mobile Top-Left Status Cluster */
