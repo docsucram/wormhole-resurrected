@@ -363,12 +363,17 @@ export class ParticleSystem {
   public durationScale = 1.0; // 0.0x to 10.0x scale (default 1.0x)
 
   public get maxCapacity(): number {
-    return Math.min(2500, Math.floor(240 * Math.max(1, this.durationScale)));
+    return Math.min(2500, Math.max(120, Math.floor(240 * Math.max(1, this.durationScale))));
   }
 
   public add(p: Particle): void {
-    if (this.durationScale <= 0.01) return;
+    // When particle scale is 0x, keep thrust particles alive for fighter engine fire
+    if (this.durationScale <= 0.01 && !(p instanceof ThrustParticle)) return;
     if (this.particles.length < this.maxCapacity) {
+      if (this.durationScale <= 0.01 && p instanceof ThrustParticle) {
+        p.maxLife = 0.16;
+        p.life = 0.16;
+      }
       this.particles.push(p);
     }
   }
@@ -388,16 +393,16 @@ export class ParticleSystem {
   }
 
   public createThrust(x: number, y: number, vx: number, vy: number, color?: string): void {
-    if (this.durationScale <= 0.01) return;
-    const speedMult = 1.0 + 0.30 * Math.max(0, this.durationScale - 1.0);
-    const friction = Math.min(0.995, 0.97 + 0.0025 * this.durationScale);
+    const scale = this.durationScale <= 0.01 ? 0.35 : this.durationScale;
+    const speedMult = 1.0 + 0.30 * Math.max(0, scale - 1.0);
+    const friction = Math.min(0.995, 0.97 + 0.0025 * scale);
 
     const tp = new ThrustParticle(x, y, vx * speedMult, vy * speedMult, color);
-    tp.maxLife *= this.durationScale;
+    tp.maxLife = Math.max(0.14, tp.maxLife * scale);
     tp.life = tp.maxLife;
     this.add(tp);
 
-    if (this.enableSparkShards && Math.random() < 0.35) {
+    if (this.enableSparkShards && this.durationScale > 0.01 && Math.random() < 0.35) {
       const baseLife = (0.30 + Math.random() * 0.20) * this.durationScale;
       const shard = new SparkShard(
         x,

@@ -2430,6 +2430,44 @@
         box-shadow: 0 0 16px rgba(0, 229, 255, 0.3);
       }
 
+      .opt-row-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(6, 14, 30, 0.85);
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(0, 229, 255, 0.2);
+        margin-bottom: 9px;
+        box-sizing: border-box;
+      }
+      .opt-row-card:hover, .opt-slider-card:hover {
+        border-color: rgba(0, 229, 255, 0.45);
+      }
+      .opt-slider-card {
+        background: rgba(6, 14, 30, 0.85);
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(0, 229, 255, 0.2);
+        margin-bottom: 9px;
+        box-sizing: border-box;
+      }
+      .opt-card-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 1px;
+      }
+      .opt-card-val {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        color: var(--neon-cyan);
+        width: 45px;
+        text-align: right;
+      }
+
       #spawner-modal.active {
         display: block !important;
         animation: spawnerFadeIn 0.18s ease-out;
@@ -3862,77 +3900,59 @@
           <!-- 1. Graphics & Display (First item) -->
           <div class="opt-tab-pane" id="opt-tab-display" style="display: block;">
             <!-- FPS Counter -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">SHOW FPS COUNTER</div>
-                <div style="font-size: 10px; color: #94a3b8;">Displays real-time frame rate in the top-left corner</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">SHOW FPS COUNTER</div>
               <input type="checkbox" id="chk-opt-fps" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Neon Vector Glow Slider -->
-            <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">NEON VECTOR GLOW INTENSITY</div>
-                  <div style="font-size: 10px; color: #94a3b8;">Adjust laser bloom and vector phosphor aura</div>
-                </div>
-                <span id="opt-glow-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">NEON VECTOR GLOW INTENSITY</div>
+                <span id="opt-glow-val" class="opt-card-val">100%</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">OFF</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">OFF</span>
                 <input type="range" id="opt-glow-slider" min="0" max="2.0" step="0.1" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">ULTRA</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">ULTRA</span>
               </div>
             </div>
 
             <!-- Particle Duration & Velocity Slider (0x to 10x) -->
-            <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">PARTICLE LIFESPAN & TRAIL SCALE</div>
-                  <div style="font-size: 10px; color: #94a3b8;">Controls muzzle discharge, spark duration, and travel speed (0x to 10x)</div>
-                </div>
-                <span id="opt-particle-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">1.0x</span>
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">PARTICLE LIFESPAN & TRAIL SCALE</div>
+                <span id="opt-particle-val" class="opt-card-val">1.0x</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">0x</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">0x</span>
                 <input type="range" id="opt-particle-slider" min="0" max="10.0" step="0.5" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">10x</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">10x</span>
               </div>
             </div>
 
-            <!-- White-Hot Core Toggle -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">WHITE-HOT CORE</div>
-                <div style="font-size: 10px; color: #94a3b8;">Dual-pass vector stroke with luminous center sheen</div>
-              </div>
+            <!-- White-Hot Vector Core Toggle -->
+            <div class="opt-row-card">
+              <div class="opt-card-title">WHITE-HOT VECTOR CORE</div>
               <input type="checkbox" id="chk-opt-dual-bloom" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
-            <!-- Retro Vector Ambient Grid Toggle -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">RETRO AMBIENT VECTOR GRID</div>
-                <div style="font-size: 10px; color: #94a3b8;">Subtle glowing geometric grid in arena space</div>
-              </div>
+            <!-- Retro Ambient Vector Grid Toggle -->
+            <div class="opt-row-card">
+              <div class="opt-card-title">RETRO AMBIENT VECTOR GRID</div>
               <input type="checkbox" id="chk-opt-vector-grid" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Retro Scanlines Toggle -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">RETRO SCANLINE FILTER</div>
-                <div style="font-size: 10px; color: #94a3b8;">Vector CRT arcade overlay</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">RETRO SCANLINE FILTER</div>
               <input type="checkbox" id="chk-opt-scanlines" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
           </div>
 
           <!-- 2. Keyboard Keybindings -->
           <div class="opt-tab-pane" id="opt-tab-keys" style="display: none;">
-            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">CLICK ANY ACTION TO REBIND KEY:</div>
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 10px;">CLICK ANY ACTION TO REBIND KEY:</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="keybind-grid">
               <!-- Populated dynamically by main.ts -->
             </div>
@@ -3943,12 +3963,24 @@
 
           <!-- 3. Controller / Gamepad -->
           <div class="opt-tab-pane" id="opt-tab-gamepad" style="display: none;">
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 12px;">
-              <span style="font-size: 11px; font-weight: 800; color: var(--neon-cyan);">GAMEPAD STATUS:</span>
-              <span id="opt-gamepad-status" style="font-size: 11px; font-weight: 900; color: #ff3344;">DISCONNECTED</span>
+            <div class="opt-row-card">
+              <div class="opt-card-title">GAMEPAD STATUS</div>
+              <span id="opt-gamepad-status" style="font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; color: #ff3344;">DISCONNECTED</span>
             </div>
 
-            <div class="manual-card">
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">STICK DEADZONE</div>
+                <span id="opt-deadzone-val" class="opt-card-val">25%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">5%</span>
+                <input type="range" id="opt-stick-deadzone" min="0.05" max="0.5" step="0.05" value="0.25" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">50%</span>
+              </div>
+            </div>
+
+            <div class="manual-card" style="margin-top: 10px;">
               <div class="manual-card-title">🎮 XBOX / PC CONTROLLER LAYOUT</div>
               <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer Ship Orientation</p>
               <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters</p>
@@ -3957,108 +3989,79 @@
               <p><strong style="color: #ff33aa;">BUTTON [Y] / [LT]:</strong> Ship Special Ability [R]</p>
               <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game</p>
             </div>
-
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
-              <span style="font-size: 11px; font-weight: 800; color: #cbd5e1;">STICK DEADZONE:</span>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="range" id="opt-stick-deadzone" min="0.05" max="0.5" step="0.05" value="0.25" style="accent-color: var(--neon-cyan); width: 100px;" />
-                <span id="opt-deadzone-val" style="font-size: 11px; font-weight: 800; color: var(--neon-cyan); width: 32px;">25%</span>
-              </div>
-            </div>
           </div>
 
-          <!-- 4. Touch & Mobile Controls (Analog Touch Thrust in its own section) -->
+          <!-- 4. Touch & Mobile Controls -->
           <div class="opt-tab-pane" id="opt-tab-touch" style="display: none;">
             <!-- Analog Touch Thrust -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">ANALOG TOUCH THRUST</div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Dynamically scale ship thrust acceleration by virtual thumbstick drag distance rather than instant max throttle</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">ANALOG TOUCH THRUST</div>
               <input type="checkbox" id="chk-opt-analog-thrust" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Left-Handed / Southpaw Mode -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">LEFT-HANDED LAYOUT (SOUTHPAW)</div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Swaps the steering joystick to the right side and action triggers to the left side</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">LEFT-HANDED LAYOUT (SOUTHPAW)</div>
               <input type="checkbox" id="chk-opt-touch-southpaw" style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Virtual Button Size (Scale) -->
-            <div style="background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">TOUCH BUTTON SIZE</div>
-                  <div style="font-size: 10px; color: #94a3b8;">Scale on-screen triggers for thumb comfort and screen reach</div>
-                </div>
-                <span id="opt-touch-scale-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">TOUCH BUTTON SIZE</div>
+                <span id="opt-touch-scale-val" class="opt-card-val">100%</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">70%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">70%</span>
                 <input type="range" id="opt-touch-scale-slider" min="0.7" max="1.4" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">140%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">140%</span>
               </div>
             </div>
 
             <!-- Virtual Button Opacity -->
-            <div style="background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">TOUCH BUTTON OPACITY</div>
-                  <div style="font-size: 10px; color: #94a3b8;">Adjust HUD trigger transparency to minimize arena visual obstruction</div>
-                </div>
-                <span id="opt-touch-opacity-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">TOUCH BUTTON OPACITY</div>
+                <span id="opt-touch-opacity-val" class="opt-card-val">100%</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">30%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">30%</span>
                 <input type="range" id="opt-touch-opacity-slider" min="0.3" max="1.0" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
               </div>
             </div>
 
             <!-- Haptic Vibration Feedback -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 11px 13px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.25); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">HAPTIC VIBRATION FEEDBACK</div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Subtle tactile phone vibration when pressing triggers or taking damage</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">HAPTIC VIBRATION FEEDBACK</div>
               <input type="checkbox" id="chk-opt-touch-haptics" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
-            <div class="manual-card">
+            <div class="manual-card" style="margin-top: 10px;">
               <div class="manual-card-title">🕹 VIRTUAL FLIGHT CONTROLS</div>
-              <p><strong style="color: var(--neon-cyan);">DYNAMIC JOYSTICK:</strong> Touch and drag on the steering half of the screen to position and steer the analog flight thumbstick.</p>
-              <p style="margin-top: 8px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap the capacitive buttons for Pulse Lasers [FIRE], Launch Offensive Powerup [LAUNCH], and Special Ability [SPECIAL] (if applicable).</p>
+              <p><strong style="color: var(--neon-cyan);">DYNAMIC JOYSTICK:</strong> Touch and drag on steering zone to orient and thrust.</p>
+              <p style="margin-top: 6px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap on-screen triggers for [FIRE], [LAUNCH], and [SPECIAL].</p>
             </div>
           </div>
 
           <!-- 5. Audio & Sound -->
           <div class="opt-tab-pane" id="opt-tab-audio" style="display: none;">
             <!-- Sound FX Toggle -->
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">SOUND EFFECTS (SFX)</div>
-                <div style="font-size: 10px; color: #94a3b8;">Enable combat laser audio, explosions, and voice telemetry</div>
-              </div>
+            <div class="opt-row-card">
+              <div class="opt-card-title">SOUND EFFECTS (SFX)</div>
               <input type="checkbox" id="chk-opt-sound-enabled" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Volume Slider -->
-            <div style="background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 12px; font-weight: 800; color: #ffffff;">MASTER AUDIO VOLUME</div>
-                  <div style="font-size: 10px; color: #94a3b8;">Overall audio output level</div>
-                </div>
-                <span id="opt-volume-val" style="font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; color: var(--neon-cyan); width: 45px; text-align: right;">100%</span>
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">MASTER AUDIO VOLUME</div>
+                <span id="opt-volume-val" class="opt-card-val">100%</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">0%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">0%</span>
                 <input type="range" id="opt-volume-slider" min="0" max="1.0" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
-                <span style="font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
               </div>
             </div>
           </div>
