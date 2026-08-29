@@ -107,6 +107,14 @@ class WormholeGame {
   public isLanMatchClient = false;
   public isSpectating = false;
 
+  // Inactivity tracking (15 minute idle timeout for hosted matches & clients)
+  public static readonly MATCH_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  public lastUserActivityTime = Date.now();
+
+  public recordUserActivity(): void {
+    this.lastUserActivityTime = Date.now();
+  }
+
   // Simulated Realm (for AI bot simulation)
   private simulatedRealm: SimulatedRealm;
 
@@ -1016,8 +1024,13 @@ class WormholeGame {
         this.isLanMatchHost = false;
         this.currentMatchConfig = null;
         this.setDeckActive(true);
-        this.showAlert('HOST HAS LEFT THE MATCH // RETURNING TO LOBBY');
-        this.addChatLog('Host left the match. Returned to lobby lounge.', 'system');
+        if (data.reason === 'TIMEOUT_INACTIVE') {
+          this.showAlert('MATCH TERMINATED // HOST INACTIVE FOR 15 MINUTES');
+          this.addChatLog('Host was inactive for 15 minutes. Match closed.', 'system');
+        } else {
+          this.showAlert('HOST HAS LEFT THE MATCH // RETURNING TO LOBBY');
+          this.addChatLog('Host left the match. Returned to lobby lounge.', 'system');
+        }
         this.sound.playDefeatFanfare();
       }
     }
@@ -1094,6 +1107,26 @@ class WormholeGame {
         this.broadcastMatches();
       }
     }, 2000);
+
+    // Inactivity timeout monitor: auto-terminate/disconnect match after 15 minutes of user inactivity
+    setInterval(() => {
+      if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
+        const elapsedInactive = Date.now() - this.lastUserActivityTime;
+        if (elapsedInactive >= WormholeGame.MATCH_INACTIVITY_TIMEOUT_MS) {
+          if (this.isLanMatchHost) {
+            this.setDeckActive(true, 'TIMEOUT_INACTIVE');
+            this.showAlert('MATCH TERMINATED // 15 MIN INACTIVITY TIMEOUT');
+            this.addChatLog('Hosted match terminated due to 15 minutes of inactivity.', 'system');
+            this.sound.playDefeatFanfare();
+          } else if (this.isLanMatchClient || this.network.isConnected) {
+            this.setDeckActive(true);
+            this.showAlert('DISCONNECTED // 15 MIN INACTIVITY TIMEOUT');
+            this.addChatLog('Disconnected from match due to 15 minutes of inactivity.', 'system');
+            this.sound.playDefeatFanfare();
+          }
+        }
+      }
+    }, 5000);
 
     // Clean up hosted match or notify host if window is closed
     window.addEventListener('beforeunload', () => {
@@ -1681,7 +1714,7 @@ class WormholeGame {
     this.updateTableRosterUI();
   }
 
-  private setDeckActive(active: boolean): void {
+  private setDeckActive(active: boolean, reason?: string): void {
     this.inArena = !active;
     const deck = document.getElementById('screen-front-end')!;
     const hud = document.getElementById('ui-overlay')!;
@@ -1746,7 +1779,7 @@ class WormholeGame {
         this.sendLanPacket({
           type: 'MATCH_TERMINATED',
           matchId: this.currentMatchConfig.id,
-          reason: 'HOST_LEFT',
+          reason: reason || 'HOST_LEFT',
         });
         this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
         this.broadcastMatches();
@@ -2594,6 +2627,17 @@ class WormholeGame {
       this.renderConnectedPilots();
       this.updateTableRosterUI();
     };
+
+    // Global User Inactivity Watcher (resets 15-minute match timeout on any user action)
+    const recordActivity = () => this.recordUserActivity();
+    window.addEventListener('keydown', recordActivity, { passive: true });
+    window.addEventListener('keyup', recordActivity, { passive: true });
+    window.addEventListener('pointerdown', recordActivity, { passive: true });
+    window.addEventListener('pointermove', recordActivity, { passive: true });
+    window.addEventListener('touchstart', recordActivity, { passive: true });
+    window.addEventListener('touchmove', recordActivity, { passive: true });
+    window.addEventListener('wheel', recordActivity, { passive: true });
+    window.addEventListener('click', recordActivity, { passive: true });
 
     if (displayCallsign) {
       displayCallsign.innerText = this.playerName;
@@ -4507,6 +4551,9 @@ class WormholeGame {
     this.simulatedRealm.arenaBound = wallHalfW;
 
     let inputState = this.input.getState();
+    if (inputState.up || inputState.left || inputState.right || inputState.fire || inputState.secondaryFire || inputState.tertiaryFire) {
+      this.recordUserActivity();
+    }
 
     // AI Autopilot mode for Player 1 ship (configured via Test Hazards menu)
     if (this.playerPilotMode !== 'human' && this.player.isAlive) {
