@@ -1414,7 +1414,7 @@ class WormholeGame {
       maxHealth: this.player.maxHealth,
       isAlive: true,
       rank: 0,
-      wins: this.totalMatchWins,
+      wins: 0,
       color: playerColor,
       team: isTeamMode ? 'A' : undefined,
     };
