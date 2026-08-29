@@ -3179,9 +3179,23 @@ class WormholeGame {
     // Pause Menu Handlers
     document.getElementById('btn-pause-resume')!.onclick = () => {
       document.getElementById('pause-modal')?.classList.remove('active');
+      const pauseStart = document.getElementById('btn-pause-start-match');
+      if (pauseStart) {
+        pauseStart.dataset.confirming = 'false';
+        pauseStart.innerText = 'RESTART MATCH';
+        pauseStart.style.borderColor = '#ffaa00';
+        pauseStart.style.color = '#ffaa00';
+      }
     };
     document.getElementById('btn-pause-title')!.onclick = () => {
       document.getElementById('pause-modal')?.classList.remove('active');
+      const pauseStart = document.getElementById('btn-pause-start-match');
+      if (pauseStart) {
+        pauseStart.dataset.confirming = 'false';
+        pauseStart.innerText = 'RESTART MATCH';
+        pauseStart.style.borderColor = '#ffaa00';
+        pauseStart.style.color = '#ffaa00';
+      }
       this.setDeckActive(true);
     };
 
@@ -4127,18 +4141,17 @@ class WormholeGame {
           btnStart.style.borderColor = 'rgba(255, 170, 0, 0.6)';
           btnStart.style.color = '#ffaa00';
         }
-        if (btnPauseStart) {
-          btnPauseStart.innerText = '🔄 RESTART MATCH';
-        }
       } else {
         if (btnStart) {
           btnStart.innerText = '⚡ START MATCH';
           btnStart.style.borderColor = 'rgba(0, 255, 136, 0.5)';
           btnStart.style.color = '#00ff88';
         }
-        if (btnPauseStart) {
-          btnPauseStart.innerText = '⚡ START MATCH';
-        }
+      }
+      if (btnPauseStart && btnPauseStart.dataset.confirming !== 'true') {
+        btnPauseStart.innerText = 'RESTART MATCH';
+        btnPauseStart.style.borderColor = '#ffaa00';
+        btnPauseStart.style.color = '#ffaa00';
       }
     }
 
@@ -4307,11 +4320,32 @@ class WormholeGame {
     }
 
     const btnPauseStart = document.getElementById('btn-pause-start-match');
+    let restartConfirmTimeout: number | null = null;
     if (btnPauseStart) {
       btnPauseStart.onclick = () => {
-        document.getElementById('pause-modal')?.classList.remove('active');
-        const startBtn = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
-        if (startBtn) startBtn.click();
+        if (btnPauseStart.dataset.confirming === 'true') {
+          btnPauseStart.dataset.confirming = 'false';
+          btnPauseStart.innerText = 'RESTART MATCH';
+          btnPauseStart.style.borderColor = '#ffaa00';
+          btnPauseStart.style.color = '#ffaa00';
+          if (restartConfirmTimeout) clearTimeout(restartConfirmTimeout);
+          document.getElementById('pause-modal')?.classList.remove('active');
+          const startBtn = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
+          if (startBtn) startBtn.click();
+        } else {
+          btnPauseStart.dataset.confirming = 'true';
+          btnPauseStart.innerText = 'CONFIRM RESTART?';
+          btnPauseStart.style.borderColor = '#ff3344';
+          btnPauseStart.style.color = '#ff3344';
+          this.sound.playClick();
+          if (restartConfirmTimeout) clearTimeout(restartConfirmTimeout);
+          restartConfirmTimeout = window.setTimeout(() => {
+            btnPauseStart.dataset.confirming = 'false';
+            btnPauseStart.innerText = 'RESTART MATCH';
+            btnPauseStart.style.borderColor = '#ffaa00';
+            btnPauseStart.style.color = '#ffaa00';
+          }, 3500);
+        }
       };
     }
 

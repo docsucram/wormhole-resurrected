@@ -1256,8 +1256,8 @@
           overflow-x: hidden !important;
         }
         .manual-tab-btn {
-          font-size: 9px !important;
-          padding: 6px 8px !important;
+          font-size: 10.5px !important;
+          padding: 7px 8px !important;
           white-space: normal !important;
         }
       }
@@ -2141,7 +2141,7 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
-        width: 230px;
+        width: 240px;
         flex-shrink: 0;
         border-right: 1px solid rgba(0, 229, 255, 0.25);
         padding-right: 12px;
@@ -2154,10 +2154,10 @@
         border-radius: 5px;
         color: #94a3b8;
         font-family: 'Orbitron', sans-serif;
-        font-size: 10.5px;
+        font-size: 11.5px;
         font-weight: 800;
         letter-spacing: 0.5px;
-        padding: 9px 12px;
+        padding: 9.5px 12px;
         cursor: pointer;
         transition: all 0.08s ease-out;
         white-space: nowrap;
@@ -3595,26 +3595,29 @@
 
     <!-- Pause Menu Modal -->
     <div id="pause-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 12px;">TACTICAL PAUSE</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 14px; letter-spacing: 1px;">TACTICAL PAUSE</div>
       <div style="display: flex; flex-direction: column; gap: 8px; width: 250px; margin: 0 auto;">
         <button class="action-btn" id="btn-pause-resume" style="border-color: #00ff88; color: #00ff88; font-weight: 900;">RESUME FLIGHT</button>
-        <button class="action-btn" id="btn-pause-start-match" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">START MATCH</button>
 
-        <!-- Add Bot Section -->
-        <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2);">
-          <select class="styled-select" id="pause-bot-diff" style="flex: 1; font-size: 10px; padding: 4px 6px;">
+        <!-- Add Bot Section (Flush side-by-side without outer bounding box, standard button height, cyan accent) -->
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <select class="styled-select" id="pause-bot-diff" style="flex: 1; padding: 8px 10px; font-size: 11px; border: 1px solid rgba(0, 229, 255, 0.4); background: #081a36; color: #cbd5e1; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-weight: 800;">
             <option value="easy">Novice</option>
             <option value="medium" selected>Pilot (Med)</option>
             <option value="hard">Ace (Hard)</option>
             <option value="insane">Cyborg (Insane)</option>
           </select>
-          <button class="action-btn" id="btn-pause-add-bot" style="padding: 4px 10px; font-size: 10px; border-color: #00ff88; color: #00ff88; font-weight: 900;">+ BOT</button>
+          <button class="action-btn" id="btn-pause-add-bot" style="padding: 8px 14px; font-size: 11px; border-color: var(--neon-cyan); color: var(--neon-cyan); font-weight: 900; white-space: nowrap;">+ BOT</button>
         </div>
 
-        <button class="action-btn" id="btn-pause-options">⚙ CONTROLS & OPTIONS</button>
-        <button class="action-btn" id="btn-pause-sound">SOUND: ON</button>
-        <button class="action-btn" id="btn-pause-fullscreen">⛶ TOGGLE FULLSCREEN</button>
-        <button class="action-btn" id="btn-pause-title" style="border-color: #ff3344; color: #ff3344; font-weight: 900;">RETURN TO LOBBY</button>
+        <button class="action-btn" id="btn-pause-options">OPTIONS</button>
+        <button class="action-btn" id="btn-pause-fullscreen">TOGGLE FULLSCREEN</button>
+
+        <!-- Grouped Destructive / Session Reset Actions -->
+        <div style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255, 51, 68, 0.25); display: flex; flex-direction: column; gap: 8px;">
+          <button class="action-btn" id="btn-pause-start-match" style="border-color: #ffaa00; color: #ffaa00; font-weight: 900;">RESTART MATCH</button>
+          <button class="action-btn" id="btn-pause-title" style="border-color: #ff3344; color: #ff3344; font-weight: 900;">RETURN TO LOBBY</button>
+        </div>
       </div>
     </div>
 
@@ -3645,7 +3648,7 @@
             <!-- FPS Counter -->
             <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
               <div>
-                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">FPS & PERFORMANCE COUNTER</div>
+                <div style="font-size: 12px; font-weight: 800; color: #ffffff;">SHOW FPS COUNTER</div>
                 <div style="font-size: 10px; color: #94a3b8;">Displays real-time frame rate in the top-left corner</div>
               </div>
               <input type="checkbox" id="chk-opt-fps" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
@@ -3812,7 +3815,7 @@
             <div class="manual-card">
               <div class="manual-card-title">🕹 VIRTUAL FLIGHT CONTROLS</div>
               <p><strong style="color: var(--neon-cyan);">DYNAMIC JOYSTICK:</strong> Touch and drag on the steering half of the screen to position and steer the analog flight thumbstick.</p>
-              <p style="margin-top: 8px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap the capacitive buttons for Pulse Lasers [FIRE], Stored Hazard Launch [HAZARD], and Special Ability [SPECIAL].</p>
+              <p style="margin-top: 8px;"><strong style="color: #00ff88;">ACTION TRIGGERS:</strong> Tap the capacitive buttons for Pulse Lasers [FIRE], Launch Offensive Powerup [LAUNCH], and Special Ability [SPECIAL] (if applicable).</p>
             </div>
           </div>
 
