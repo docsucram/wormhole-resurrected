@@ -2934,14 +2934,8 @@
               </div>
               <div class="callsign-controls-row">
                 <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2L21 7V17L12 22L3 17V7L12 2Z"/>
-                    <path d="M12 2V12M12 12L21 7M12 12L3 7"/>
-                    <circle cx="12" cy="7" r="1.2" fill="currentColor"/>
-                    <circle cx="7.5" cy="12" r="1.2" fill="currentColor"/>
-                    <circle cx="7.5" cy="16.5" r="1.2" fill="currentColor"/>
-                    <circle cx="16.5" cy="12" r="1.2" fill="currentColor"/>
-                    <circle cx="16.5" cy="16.5" r="1.2" fill="currentColor"/>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                   </svg>
                 </button>
                 <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">
@@ -3048,8 +3042,7 @@
 
     <!-- Avatar Selection Modal -->
     <div id="avatar-picker-modal" style="display: none;">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">SELECT PILOT AVATAR</div>
-      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">CHOOSE YOUR TACTICAL IDENTITY IN SPACE</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 16px;">SELECT PILOT AVATAR</div>
 
       <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 420px; margin: 0 auto 16px auto;">
         <div class="avatar-card-item" data-avatar="avatar_1.png" title="Avatar 1">
@@ -3086,7 +3079,7 @@
     <!-- Host Custom Match Modal -->
     <div id="create-match-modal">
       <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">HOST NEW MATCH</div>
-      <div class="host-modal-subtitle" style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">CONFIGURE MATCH RULES & LOBBY SETTINGS</div>
+      <div class="host-modal-subtitle" style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SET MATCH RULES</div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 480px; margin: 0 auto;">
         <div class="input-group">
@@ -3177,7 +3170,7 @@
     <!-- Solo Practice AI Difficulty Modal -->
     <div id="solo-difficulty-modal">
       <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">SOLO PRACTICE SIMULATION</div>
-      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SELECT ENEMY AI COMBAT DIRECTIVE:</div>
+      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SELECT ENEMY AI DIFFICULTY:</div>
 
       <div style="display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto 16px auto;">
         <button class="solo-diff-card" data-diff="easy" id="btn-solo-diff-easy">
@@ -3185,7 +3178,7 @@
             <strong style="color: #00ff88; font-size: 13px; font-family: 'Orbitron', sans-serif;">NOVICE (EASY)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">TRAINING</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Standard evasion, relaxed aim, and steady wormhole dispatching.</p>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Basic navigation and slow aim. Ideal for learning flight controls.</p>
         </button>
 
         <button class="solo-diff-card active" data-diff="medium" id="btn-solo-diff-med">
@@ -3193,7 +3186,7 @@
             <strong style="color: var(--neon-cyan); font-size: 13px; font-family: 'Orbitron', sans-serif;">PILOT (MEDIUM)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">STANDARD</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Target leading, proactive hazard launching, and smart positioning.</p>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Leads targets, avoids mines, and faster reflexes.</p>
         </button>
 
         <button class="solo-diff-card" data-diff="hard" id="btn-solo-diff-hard">
@@ -3201,7 +3194,7 @@
             <strong style="color: var(--neon-magenta); font-size: 13px; font-family: 'Orbitron', sans-serif;">ACE (HARD)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">VETERAN</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Rapid mine clearance, rapid powerup combos, and lethal predictive fire.</p>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Predictive aim, aggressive hazard clearing, and fast wormhole attacks.</p>
         </button>
 
         <button class="solo-diff-card" data-diff="insane" id="btn-solo-diff-insane">
@@ -3209,7 +3202,7 @@
             <strong style="color: #bd53ed; font-size: 13px; font-family: 'Orbitron', sans-serif;">CYBORG (INSANE)</strong>
             <span style="font-size: 9px; color: #bd53ed; font-family: 'Orbitron', sans-serif; font-weight: 800;">APEX COMBAT</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Superhuman reflex, predictive trajectory intercepts, and relentless barrage bursts.</p>
+          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Near-instant reflexes, intercept drift maneuvers, and ruthless offensive pressure.</p>
         </button>
       </div>
 
@@ -3526,7 +3519,7 @@
                   </div>
 
                   <div class="detail-desc" id="manual-ship-desc" style="font-size: 10.5px; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">
-                    The Tank is the ultimate in destructive capabilities. Formidable armor & heavy gun systems right off the bat.
+                    Heavy assault fighter with boosted starting armor and dual-pulse cannons.
                   </div>
                 </div>
 
@@ -4245,7 +4238,7 @@
         <path d="M4 22l-2-2 2-2"/>
       </svg>
       <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; color: var(--neon-cyan); margin-bottom: 8px;">ROTATE DEVICE TO LANDSCAPE</div>
-      <div style="font-size: 11px; color: #88bbdd; letter-spacing: 1px;">COMBAT SYSTEMS REQUIRE HORIZONTAL VIEWPORT</div>
+      <div style="font-size: 11px; color: #88bbdd; letter-spacing: 1px;">Wormhole requires landscape orientation to play.</div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
