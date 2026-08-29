@@ -250,11 +250,12 @@ class WormholeGame {
 
     // Apply persisted Mobile Touch Customizations
     const mobileTouchRoot = document.getElementById('mobile-touch-root');
+    const savedSouthpaw = localStorage.getItem('wh_opt_touch_southpaw');
+    if (savedSouthpaw === 'true') {
+      document.body.classList.add('southpaw');
+      if (mobileTouchRoot) mobileTouchRoot.classList.add('southpaw');
+    }
     if (mobileTouchRoot) {
-      const savedSouthpaw = localStorage.getItem('wh_opt_touch_southpaw');
-      if (savedSouthpaw === 'true') {
-        mobileTouchRoot.classList.add('southpaw');
-      }
       const savedTouchScale = localStorage.getItem('wh_opt_touch_scale');
       if (savedTouchScale !== null) {
         mobileTouchRoot.style.setProperty('--touch-btn-scale', savedTouchScale);
@@ -1414,6 +1415,8 @@ class WormholeGame {
   }
 
   private initTableRoster(): void {
+    this.gameState.player1Score = 0;
+    this.gameState.player2Score = 0;
     this.player.slot = 0;
     this.player.colorIndex = this.selectedColorIndex;
     this.simulatedRealm.clearAllBots();
@@ -1732,7 +1735,11 @@ class WormholeGame {
       this.resetPilotModeToHuman();
       this.isMatchWaitingForPilots = false;
       this.gameState.phase = 'PLAYING';
+      this.gameState.player1Score = 0;
+      this.gameState.player2Score = 0;
+      this.gameState.currentRound = 1;
       this.simulatedRealm.clearAllBots();
+      this.initTableRoster();
 
       if (this.isLanMatchHost && this.currentMatchConfig) {
         this.sendLanPacket({
@@ -1891,7 +1898,7 @@ class WormholeGame {
       this.updateTableRosterUI();
     };
 
-    this.gameState.onRoundEnd = (roundWinner, p1Score, p2Score) => {
+    this.gameState.onRoundEnd = (roundWinner, _p1Score, _p2Score) => {
       const roundModal = document.getElementById('round-modal')!;
       const titleEl = document.getElementById('round-modal-title')!;
       const subEl = document.getElementById('round-modal-subtitle')!;
@@ -1899,15 +1906,18 @@ class WormholeGame {
 
       const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
       const isLocalRoundWin = (roundWinner === 'PLAYER 1' && isP1Local) || (roundWinner === 'PLAYER 2' && !isP1Local);
-      const myWins = isP1Local ? p1Score : p2Score;
-      const oppWins = isP1Local ? p2Score : p1Score;
 
-      titleEl.innerText = isLocalRoundWin ? 'ROUND VICTORY!' : 'YOU DIED';
-      titleEl.style.color = isLocalRoundWin ? 'var(--neon-cyan)' : '#ff3344';
-      titleEl.style.textShadow = isLocalRoundWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
+      // Only set generic fallback title if not already styled by showDefeatModal / showVictoryModal
+      if (!titleEl.innerText || titleEl.innerText === 'ROUND VICTORY!' || titleEl.innerText === 'YOU DIED') {
+        titleEl.innerText = isLocalRoundWin ? 'ROUND VICTORY!' : 'YOU DIED';
+        titleEl.style.color = isLocalRoundWin ? 'var(--neon-cyan)' : '#ff3344';
+        titleEl.style.textShadow = isLocalRoundWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
+        subEl.innerText = isLocalRoundWin ? 'ENEMY SHIP ELIMINATED' : 'YOUR SHIP WAS DESTROYED';
+      }
 
-      subEl.innerText = isLocalRoundWin ? 'ENEMY SHIP ELIMINATED' : 'YOUR SHIP WAS DESTROYED';
-      scoreEl.innerText = `${myWins} - ${oppWins}`;
+      if (scoreEl) {
+        scoreEl.innerText = this.formatMatchScoreDisplay();
+      }
 
       roundModal.classList.add('active');
       roundModal.style.display = 'block';
@@ -2207,6 +2217,32 @@ class WormholeGame {
     }
   }
 
+  private formatMatchScoreDisplay(): string {
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    if (isTeamMode) {
+      return `ALPHA: ${this.gameState.player1Score}   |   OMEGA: ${this.gameState.player2Score}`;
+    }
+
+    const activePlayers = this.tablePlayers.filter((p) => p !== null);
+    if (activePlayers.length === 2) {
+      const p1 = this.tablePlayers[0];
+      const p2 = this.tablePlayers.find((p) => p && p.slot !== 0) || this.tablePlayers[1];
+      const p1Name = p1 ? p1.name.toUpperCase() : 'YOU';
+      const p2Name = p2 ? p2.name.toUpperCase() : 'OPPONENT';
+      const p1Wins = p1 ? p1.wins : this.gameState.player1Score;
+      const p2Wins = p2 ? p2.wins : this.gameState.player2Score;
+      return `${p1Name}: ${p1Wins}    —    ${p2Name}: ${p2Wins}`;
+    }
+
+    const topStandings = activePlayers
+      .sort((a, b) => b!.wins - a!.wins)
+      .slice(0, 4)
+      .map((p) => `${p!.name}: ${p!.wins}`)
+      .join('   |   ');
+
+    return topStandings || `${this.playerName.toUpperCase()}: ${this.gameState.player1Score}   —   OPPONENT: ${this.gameState.player2Score}`;
+  }
+
   public showDefeatModal(customTitle = 'YOU DIED', customSubtitle = 'YOUR SHIP WAS DESTROYED'): void {
     if ((this.gameState.phase as string) === 'MATCH_OVER') return;
 
@@ -2235,19 +2271,8 @@ class WormholeGame {
       }
     }
 
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
     if (scoreEl) {
-      if (isTeamMode) {
-        scoreEl.innerText = `ALPHA: ${this.gameState.player1Score}  |  OMEGA: ${this.gameState.player2Score}`;
-      } else {
-        const topStandings = this.tablePlayers
-          .filter(p => !!p)
-          .sort((a, b) => b!.wins - a!.wins)
-          .slice(0, 4)
-          .map(p => `${p!.name}: ${p!.wins}`)
-          .join(' | ');
-        scoreEl.innerText = topStandings || `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
-      }
+      scoreEl.innerText = this.formatMatchScoreDisplay();
     }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
@@ -2277,19 +2302,8 @@ class WormholeGame {
       killerEl.innerText = '';
       killerEl.style.display = 'none';
     }
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
     if (scoreEl) {
-      if (isTeamMode) {
-        scoreEl.innerText = `ALPHA: ${this.gameState.player1Score}  |  OMEGA: ${this.gameState.player2Score}`;
-      } else {
-        const topStandings = this.tablePlayers
-          .filter(p => !!p)
-          .sort((a, b) => b!.wins - a!.wins)
-          .slice(0, 4)
-          .map(p => `${p!.name}: ${p!.wins}`)
-          .join(' | ');
-        scoreEl.innerText = topStandings || `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
-      }
+      scoreEl.innerText = this.formatMatchScoreDisplay();
     }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
 
@@ -3350,13 +3364,15 @@ class WormholeGame {
     // 1. Southpaw / Left-Handed Layout
     const chkSouthpaw = document.getElementById('chk-opt-touch-southpaw') as HTMLInputElement | null;
     const savedSouthpaw = localStorage.getItem('wh_opt_touch_southpaw');
-    if (chkSouthpaw && mobileTouchRoot) {
+    if (chkSouthpaw) {
       if (savedSouthpaw !== null) {
         chkSouthpaw.checked = savedSouthpaw === 'true';
-        mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
+        document.body.classList.toggle('southpaw', chkSouthpaw.checked);
+        if (mobileTouchRoot) mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
       }
       chkSouthpaw.onchange = () => {
-        mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
+        document.body.classList.toggle('southpaw', chkSouthpaw.checked);
+        if (mobileTouchRoot) mobileTouchRoot.classList.toggle('southpaw', chkSouthpaw.checked);
         try { localStorage.setItem('wh_opt_touch_southpaw', chkSouthpaw.checked.toString()); } catch {}
       };
     }
