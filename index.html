@@ -2933,8 +2933,21 @@
                 <input type="text" class="inline-callsign-input" id="input-callsign" value="VortexPrime" maxlength="16" style="display: none;" />
               </div>
               <div class="callsign-controls-row">
-                <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">🎲</button>
-                <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">✏️</button>
+                <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                    <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
+                    <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/>
+                  </svg>
+                </button>
+                <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -2991,8 +3004,12 @@
               <div class="section-title" style="font-size: 12px; margin-bottom: 0;">LIVE HOSTED MATCHES</div>
               <div class="matches-search-box">
                 <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 11px; padding: 6px 12px 6px 28px; width: 170px; background: #040c1a; border-color: #163658;" />
-                <span style="position: absolute; left: 9px; font-size: 11px; color: #64748b; pointer-events: none;">🔍</span>
-                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 6px 9px; font-size: 11px; background: #091728; border-color: #163658;">🔄</button>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 9px; pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 6px 9px; font-size: 11px; background: #091728; border-color: #163658; display: flex; align-items: center; justify-content: center;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                </button>
               </div>
             </div>
 
@@ -3016,11 +3033,11 @@
 
             <!-- Action Bar at bottom of matches panel: Host Match + Solo Practice -->
             <div class="matches-action-footer" style="margin-top: auto; padding-top: 10px; border-top: 1.5px solid #163658; display: flex; gap: 10px; align-items: center;">
-              <button class="btn-host" id="btn-create-host" style="flex: 2; justify-content: center; padding: 11px 18px; font-size: 12px; font-weight: 900; white-space: nowrap; background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%); border: 1.5px solid #00e5ff; box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);">
+              <button class="btn-host" id="btn-create-host" style="flex: 2; justify-content: center; padding: 13px 20px; font-size: 13.5px; font-weight: 900; letter-spacing: 1px; white-space: nowrap; background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%); border: 1.5px solid #00e5ff; box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);">
                 <span>+</span> HOST NEW MATCH
               </button>
-              <button class="btn-singleplayer" id="btn-main-engage" style="flex: 1; justify-content: center; padding: 11px 18px; font-size: 12px; font-weight: 900; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border: 1.5px solid #00ff88; color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);">
-                <span>⚡</span> SOLO PRACTICE
+              <button class="btn-singleplayer" id="btn-main-engage" style="flex: 1.3; justify-content: center; padding: 13px 20px; font-size: 13px; font-weight: 900; letter-spacing: 1px; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border: 1.5px solid #00ff88; color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);">
+                SOLO PRACTICE
               </button>
             </div>
           </div>
@@ -3030,7 +3047,7 @@
 
     <!-- Avatar Selection Modal -->
     <div id="avatar-picker-modal" style="display: none;">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SELECT PILOT AVATAR</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">SELECT PILOT AVATAR</div>
       <div style="font-size: 11px; color: #88bbdd; margin-bottom: 16px;">CHOOSE YOUR TACTICAL IDENTITY IN SPACE</div>
 
       <div class="avatar-selection-grid" id="avatar-selection-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 420px; margin: 0 auto 16px auto;">
@@ -3067,7 +3084,7 @@
 
     <!-- Host Custom Match Modal -->
     <div id="create-match-modal">
-      <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ HOST NEW MATCH</div>
+      <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">HOST NEW MATCH</div>
       <div class="host-modal-subtitle" style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">CONFIGURE MATCH RULES & LOBBY SETTINGS</div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 480px; margin: 0 auto;">
@@ -3145,7 +3162,7 @@
         <div class="input-group host-test-mode-group" id="host-test-mode-group" style="margin-top: 2px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; font-weight: 800; color: #ffaa00;">
             <input type="checkbox" id="host-test-mode" style="accent-color: #ffaa00; width: 15px; height: 15px; cursor: pointer;" />
-            <span>⚡ ENABLE TEST MODE (Dev Controls & Bot PiP)</span>
+            <span>ENABLE TEST MODE (Dev Controls & Bot PiP)</span>
           </label>
         </div>
       </div>
@@ -3158,13 +3175,13 @@
 
     <!-- Solo Practice AI Difficulty Modal -->
     <div id="solo-difficulty-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">⚡ SOLO PRACTICE SIMULATION</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">SOLO PRACTICE SIMULATION</div>
       <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SELECT ENEMY AI COMBAT DIRECTIVE:</div>
 
       <div style="display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto 16px auto;">
         <button class="solo-diff-card" data-diff="easy" id="btn-solo-diff-easy">
           <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: #00ff88; font-size: 13px; font-family: 'Orbitron', sans-serif;">🟢 NOVICE (EASY)</strong>
+            <strong style="color: #00ff88; font-size: 13px; font-family: 'Orbitron', sans-serif;">NOVICE (EASY)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">TRAINING</span>
           </div>
           <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Standard evasion, relaxed aim, and steady wormhole dispatching.</p>
@@ -3172,7 +3189,7 @@
 
         <button class="solo-diff-card active" data-diff="medium" id="btn-solo-diff-med">
           <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: var(--neon-cyan); font-size: 13px; font-family: 'Orbitron', sans-serif;">🔵 PILOT (MEDIUM)</strong>
+            <strong style="color: var(--neon-cyan); font-size: 13px; font-family: 'Orbitron', sans-serif;">PILOT (MEDIUM)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">STANDARD</span>
           </div>
           <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Target leading, proactive hazard launching, and smart positioning.</p>
@@ -3180,7 +3197,7 @@
 
         <button class="solo-diff-card" data-diff="hard" id="btn-solo-diff-hard">
           <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: var(--neon-magenta); font-size: 13px; font-family: 'Orbitron', sans-serif;">🔴 ACE (HARD)</strong>
+            <strong style="color: var(--neon-magenta); font-size: 13px; font-family: 'Orbitron', sans-serif;">ACE (HARD)</strong>
             <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">VETERAN</span>
           </div>
           <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Rapid mine clearance, rapid powerup combos, and lethal predictive fire.</p>
@@ -3188,7 +3205,7 @@
 
         <button class="solo-diff-card" data-diff="insane" id="btn-solo-diff-insane">
           <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: #bd53ed; font-size: 13px; font-family: 'Orbitron', sans-serif;">🟣 CYBORG (INSANE)</strong>
+            <strong style="color: #bd53ed; font-size: 13px; font-family: 'Orbitron', sans-serif;">CYBORG (INSANE)</strong>
             <span style="font-size: 9px; color: #bd53ed; font-family: 'Orbitron', sans-serif; font-weight: 800;">APEX COMBAT</span>
           </div>
           <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Superhuman reflex, predictive trajectory intercepts, and relentless barrage bursts.</p>
@@ -3205,7 +3222,8 @@
     <div id="manual-modal">
       <div class="manual-modal-header">
         <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;">
-          <span>📖</span> TACTICAL FLIGHT MANUAL & STRATEGY GUIDE
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          TACTICAL FLIGHT MANUAL & STRATEGY GUIDE
         </div>
         <button id="btn-close-manual-top" class="modal-close-btn" title="Close Manual" style="background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
       </div>
@@ -3213,13 +3231,34 @@
       <div class="manual-layout">
         <!-- Left Side Navigation Sidebar -->
         <div class="manual-tabs">
-          <button class="manual-tab-btn active" data-tab="tab-overview">📖 OVERVIEW</button>
-          <button class="manual-tab-btn" data-tab="tab-powerups">⚡ POWERUPS</button>
-          <button class="manual-tab-btn" data-tab="tab-defensive">🛡 DEFENSIVE</button>
-          <button class="manual-tab-btn" data-tab="tab-offensive">💣 OFFENSIVE</button>
-          <button class="manual-tab-btn" data-tab="tab-fleet">🚀 FIGHTER FLEET</button>
-          <button class="manual-tab-btn" data-tab="tab-controls">🛸 CONTROLS</button>
-          <button class="manual-tab-btn" data-tab="tab-strategy">💡 TIPS</button>
+          <button class="manual-tab-btn active" data-tab="tab-overview">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            OVERVIEW
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-powerups">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>
+            POWERUPS
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-defensive">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            DEFENSIVE
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-offensive">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            OFFENSIVE
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-fleet">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+            FIGHTER FLEET
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-controls">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="7" cy="12" r="1.5" fill="currentColor"/><circle cx="17" cy="12" r="1.5" fill="currentColor"/><line x1="12" y1="9" x2="12" y2="15"/></svg>
+            CONTROLS
+          </button>
+          <button class="manual-tab-btn" data-tab="tab-strategy">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="12 8 16 12 12 16 8 12"/></svg>
+            TIPS
+          </button>
         </div>
 
         <!-- Right Side Scrollable Content Pane -->
@@ -3518,14 +3557,14 @@
           <!-- 6. Default Controls -->
           <div class="manual-tab-pane" id="tab-controls">
             <div class="manual-card">
-              <div class="manual-card-title">🛸 FLIGHT & PROPULSION</div>
+              <div class="manual-card-title">FLIGHT & PROPULSION</div>
               <p><strong style="color: #ffffff;">[W] / [▲ UP]:</strong> Main Thrusters. Accelerates your ship forward. Generates a plasma exhaust trail.</p>
               <p><strong style="color: #ffffff;">[A] / [D] or [◀ / ▶]:</strong> Agility Rotation. Steers ship orientation instantly.</p>
               <p><strong style="color: #ffffff;">RETROS (BRAKING):</strong> When equipped with Retros, easing off the thruster applies automatic reverse damping to stop drifting.</p>
             </div>
 
             <div class="manual-card">
-              <div class="manual-card-title">⚔ WEAPONS & COMBAT SYSTEMS</div>
+              <div class="manual-card-title">WEAPONS & COMBAT SYSTEMS</div>
               <p><strong style="color: #ffffff;">[SPACE]:</strong> Pulse Cannons. Upgradable from single center fire to dual-cannons and wide-angle triple spread.</p>
               <p><strong style="color: #ffffff;">[F]:</strong> Secondary Powerup Launch. Fires the topmost stored hazard projectile forward into enemy wormholes.</p>
               <p><strong style="color: #ffffff;">[R] / [SHIFT]:</strong> Class Special Ability. Activates unique ship features (Turtle Cannon, ShapeShift, HeatSeeker array, Attractor/Repulser field).</p>
@@ -3533,7 +3572,7 @@
             </div>
 
             <div class="manual-card">
-              <div class="manual-card-title">🎮 XBOX / PC CONTROLLER SUPPORT</div>
+              <div class="manual-card-title">XBOX & CONTROLLER SUPPORT</div>
               <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship rotation.</p>
               <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters.</p>
               <p><strong style="color: #00e5ff;">BUTTON [X] / [RB]:</strong> Primary Pulse Cannons.</p>
@@ -3546,19 +3585,19 @@
           <!-- 7. Tips -->
           <div class="manual-tab-pane" id="tab-strategy">
             <div class="manual-card">
-              <div class="manual-card-title">⚡ OPENING GAMEPLAY</div>
+              <div class="manual-card-title">OPENING GAMEPLAY</div>
               <p>Immediately target the opponent's wormhole with primary lasers to spawn powerups right away. Upgraded guns eject powerups even faster.</p>
             </div>
             <div class="manual-card">
-              <div class="manual-card-title">🎒 INVENTORY CAPACITY</div>
+              <div class="manual-card-title">INVENTORY CAPACITY</div>
               <p>Your fighter holds a maximum of <strong style="color: var(--neon-cyan);">5 stored hazards</strong> in the top tray. Shoot them into wormholes using <strong style="color: #ffaa00;">[F]</strong> promptly to overwhelm your opponent.</p>
             </div>
             <div class="manual-card">
-              <div class="manual-card-title">🛡 COUNTERMEASURES</div>
+              <div class="manual-card-title">COUNTERMEASURES</div>
               <p>Save ZAP attacks and Invulnerability Shields when opponents send Nukes, Sweeping Beams, or massive HeatSeeker swarms.</p>
             </div>
             <div class="manual-card">
-              <div class="manual-card-title">👻 PUNTING GHOST-PUDS</div>
+              <div class="manual-card-title">PUNTING GHOST-PUDS</div>
               <p>Use your lasers to push wandering Ghost-Puds into enemy wormholes to turn an indestructible hazard against your opponent!</p>
             </div>
           </div>
@@ -3569,7 +3608,7 @@
     <!-- Test & Spawner Modal -->
     <div id="spawner-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 170, 0, 0.3); padding-bottom: 6px;">
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: #ffaa00; letter-spacing: 1px;">⚡ TEST CONTROL PANEL</div>
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: #ffaa00; letter-spacing: 1px;">TEST CONTROL PANEL</div>
         <button id="btn-close-spawner-top" style="background: transparent; border: none; color: #94a3b8; font-size: 16px; font-weight: bold; cursor: pointer; padding: 0 4px; line-height: 1;">✕</button>
       </div>
       
@@ -3593,20 +3632,20 @@
       </div>
 
       <!-- Section 2: Wormhole Powerup Ejection -->
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: var(--neon-cyan); text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">🌀 EJECT POWERUP FROM WORMHOLE:</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: var(--neon-cyan); text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">EJECT POWERUP FROM WORMHOLE:</div>
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-bottom: 10px;" id="spawner-pups-grid">
-        <button class="arena-btn pup-eject-btn" data-puptype="-1" style="border-color: #00ff88; color: #00ff88;">🎲 RANDOM PUP</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="0" style="border-color: #ff3344; color: #ff6677;">🔴 GUN (+1)</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="1" style="border-color: #ffaa00; color: #ffaa00;">🟠 THRUST (+1)</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="2" style="border-color: #3399ff; color: #3399ff;">🔵 RETROS</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="3" style="border-color: #00ffcc; color: #00ffcc;">🟢 SHIELD</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="4" style="border-color: #ffffff; color: #ffffff;">⚪ SCREEN ZAP</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="5" style="border-color: #df70ff; color: #df70ff;">🟣 +HP REPAIR</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="6" style="border-color: #ffcc00; color: #ffcc00;">🟡 HEATSEEKER</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="-1" style="border-color: #00ff88; color: #00ff88;">RANDOM PUP</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="0" style="border-color: #ff3344; color: #ff6677;">GUN (+1)</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="1" style="border-color: #ffaa00; color: #ffaa00;">THRUST (+1)</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="2" style="border-color: #3399ff; color: #3399ff;">RETROS</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="3" style="border-color: #00ffcc; color: #00ffcc;">SHIELD</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="4" style="border-color: #ffffff; color: #ffffff;">SCREEN ZAP</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="5" style="border-color: #df70ff; color: #df70ff;">+HP REPAIR</button>
+        <button class="arena-btn pup-eject-btn" data-puptype="6" style="border-color: #ffcc00; color: #ffcc00;">HEATSEEKER</button>
       </div>
 
       <!-- Section 3: Direct Arena Hazard Spawn -->
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: #ffaa00; text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">💣 SPAWN HAZARD DIRECTLY:</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: #ffaa00; text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">SPAWN HAZARD DIRECTLY:</div>
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 2px;" id="spawner-btn-grid"></div>
 
       <button class="action-btn" id="btn-close-spawner" style="margin-top: 10px; width: 100%; padding: 7px 0; font-size: 10px;">CLOSE TEST PANEL</button>
@@ -3653,11 +3692,26 @@
       <div class="manual-layout">
         <!-- Left Side Navigation Tabs -->
         <div class="manual-tabs">
-          <button class="manual-tab-btn active" id="opt-tab-btn-display" data-opttab="opt-tab-display">🖥 GRAPHICS & DISPLAY</button>
-          <button class="manual-tab-btn" id="opt-tab-btn-keys" data-opttab="opt-tab-keys">⌨ KEYBOARD</button>
-          <button class="manual-tab-btn" id="opt-tab-btn-gamepad" data-opttab="opt-tab-gamepad">🎮 CONTROLLER</button>
-          <button class="manual-tab-btn" id="opt-tab-btn-touch" data-opttab="opt-tab-touch">📱 TOUCH & MOBILE</button>
-          <button class="manual-tab-btn" id="opt-tab-btn-audio" data-opttab="opt-tab-audio">🔊 AUDIO & SOUND</button>
+          <button class="manual-tab-btn active" id="opt-tab-btn-display" data-opttab="opt-tab-display">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            GRAPHICS & DISPLAY
+          </button>
+          <button class="manual-tab-btn" id="opt-tab-btn-keys" data-opttab="opt-tab-keys">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
+            KEYBOARD
+          </button>
+          <button class="manual-tab-btn" id="opt-tab-btn-gamepad" data-opttab="opt-tab-gamepad">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="7" cy="12" r="1.5" fill="currentColor"/><circle cx="17" cy="12" r="1.5" fill="currentColor"/><line x1="12" y1="9" x2="12" y2="15"/></svg>
+            CONTROLLER
+          </button>
+          <button class="manual-tab-btn" id="opt-tab-btn-touch" data-opttab="opt-tab-touch">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            TOUCH & MOBILE
+          </button>
+          <button class="manual-tab-btn" id="opt-tab-btn-audio" data-opttab="opt-tab-audio">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            AUDIO & SOUND
+          </button>
         </div>
 
         <!-- Right Content Pane -->
@@ -4120,8 +4174,12 @@
       <!-- Top-Right Score & Pause Button -->
       <div class="mob-hud-top-right">
         <div class="mob-score-box" id="mob-score-display">0 - 0</div>
-        <button class="mob-btn-pause" id="btn-mob-fullscreen" title="Toggle Fullscreen" style="font-size: 15px;">⛶</button>
-        <button class="mob-btn-pause" id="btn-mobile-pause" title="Tactical Pause">⚙</button>
+        <button class="mob-btn-pause" id="btn-mob-fullscreen" title="Toggle Fullscreen" style="display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button class="mob-btn-pause" id="btn-mobile-pause" title="Tactical Pause" style="display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
       </div>
 
       <!-- Mini Roster Strip -->
@@ -4131,7 +4189,9 @@
       <div class="mob-floating-comms" id="mob-floating-comms"></div>
 
       <!-- Floating Chat Drawer Trigger -->
-      <button class="mob-chat-trigger" id="btn-mob-chat-toggle" title="Open Comms">💬</button>
+      <button class="mob-chat-trigger" id="btn-mob-chat-toggle" title="Open Comms" style="display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
       <div class="mob-chat-drawer" id="mob-chat-drawer">
         <input type="text" class="styled-input" id="mob-chat-input" placeholder="Type transmission..." maxlength="50" style="width: 180px; font-size: 11px; padding: 4px 8px;" />
         <button class="action-btn" id="btn-mob-chat-send" style="padding: 4px 10px; font-size: 10px;">SEND</button>
@@ -4149,12 +4209,18 @@
       <!-- Right Screen Action Pads -->
       <div class="mob-touch-actions">
         <button class="touch-btn launch-btn" id="btn-touch-launch" title="Launch Stored Hazard">
-          <span style="font-size: 16px;">⚡</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin-bottom: 2px;">
+            <path d="M12 2l3 6-3 3-3-3 3-6z"/>
+            <path d="M9 11v6l3 3 3-3v-6"/>
+            <line x1="12" y1="2" x2="12" y2="11"/>
+          </svg>
           <span class="touch-sub-label">LAUNCH</span>
         </button>
         <div class="mob-fire-column" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <button class="touch-btn special-btn" id="btn-touch-special" title="Special Ability" style="display: none; width: 54px; height: 54px; font-size: 13px;">
-            <span>✨</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin-bottom: 2px;">
+              <polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9 12 2"/>
+            </svg>
             <span class="touch-sub-label">SPEC</span>
           </button>
           <button class="touch-btn fire-btn" id="btn-touch-fire" title="Primary Pulse Cannon">
@@ -4167,7 +4233,12 @@
 
     <!-- Mobile Portrait Orientation Warning Prompt -->
     <div id="mobile-orientation-prompt">
-      <div style="font-size: 40px; margin-bottom: 16px; animation: pulseAlert 1s infinite alternate;">📱 ⟲</div>
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 14px; animation: pulseAlert 1s infinite alternate;">
+        <rect x="3" y="5" width="18" height="14" rx="2"/>
+        <path d="M7 2v3M17 22v-3"/>
+        <path d="M20 2l2 2-2 2"/>
+        <path d="M4 22l-2-2 2-2"/>
+      </svg>
       <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; color: var(--neon-cyan); margin-bottom: 8px;">ROTATE DEVICE TO LANDSCAPE</div>
       <div style="font-size: 11px; color: #88bbdd; letter-spacing: 1px;">COMBAT SYSTEMS REQUIRE HORIZONTAL VIEWPORT</div>
     </div>

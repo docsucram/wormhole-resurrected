@@ -1257,9 +1257,9 @@ class WormholeGame {
       const isFull = match.currentPlayers >= match.maxPlayers;
 
       const testBadge = match.isTestMode
-        ? `<span class="match-badge badge-rule" style="background: rgba(255, 170, 0, 0.25); border: 1px solid #ffaa00; color: #ffaa00; font-weight: 900; box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);">⚡ TEST MODE</span>`
+        ? `<span class="match-badge badge-rule" style="background: rgba(255, 170, 0, 0.25); border: 1px solid #ffaa00; color: #ffaa00; font-weight: 900; box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);">TEST MODE</span>`
         : '';
-      const modeLabel = match.matchType === 'TEAM' ? '⚔ TEAM' : '🎯 FFA';
+      const modeLabel = match.matchType === 'TEAM' ? 'TEAM' : 'FFA';
 
       card.innerHTML = `
         <div class="match-info-col">
@@ -3149,7 +3149,7 @@ class WormholeGame {
     if (btnPupsPool) {
       btnPupsPool.onclick = () => {
         Powerup.allPowerupsAllowed = !Powerup.allPowerupsAllowed;
-        btnPupsPool.innerText = Powerup.allPowerupsAllowed ? '⚡ PUPS: ALL (14)' : '⚡ PUPS: CLASSIC (11)';
+        btnPupsPool.innerText = Powerup.allPowerupsAllowed ? 'PUPS: ALL (14)' : 'PUPS: CLASSIC (11)';
         btnPupsPool.style.color = Powerup.allPowerupsAllowed ? '#00ffcc' : '#ffaa00';
         btnPupsPool.style.borderColor = Powerup.allPowerupsAllowed ? 'rgba(0, 255, 204, 0.4)' : 'rgba(255, 170, 0, 0.4)';
         this.sound.playLaser(0);
@@ -4088,7 +4088,7 @@ class WormholeGame {
       const headerA = document.createElement('div');
       headerA.className = 'team-group-header';
       headerA.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 3px 7px; margin: 3px 0 5px 0; background: rgba(0, 229, 255, 0.12); border-left: 3px solid #00e5ff; border-radius: 4px; font-family: "Orbitron", sans-serif; font-size: 9px; font-weight: 900; color: #00e5ff; letter-spacing: 1px;';
-      headerA.innerHTML = `<span>⚡ TEAM ALPHA (α)</span><span style="font-size: 8px; opacity: 0.85;">${teamAPlayers.length} PILOT${teamAPlayers.length === 1 ? '' : 'S'}</span>`;
+      headerA.innerHTML = `<span>TEAM ALPHA (α)</span><span style="font-size: 8px; opacity: 0.85;">${teamAPlayers.length} PILOT${teamAPlayers.length === 1 ? '' : 'S'}</span>`;
       rosterList.appendChild(headerA);
 
       teamAPlayers.forEach(({ p, slot }) => {
@@ -4099,7 +4099,7 @@ class WormholeGame {
       const headerB = document.createElement('div');
       headerB.className = 'team-group-header';
       headerB.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 3px 7px; margin: 8px 0 5px 0; background: rgba(192, 64, 255, 0.12); border-left: 3px solid #c040ff; border-radius: 4px; font-family: "Orbitron", sans-serif; font-size: 9px; font-weight: 900; color: #c040ff; letter-spacing: 1px;';
-      headerB.innerHTML = `<span>🔮 TEAM OMEGA (Ω)</span><span style="font-size: 8px; opacity: 0.85;">${teamBPlayers.length} PILOT${teamBPlayers.length === 1 ? '' : 'S'}</span>`;
+      headerB.innerHTML = `<span>TEAM OMEGA (Ω)</span><span style="font-size: 8px; opacity: 0.85;">${teamBPlayers.length} PILOT${teamBPlayers.length === 1 ? '' : 'S'}</span>`;
       rosterList.appendChild(headerB);
 
       teamBPlayers.forEach(({ p, slot }) => {
@@ -4138,13 +4138,13 @@ class WormholeGame {
       const isCombatActive = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
       if (isCombatActive) {
         if (btnStart) {
-          btnStart.innerText = '🔄 RESTART MATCH';
+          btnStart.innerText = 'RESTART MATCH';
           btnStart.style.borderColor = 'rgba(255, 170, 0, 0.6)';
           btnStart.style.color = '#ffaa00';
         }
       } else {
         if (btnStart) {
-          btnStart.innerText = '⚡ START MATCH';
+          btnStart.innerText = 'START MATCH';
           btnStart.style.borderColor = 'rgba(0, 255, 136, 0.5)';
           btnStart.style.color = '#00ff88';
         }
@@ -4966,20 +4966,20 @@ class WormholeGame {
     // 4. Update Powerup Mini Slots with clear icons & colored badges
     const inv = this.player.powerupInventory;
     const badgeInfo: Record<number, { label: string; icon: string; col: string }> = {
-      6: { label: 'HEAT SEEKER', icon: '🎯 HS', col: '#00ffff' },
-      7: { label: 'TURRET', icon: '🗼 TRT', col: '#00ff88' },
-      8: { label: 'MINES', icon: '💣 MIN', col: '#ffaa00' },
-      9: { label: 'UFO', icon: '🛸 UFO', col: '#ff00cc' },
-      10: { label: 'INFLATOR', icon: '🎈 INF', col: '#ff3344' },
-      11: { label: 'MINELAYER', icon: '⚓ ML', col: '#ffff00' },
-      12: { label: 'GUNSHIP', icon: '🚀 GSH', col: '#ff6600' },
-      13: { label: 'SCARAB', icon: '🦂 SCB', col: '#33ff99' },
-      14: { label: 'NUKE', icon: '☢ NUK', col: '#ff0033' },
-      15: { label: 'WALLCRAWLER', icon: '👾 WC', col: '#ff00ff' },
-      16: { label: 'BEAM', icon: '⚡ BEAM', col: '#00e5ff' },
-      17: { label: 'EMP', icon: '💥 EMP', col: '#ffffff' },
-      18: { label: 'GHOST-PUD', icon: '👻 GHD', col: '#9966ff' },
-      19: { label: 'ARTILLERY', icon: '🏰 ART', col: '#ffcc00' },
+      6: { label: 'HEAT SEEKER', icon: 'HS', col: '#00ffff' },
+      7: { label: 'TURRET', icon: 'TRT', col: '#00ff88' },
+      8: { label: 'MINES', icon: 'MIN', col: '#ffaa00' },
+      9: { label: 'UFO', icon: 'UFO', col: '#ff00cc' },
+      10: { label: 'INFLATOR', icon: 'INF', col: '#ff3344' },
+      11: { label: 'MINELAYER', icon: 'ML', col: '#ffff00' },
+      12: { label: 'GUNSHIP', icon: 'GSH', col: '#ff6600' },
+      13: { label: 'SCARAB', icon: 'SCB', col: '#33ff99' },
+      14: { label: 'NUKE', icon: 'NUK', col: '#ff0033' },
+      15: { label: 'WALLCRAWLER', icon: 'WC', col: '#ff00ff' },
+      16: { label: 'BEAM', icon: 'BEAM', col: '#00e5ff' },
+      17: { label: 'EMP', icon: 'EMP', col: '#ffffff' },
+      18: { label: 'GHOST-PUD', icon: 'GHD', col: '#9966ff' },
+      19: { label: 'ARTILLERY', icon: 'ART', col: '#ffcc00' },
     };
 
     for (let i = 0; i < 5; i++) {
@@ -4987,7 +4987,7 @@ class WormholeGame {
       if (!slotEl) continue;
       if (i < inv.length) {
         const type = inv[i];
-        const info = badgeInfo[type] || { label: 'HAZARD', icon: `⚡ #${type}`, col: '#00e5ff' };
+        const info = badgeInfo[type] || { label: 'HAZARD', icon: `#${type}`, col: '#00e5ff' };
         slotEl.className = 'mini-pup-slot filled';
         slotEl.style.borderColor = info.col;
         slotEl.style.boxShadow = `0 0 10px ${info.col}`;
