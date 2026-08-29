@@ -107,6 +107,7 @@ class WormholeGame {
   public isLanMatchHost = false;
   public isLanMatchClient = false;
   public isSpectating = false;
+  public isLocalPlayerEliminatedThisRound = false;
 
   // Inactivity tracking (15 minute idle timeout for hosted matches & clients)
   public static readonly MATCH_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -2278,9 +2279,10 @@ class WormholeGame {
   }
 
   private handlePlayerElimination(): void {
-    if (this.gameState.phase === 'ROUND_OVER' || this.gameState.phase === 'MATCH_OVER') {
+    if (this.isLocalPlayerEliminatedThisRound || this.gameState.phase === 'ROUND_OVER' || this.gameState.phase === 'MATCH_OVER') {
       return;
     }
+    this.isLocalPlayerEliminatedThisRound = true;
 
     const cause = this.player.lastDamagedBy?.weapon ? ` [Cause: ${this.player.lastDamagedBy.weapon}]` : '';
     this.addChatLog(`Your ship was destroyed!${cause}`, 'system');
@@ -2289,6 +2291,7 @@ class WormholeGame {
       this.tablePlayers[this.player.slot]!.health = 0;
       this.tablePlayers[this.player.slot]!.isAlive = false;
     }
+    this.rebuildTableWormholes();
     this.updateTableRosterUI();
 
     // Trigger bot taunt on player elimination
@@ -4477,6 +4480,7 @@ class WormholeGame {
   }
 
   private respawnPlayer(): void {
+    this.isLocalPlayerEliminatedThisRound = false;
     const sizeCfg = GAME_CONSTANTS.SIZES[this.currentArenaSize as keyof typeof GAME_CONSTANTS.SIZES] || GAME_CONSTANTS.SIZES.MEDIUM;
     this.player.respawn(0, -sizeCfg.orbitDistance);
     this.player.onDeath = () => this.handlePlayerElimination();
@@ -4895,6 +4899,7 @@ class WormholeGame {
       if (
         this.gameState.phase === 'PLAYING' &&
         !this.isMatchWaitingForPilots &&
+        !this.isLocalPlayerEliminatedThisRound &&
         roundGraceElapsed &&
         (!this.player.isAlive || this.player.health <= 0) &&
         !document.getElementById('round-modal')?.classList.contains('active') &&
