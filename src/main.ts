@@ -2075,15 +2075,12 @@ class WormholeGame {
         winnerPlayer.wins += 1;
         winnerName = winnerPlayer.name;
       }
-      if (winnerSlot === 0) {
-        this.gameState.player1Score = (winnerPlayer?.wins ?? (this.gameState.player1Score + 1));
-      } else if (winnerSlot === 1) {
-        this.gameState.player2Score = (winnerPlayer?.wins ?? (this.gameState.player2Score + 1));
-      } else if (winnerPlayer) {
-        if (winnerSlot % 2 === 0) this.gameState.player1Score += 1;
-        else this.gameState.player2Score += 1;
-      }
       isLocalWin = (winnerSlot === this.player.slot);
+      if (isLocalWin) {
+        this.gameState.player1Score += 1;
+      } else {
+        this.gameState.player2Score += 1;
+      }
     } else if (winnerRef === 'TEAM_A') {
       this.gameState.player1Score += 1;
       for (let i = 0; i < 8; i++) {
@@ -2175,7 +2172,17 @@ class WormholeGame {
       this.triggerBotKillChat(activeBot.name, activeBot.slot);
     }
 
-    // Notify peers / Host
+    // In Solo Practice / Singleplayer vs Bots:
+    const isMultiplayer = this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected;
+    if (!isMultiplayer) {
+      // When Player 1 is killed, immediately end the round with a defeat for Player 1!
+      const survivingBot = this.tablePlayers.find((p) => p && p.isBot && p.isAlive) || this.tablePlayers.find((p) => p && p.slot !== 0) || this.tablePlayers[1];
+      const winningSlot = survivingBot ? survivingBot.slot : 1;
+      this.concludeRoundWithWinner(winningSlot);
+      return;
+    }
+
+    // Notify peers / Host in Multiplayer
     if (this.isLanMatchHost) {
       if (this.currentMatchConfig) {
         this.sendLanPacket({
@@ -2208,12 +2215,6 @@ class WormholeGame {
       }
       // Client waits in spectator mode until Host sends KILL_EVENT / ROUND_OVER
       this.showAlert('SHIP DESTROYED // SPECTATING ACTIVE BATTLE');
-    } else {
-      // Solo Mode or legacy fallback
-      const isRoundOver = this.checkMatchRoundStatus();
-      if (!isRoundOver) {
-        this.showAlert('SHIP DESTROYED // SPECTATING ACTIVE BATTLE');
-      }
     }
   }
 
@@ -4525,15 +4526,6 @@ class WormholeGame {
       this.tablePlayers[0]!.health = this.player.health;
       this.tablePlayers[0]!.maxHealth = this.player.maxHealth;
       this.tablePlayers[0]!.isAlive = this.player.isAlive;
-    }
-
-    if (
-      !this.isMatchWaitingForPilots &&
-      !this.player.isAlive &&
-      !document.getElementById('round-modal')?.classList.contains('active') &&
-      !document.getElementById('match-modal')?.classList.contains('active')
-    ) {
-      this.handlePlayerElimination();
     }
 
     // 2. Update Simulated AI Realms (Authoritative: ONLY active on Host or Singleplayer during PLAYING phase)
