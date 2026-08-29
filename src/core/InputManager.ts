@@ -42,8 +42,8 @@ export class InputManager {
     this.setupGamepadListeners();
   }
 
-  public triggerHaptic(duration = 15): void {
-    if (this.enableHaptics && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+  public triggerHaptic(duration: number | number[] = 25): void {
+    if (this.enableHaptics && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       try {
         navigator.vibrate(duration);
       } catch {}
@@ -113,10 +113,6 @@ export class InputManager {
     });
 
     window.addEventListener('keyup', (e) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        return;
-      }
       this.keys[e.code] = false;
     });
 
@@ -135,6 +131,12 @@ export class InputManager {
         this.gamepadIndex = null;
       }
     });
+  }
+
+  public getGamepad(): Gamepad | null {
+    if (this.gamepadIndex === null) return null;
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    return gamepads[this.gamepadIndex] || null;
   }
 
   public isGamepadConnected(): boolean {
@@ -162,73 +164,67 @@ export class InputManager {
   }
 
   public getState(): InputState {
+    const pad = this.getGamepad();
+
     // 1. Keyboard Inputs
-    const isActionDown = (action: InputAction): boolean => {
+    const isBound = (action: InputAction): boolean => {
       const codes = this.bindings[action] || [];
-      return codes.some((code) => !!this.keys[code]);
+      return codes.some((code) => this.keys[code]);
     };
 
-    let up = isActionDown('up');
-    let left = isActionDown('left');
-    let right = isActionDown('right');
-    let fire = isActionDown('fire');
-    let secondaryFire = isActionDown('secondaryFire');
-    let tertiaryFire = isActionDown('tertiaryFire');
+    let up = isBound('up');
+    let left = isBound('left');
+    let right = isBound('right');
+    let fire = isBound('fire');
+    let secondaryFire = isBound('secondaryFire');
+    let tertiaryFire = isBound('tertiaryFire');
+    let throttle = 1.0;
 
-    // 2. Xbox / Gamepad Inputs
-    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-    let gp: Gamepad | null = null;
-    if (this.gamepadIndex !== null && gamepads[this.gamepadIndex]) {
-      gp = gamepads[this.gamepadIndex];
-    } else {
-      for (const g of gamepads) {
-        if (g && g.connected) {
-          gp = g;
-          break;
+    // 2. Mobile Touch Inputs
+    if (this.touchState.up) up = true;
+    if (this.touchState.left) left = true;
+    if (this.touchState.right) right = true;
+    if (this.touchState.fire) fire = true;
+    if (this.touchState.secondaryFire) secondaryFire = true;
+    if (this.touchState.tertiaryFire) tertiaryFire = true;
+    if (this.touchState.throttle !== undefined) throttle = this.touchState.throttle;
+
+    // 3. Gamepad Integration
+    if (pad) {
+      // Left Stick X-axis
+      const axisX = pad.axes[0] || 0;
+      if (axisX < -this.deadzone) left = true;
+      if (axisX > this.deadzone) right = true;
+
+      // D-Pad
+      if (pad.buttons[14]?.pressed) left = true;
+      if (pad.buttons[15]?.pressed) right = true;
+
+      // Right Trigger [RT / R2] or [A / Cross] for Thrust
+      const rtValue = pad.buttons[7]?.value || 0;
+      const aPressed = pad.buttons[0]?.pressed || false;
+      if (rtValue > this.deadzone || aPressed) {
+        up = true;
+        if (this.enableAnalogThrust && rtValue > this.deadzone) {
+          throttle = rtValue;
         }
       }
-    }
 
-    if (gp && gp.connected) {
-      // Standard Xbox Gamepad Mapping:
-      // Buttons: 0=A, 1=B, 2=X, 3=Y, 4=LB, 5=RB, 6=LT, 7=RT, 8=Select, 9=Start, 12=D-Up, 13=D-Down, 14=D-Left, 15=D-Right
-      // Axes: 0=LeftStick X, 1=LeftStick Y, 2=RightStick X, 3=RightStick Y
-      const btn = (idx: number): boolean => {
-        const b = gp!.buttons[idx];
-        return typeof b === 'object' ? b.pressed || b.value > 0.3 : b > 0.3;
-      };
+      // Button [X / Square] or [RB] for Primary Fire
+      if (pad.buttons[2]?.pressed || pad.buttons[5]?.pressed) {
+        fire = true;
+      }
 
-      const stickX = gp.axes[0] || 0;
-      const stickY = gp.axes[1] || 0;
+      // Button [B / Circle] or [LB] for Secondary Powerup / Hazard Launch
+      if (pad.buttons[1]?.pressed || pad.buttons[4]?.pressed) {
+        secondaryFire = true;
+      }
 
-      // Steering (Left Stick X or D-Pad Left/Right)
-      if (stickX < -this.deadzone || btn(14)) left = true;
-      if (stickX > this.deadzone || btn(15)) right = true;
-
-      // Thrust (Left Stick Up, D-Pad Up, Right Trigger [RT / btn 7], or Button A [btn 0])
-      if (stickY < -this.deadzone || btn(12) || btn(7) || btn(0)) up = true;
-
-      // Primary Fire (Button X [btn 2], Right Bumper [RB / btn 5], or Right Stick click)
-      if (btn(2) || btn(5)) fire = true;
-
-      // Secondary Fire / Powerup Shot (Button B [btn 1] or Left Bumper [LB / btn 4])
-      if (btn(1) || btn(4)) secondaryFire = true;
-
-      // Special Ability (Button Y [btn 3] or Left Trigger [LT / btn 6])
-      if (btn(3) || btn(6)) tertiaryFire = true;
-    }
-
-    // 3. Mobile Touch Controls
-    up = up || this.touchState.up;
-    left = left || this.touchState.left;
-    right = right || this.touchState.right;
-    fire = fire || this.touchState.fire;
-    secondaryFire = secondaryFire || this.touchState.secondaryFire;
-    tertiaryFire = tertiaryFire || this.touchState.tertiaryFire;
-
-    let throttle = 1.0;
-    if (this.touchState.up && this.touchState.throttle !== undefined) {
-      throttle = this.touchState.throttle;
+      // Button [Y / Triangle] or [LT] for Tertiary Special Ability
+      const ltValue = pad.buttons[6]?.value || 0;
+      if (pad.buttons[3]?.pressed || ltValue > this.deadzone) {
+        tertiaryFire = true;
+      }
     }
 
     return {
@@ -265,7 +261,7 @@ export class InputManager {
       e.stopPropagation();
       this.setTouchAction(action, true);
       el.classList.add('touch-active');
-      this.triggerHaptic(15);
+      this.triggerHaptic(25);
     };
 
     const endHandler = (e: Event) => {
@@ -275,6 +271,9 @@ export class InputManager {
       el.classList.remove('touch-active');
     };
 
+    el.addEventListener('pointerdown', startHandler);
+    el.addEventListener('pointerup', endHandler);
+    el.addEventListener('pointercancel', endHandler);
     el.addEventListener('touchstart', startHandler, { passive: false });
     el.addEventListener('touchend', endHandler, { passive: false });
     el.addEventListener('touchcancel', endHandler, { passive: false });

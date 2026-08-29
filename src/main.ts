@@ -1005,7 +1005,8 @@ class WormholeGame {
           this.updateTableRosterUI();
         } else if (pkt.type === 'CLIENT_READY') {
           if (this.isLanMatchHost) {
-            this.addChatLog(`${pkt.playerName || 'Opponent'} is ready for next round! [SPACE to start]`, 'system');
+            const readyPrompt = this.isMobile ? 'Tap Ready to start' : 'SPACE to start';
+            this.addChatLog(`${pkt.playerName || 'Opponent'} is ready for next round! [${readyPrompt}]`, 'system');
           }
         }
       }
@@ -1403,7 +1404,7 @@ class WormholeGame {
     titleEl.innerText = 'TACTICAL MATCH STAGING';
     subEl.innerText = 'SELECT YOUR FIGHTER CLASS & ENGAGE WHEN READY';
     scoreEl.innerText = match.targetWins >= 999999 ? 'ENDLESS DUEL // STANDBY' : (match.targetWins <= 4 ? `BEST OF ${(match.targetWins * 2) - 1} // ROUND 1` : `FIRST TO ${match.targetWins} WINS // ROUND 1`);
-    btnNext.innerText = this.isLanMatchHost ? 'ENGAGE MATCH [SPACE]' : 'READY TO DEPLOY';
+    btnNext.innerText = this.isLanMatchHost || !this.network.isConnected ? (this.isMobile ? 'ENGAGE MATCH' : 'ENGAGE MATCH [SPACE]') : 'READY TO DEPLOY';
 
     roundModal.classList.add('active');
     roundModal.style.display = 'block';
@@ -2275,7 +2276,7 @@ class WormholeGame {
     if (scoreEl) {
       scoreEl.innerText = this.formatMatchScoreDisplay();
     }
-    btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
+    btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : (this.isMobile ? 'NEXT ROUND' : 'NEXT ROUND [SPACE]');
 
     roundModal.classList.add('active');
     roundModal.style.display = 'block';
@@ -2306,7 +2307,7 @@ class WormholeGame {
     if (scoreEl) {
       scoreEl.innerText = this.formatMatchScoreDisplay();
     }
-    btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : 'NEXT ROUND [SPACE]';
+    btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : (this.isMobile ? 'NEXT ROUND' : 'NEXT ROUND [SPACE]');
 
     roundModal.classList.add('active');
     roundModal.style.display = 'block';
@@ -3265,7 +3266,7 @@ class WormholeGame {
       titleEl.innerText = 'REMATCH STAGING // STANDBY';
       subEl.innerText = 'SELECT YOUR FIGHTER CLASS & ENGAGE WHEN READY';
       scoreEl.innerText = targetWins >= 999999 ? 'ENDLESS DUEL // STANDBY' : (targetWins <= 4 ? `BEST OF ${(targetWins * 2) - 1} // ROUND 1` : `FIRST TO ${targetWins} WINS // ROUND 1`);
-      btnNext.innerText = this.isLanMatchHost || !this.network.isConnected ? 'ENGAGE MATCH [SPACE]' : 'READY TO DEPLOY';
+      btnNext.innerText = this.isLanMatchHost || !this.network.isConnected ? (this.isMobile ? 'ENGAGE MATCH' : 'ENGAGE MATCH [SPACE]') : 'READY TO DEPLOY';
 
       roundModal.classList.add('active');
       roundModal.style.display = 'block';
@@ -5045,7 +5046,14 @@ class WormholeGame {
 
       const btnTouchSpecial = document.getElementById('btn-touch-special');
       if (btnTouchSpecial) {
-        btnTouchSpecial.style.display = this.player.specialType > 0 ? 'flex' : 'none';
+        if (this.player.specialType > 0) {
+          btnTouchSpecial.style.display = 'flex';
+          const isReady = this.player.specialCooldown <= 0 && (this.player.specialType !== 3 || this.player.heatSeekerRounds > 0);
+          btnTouchSpecial.classList.toggle('ready-glow', isReady);
+          btnTouchSpecial.classList.toggle('on-cooldown', !isReady);
+        } else {
+          btnTouchSpecial.style.display = 'none';
+        }
       }
 
       for (let i = 0; i < 5; i++) {
