@@ -290,23 +290,33 @@
       }
 
       .btn-util {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
         background: #091728;
         border: 1.5px solid #163658;
-        color: #8ea3bf;
+        color: #00e5ff;
         border-radius: 8px;
-        font-size: 16px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 0;
         transition: all 0.15s ease;
+        box-sizing: border-box;
       }
       .btn-util:hover {
         border-color: #00e5ff;
-        color: #00e5ff;
+        color: #ffffff;
         box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+      }
+      .btn-util svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+        stroke: currentColor;
+        pointer-events: none;
       }
 
       /* 2-Column Command Hub Grid */
@@ -1100,25 +1110,6 @@
       .btn-join:hover {
         background: var(--neon-cyan);
         color: #030816;
-      }
-
-      .btn-util {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(100, 116, 139, 0.4);
-        background: #060f22;
-        color: #94a3b8;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.08s ease-out;
-      }
-
-      .btn-util:hover {
-        border-color: var(--neon-cyan);
-        color: var(--neon-cyan);
       }
 
       .right-col {
@@ -2684,15 +2675,27 @@
         }
 
         .btn-util {
-          width: 28px !important;
-          height: 28px !important;
-          font-size: 12px !important;
+          width: 32px !important;
+          height: 32px !important;
+          min-width: 32px !important;
+          min-height: 32px !important;
+          padding: 0 !important;
           border-radius: 6px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          background: #091728 !important;
+          border: 1.5px solid #163658 !important;
+          color: #00e5ff !important;
+          flex-shrink: 0 !important;
         }
 
         .btn-util svg {
-          width: 14px !important;
-          height: 14px !important;
+          width: 16px !important;
+          height: 16px !important;
+          display: block !important;
+          stroke: currentColor !important;
+          pointer-events: none !important;
         }
 
         .dashboard-grid-2col {

@@ -3149,9 +3149,11 @@ class WormholeGame {
     if (btnMatchSound) {
       btnMatchSound.onclick = () => {
         const muted = this.sound.toggleMute();
-        btnMatchSound.innerText = muted ? '🔇' : '🔊';
+        const soundOnSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+        const soundOffSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff3344" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+        btnMatchSound.innerHTML = muted ? soundOffSvg : soundOnSvg;
         const menuSound = document.getElementById('btn-menu-sound');
-        if (menuSound) menuSound.innerText = muted ? '🔇' : '🔊';
+        if (menuSound) menuSound.innerHTML = muted ? soundOffSvg : soundOnSvg;
       };
     }
 
@@ -3315,12 +3317,18 @@ class WormholeGame {
     this.setupOptionsUI();
 
     // Sound toggle in menu
-    document.getElementById('btn-menu-sound')!.onclick = () => {
-      const muted = this.sound.toggleMute();
-      document.getElementById('btn-menu-sound')!.innerText = muted ? '🔇' : '🔊';
-      const matchSound = document.getElementById('btn-match-sound');
-      if (matchSound) matchSound.innerText = muted ? '🔇' : '🔊';
-    };
+    const SOUND_ON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+    const SOUND_OFF_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff3344" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+
+    const btnMenuSound = document.getElementById('btn-menu-sound');
+    if (btnMenuSound) {
+      btnMenuSound.onclick = () => {
+        const muted = this.sound.toggleMute();
+        btnMenuSound.innerHTML = muted ? SOUND_OFF_SVG : SOUND_ON_SVG;
+        const matchSound = document.getElementById('btn-match-sound');
+        if (matchSound) matchSound.innerHTML = muted ? SOUND_OFF_SVG : SOUND_ON_SVG;
+      };
+    }
 
     // Fullscreen Toggle in Lobby & Pause Menu
     const btnFsLobby = document.getElementById('btn-fullscreen-toggle');
