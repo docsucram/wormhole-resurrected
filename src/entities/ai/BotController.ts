@@ -83,6 +83,7 @@ export class BotController {
   private targetAngle = 0;
   private isUnloadingBarrage = false;
   private seenHazardTimestamps: Map<Hazard, number> = new Map();
+  private prevHazardPositions: Map<Hazard, { x: number; y: number; time: number; vx: number; vy: number }> = new Map();
 
   constructor(difficulty: BotDifficulty = 'medium') {
     this.difficulty = difficulty;
@@ -137,7 +138,8 @@ export class BotController {
         this.isUnloadingBarrage = true;
       }
     } else if (this.difficulty === 'medium') {
-      if (currentInvCount >= 3 || (currentInvCount >= 2 && this.inventoryHoldTimer >= 6.0) || (currentInvCount >= 1 && validPowerups.length === 0)) {
+      // Medium AI holds until 4 hazards or 3 hazards held for 7.0s
+      if (currentInvCount >= 4 || (currentInvCount >= 3 && this.inventoryHoldTimer >= 7.0) || (currentInvCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 5.0)) {
         this.isUnloadingBarrage = true;
       }
     } else {
@@ -146,17 +148,36 @@ export class BotController {
 
     const allThreats = [...hazards, ...mines];
 
-    // Clean up dead hazards from reaction tracking
+    // Clean up dead hazards from reaction tracking & velocity caches
     for (const [h] of this.seenHazardTimestamps) {
       if (!h.isAlive) {
         this.seenHazardTimestamps.delete(h);
       }
     }
+    for (const [h] of this.prevHazardPositions) {
+      if (!h.isAlive) {
+        this.prevHazardPositions.delete(h);
+      }
+    }
 
-    // Track newly emerged hazards
+    // Track newly emerged hazards and calculate smoothed velocities
     for (const h of allThreats) {
-      if (h.isAlive && !this.seenHazardTimestamps.has(h)) {
-        this.seenHazardTimestamps.set(h, this.totalTime);
+      if (h.isAlive) {
+        if (!this.seenHazardTimestamps.has(h)) {
+          this.seenHazardTimestamps.set(h, this.totalTime);
+        }
+
+        const prev = this.prevHazardPositions.get(h);
+        let hazVx = (h as any).vx !== undefined ? (h as any).vx : 0;
+        let hazVy = (h as any).vy !== undefined ? (h as any).vy : 0;
+        if (prev && (h as any).vx === undefined) {
+          const dtPos = this.totalTime - prev.time;
+          if (dtPos > 0.001) {
+            hazVx = (h.x - prev.x) / dtPos;
+            hazVy = (h.y - prev.y) / dtPos;
+          }
+        }
+        this.prevHazardPositions.set(h, { x: h.x, y: h.y, time: this.totalTime, vx: hazVx, vy: hazVy });
       }
     }
 
@@ -177,6 +198,53 @@ export class BotController {
     this.currentInput.right = angleDiff > cfg.deadZone;
 
     return { ...this.currentInput };
+  }
+
+  /**
+   * Calculates the exact predictive leading intercept point for moving targets (UFOs, Scarabs, Gunships, etc.)
+   */
+  private calculatePredictiveIntercept(
+    originX: number,
+    originY: number,
+    targetX: number,
+    targetY: number,
+    targetVx: number,
+    targetVy: number,
+    bulletSpeed: number
+  ): { x: number; y: number } {
+    const rx = targetX - originX;
+    const ry = targetY - originY;
+    const targetSpeedSq = targetVx * targetVx + targetVy * targetVy;
+    const bulletSpeedSq = bulletSpeed * bulletSpeed;
+
+    if (targetSpeedSq < 0.01) {
+      return { x: targetX, y: targetY };
+    }
+
+    const a = targetSpeedSq - bulletSpeedSq;
+    const b = 2 * (rx * targetVx + ry * targetVy);
+    const c = rx * rx + ry * ry;
+
+    let t = 0;
+    if (Math.abs(a) < 0.0001) {
+      t = Math.max(0, -c / (b || 0.001));
+    } else {
+      const disc = b * b - 4 * a * c;
+      if (disc >= 0) {
+        const sqrtDisc = Math.sqrt(disc);
+        const t1 = (-b - sqrtDisc) / (2 * a);
+        const t2 = (-b + sqrtDisc) / (2 * a);
+        if (t1 > 0 && t2 > 0) t = Math.min(t1, t2);
+        else if (t1 > 0) t = t1;
+        else if (t2 > 0) t = t2;
+      }
+    }
+
+    const clampedT = Math.max(0, Math.min(t, 1.2)); // Up to 1.2s lead window
+    return {
+      x: targetX + targetVx * clampedT,
+      y: targetY + targetVy * clampedT,
+    };
   }
 
   private isPowerupInFiringLine(
@@ -310,7 +378,7 @@ export class BotController {
     for (const h of hazards) {
       if (!h.isAlive || h.powerupType === 16) continue;
       const dist = Math.hypot(h.x - botShip.x, h.y - botShip.y);
-      const safeDist = h.radius + (h.powerupType === 10 ? 85 : (this.difficulty === 'insane' ? 70 : this.difficulty === 'hard' ? 55 : 40));
+      const safeDist = h.radius + (h.powerupType === 10 ? 90 : (this.difficulty === 'insane' ? 75 : this.difficulty === 'hard' ? 65 : this.difficulty === 'medium' ? 55 : 40));
       if (dist < safeDist) {
         // Immediate escape vector directly away from hazard body
         this.targetAngle = Math.atan2(botShip.y - h.y, botShip.x - h.x);
@@ -323,12 +391,13 @@ export class BotController {
       }
     }
 
-    // 2.6 PREDICTIVE RAMMING ANTICIPATION & DEFENSIVE EVASION (Insane & Hard AI)
-    // Projects forward flight trajectory 20-30 frames to detect impending collisions with Mines, Inflators, Puds, and Asteroids.
+    // 2.6 PREDICTIVE RAMMING ANTICIPATION & DEFENSIVE EVASION (Insane, Hard, & Medium AI)
+    // Projects forward flight trajectory to detect impending collisions with Mines, Inflators, Puds, and Asteroids.
     // Uses rapid pulse fire to pop the threat and tangent thrust bursts to divert around it.
-    if (this.difficulty === 'insane' || this.difficulty === 'hard') {
+    if (this.difficulty === 'insane' || this.difficulty === 'hard' || this.difficulty === 'medium') {
       const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
-      const lookAheadDist = Math.max(100, currentSpeed * 24);
+      const lookAheadFrames = this.difficulty === 'insane' ? 28 : (this.difficulty === 'hard' ? 24 : 18);
+      const lookAheadDist = Math.max(85, currentSpeed * lookAheadFrames);
 
       for (const h of hazards) {
         if (!h.isAlive || h.powerupType === 16) continue;
@@ -345,7 +414,7 @@ export class BotController {
 
         if (projection > 0 && projection < lookAheadDist) {
           const perpDist = Math.abs(toHazX * travelDirY - toHazY * travelDirX);
-          const collisionMargin = h.radius + (this.difficulty === 'insane' ? 38 : 28);
+          const collisionMargin = h.radius + (this.difficulty === 'insane' ? 38 : this.difficulty === 'hard' ? 30 : 22);
 
           if (perpDist < collisionMargin) {
             // Imminent impact trajectory detected!
@@ -447,14 +516,21 @@ export class BotController {
     }
 
     // 4. POWERUP HARVESTING VS WORMHOLE SHOOTING
-    // Hard & Insane AI Rule: If there are fewer than 6 powerups in the arena, prioritize shooting the opponent wormhole
-    // to extract a flood of powerups rather than chasing down individual ones (unless needing emergency HP).
+    // Hard/Insane AI wait until 6 powerups spawn; Moderate (Medium) AI waits until 5 powerups spawn
+    // to build a rich battlefield flood rather than chasing solitary items (unless needing emergency HP).
     const validPowerups = powerups.filter((p) => p.isAlive);
     const isApexAi = this.difficulty === 'hard' || this.difficulty === 'insane';
-    const isLowHealth = botShip.health < botShip.maxHealth * 0.50;
+    const isMediumAi = this.difficulty === 'medium';
+    const isLowHealth = botShip.health < botShip.maxHealth * 0.55;
     const hasHealthPowerup = validPowerups.some((p) => p.type === 5);
     const needsUrgentHealth = isLowHealth && hasHealthPowerup;
-    const preferShootingWormhole = isApexAi && validPowerups.length < 6 && !needsUrgentHealth && wormholes.length > 0;
+
+    const minPowerupsThreshold = isApexAi ? 6 : (isMediumAi ? 5 : 1);
+    const preferShootingWormhole =
+      (isApexAi || isMediumAi) &&
+      validPowerups.length < minPowerupsThreshold &&
+      !needsUrgentHealth &&
+      wormholes.length > 0;
 
     if (!this.isUnloadingBarrage && !preferShootingWormhole && validPowerups.length > 0) {
       let bestPup: Powerup | null = null;
@@ -570,14 +646,35 @@ export class BotController {
       if (targetHazard) {
         const actualDist = Math.hypot(targetHazard.x - botShip.x, targetHazard.y - botShip.y);
         const bulletSpeed = 10.0;
-        const timeToHit = actualDist / (bulletSpeed * 60);
-        const hazObj = targetHazard as unknown as { vx?: number; vy?: number };
-        const leadX = targetHazard.x + (hazObj.vx || 0) * timeToHit * 60;
-        const leadY = targetHazard.y + (hazObj.vy || 0) * timeToHit * 60;
+        const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+        const hazData = this.prevHazardPositions.get(targetHazard) || { vx: (targetHazard as any).vx || 0, vy: (targetHazard as any).vy || 0 };
+
+        let leadX = targetHazard.x;
+        let leadY = targetHazard.y;
+
+        if (isApex) {
+          // Exact predictive interception calculation for moving UFOs, Scarabs, Gunships, etc.
+          const intercept = this.calculatePredictiveIntercept(
+            botShip.x,
+            botShip.y,
+            targetHazard.x,
+            targetHazard.y,
+            hazData.vx,
+            hazData.vy,
+            bulletSpeed
+          );
+          leadX = intercept.x;
+          leadY = intercept.y;
+        } else if (this.difficulty === 'medium') {
+          // Linear lead calculation
+          const timeToHit = Math.min(1.0, actualDist / (bulletSpeed * 60));
+          leadX = targetHazard.x + hazData.vx * timeToHit * 60;
+          leadY = targetHazard.y + hazData.vy * timeToHit * 60;
+        }
 
         const baseAngle = Math.atan2(leadY - botShip.y, leadX - botShip.x);
 
-        // Add difficulty-scaled aim jitter (smooth human hand tremor)
+        // Add difficulty-scaled aim jitter
         const jitter = Math.sin(this.totalTime * 4.0 + (botShip.slot || 1)) * cfg.aimErrorRad;
         this.targetAngle = baseAngle + jitter;
 
@@ -585,12 +682,30 @@ export class BotController {
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        if (actualDist > 160) {
+        // Inertial Drift Maneuvers for Hard & Insane AI
+        const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
+        if (isApex && currentSpeed > 2.0) {
+          const moveAngle = Math.atan2(botShip.vy, botShip.vx);
+          let travelAimDiff = Math.abs(this.targetAngle - moveAngle);
+          while (travelAimDiff > Math.PI) travelAimDiff = Math.abs(travelAimDiff - 2 * Math.PI);
+
+          // If moving fast and pivoting > 45 degrees to target, glide on inertia and drift-fire!
+          if (travelAimDiff > 0.75 && actualDist > 130) {
+            this.currentInput.up = false;
+          } else if (actualDist > 160) {
+            this.currentInput.up = true;
+          }
+        } else if (actualDist > 160) {
           this.currentInput.up = true;
         }
 
+        // Retro Braking for Hard/Insane near arena perimeter
+        if (isApex && botShip.hasRetros && (Math.abs(botShip.x) > 310 || Math.abs(botShip.y) > 310) && currentSpeed > 2.5) {
+          this.currentInput.up = false;
+        }
+
         // Fire if aligned and NO powerups are in line-of-fire
-        if (Math.abs(angleDiff) < 0.35 && actualDist < cfg.hazardEngagementRadius) {
+        if (Math.abs(angleDiff) < (isApex ? 0.40 : 0.35) && actualDist < cfg.hazardEngagementRadius) {
           if (!this.isPowerupInFiringLine(botShip, powerups, botShip.angle, actualDist)) {
             this.currentInput.fire = true;
           }
@@ -610,7 +725,7 @@ export class BotController {
         } else if (this.difficulty === 'hard') {
           shouldLaunch = invCount >= 5 || (invCount >= 3 && this.inventoryHoldTimer >= 8.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 8.0);
         } else if (this.difficulty === 'medium') {
-          shouldLaunch = invCount >= 3 || (invCount >= 2 && this.inventoryHoldTimer >= 6.0) || (invCount >= 1 && validPowerups.length === 0);
+          shouldLaunch = invCount >= 4 || (invCount >= 3 && this.inventoryHoldTimer >= 7.0) || (invCount >= 1 && validPowerups.length === 0 && this.inventoryHoldTimer >= 5.0);
         } else {
           shouldLaunch = true;
         }
@@ -640,7 +755,7 @@ export class BotController {
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-        // Pacing & Standoff Distance Control (avoid overshooting)
+        // Pacing & Standoff Distance Control
         const toWhDirX = (wh.x - botShip.x) / Math.max(1, rawDist);
         const toWhDirY = (wh.y - botShip.y) / Math.max(1, rawDist);
         const closingVelocity = (botShip.vx - whVx) * toWhDirX + (botShip.vy - whVy) * toWhDirY;
