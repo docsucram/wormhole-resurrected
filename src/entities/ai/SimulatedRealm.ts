@@ -163,9 +163,10 @@ export class SimulatedRealm {
   }
 
   public rebuildTableWormholes(
-    tablePlayers: Array<{ name: string; slot: number; color?: string; team?: 'A' | 'B' } | null>,
+    tablePlayers: Array<{ name: string; slot: number; color?: string; team?: 'A' | 'B'; isAlive?: boolean; isSpectating?: boolean } | null>,
     orbitDistance = this.orbitDistance,
-    isTeamMode = false
+    isTeamMode = false,
+    filterDead = false
   ): void {
     this.orbitDistance = orbitDistance;
 
@@ -179,6 +180,9 @@ export class SimulatedRealm {
       for (let i = 0; i < tablePlayers.length; i++) {
         const p = tablePlayers[i];
         if (p && p.slot !== slot) {
+          if (filterDead && (p.isSpectating || p.isAlive === false)) {
+            continue;
+          }
           if (isTeamMode) {
             if (p.team !== botTeam) {
               otherPlayers.push(p);

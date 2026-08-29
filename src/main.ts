@@ -898,6 +898,7 @@ class WormholeGame {
               if (victimWh) {
                 victimWh.killSelf(this.particles, this.sound);
               }
+              this.rebuildTableWormholes();
               this.updateTableRosterUI();
               const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
               const cause = pkt.cause ? ` [Cause: ${pkt.cause}]` : '';
@@ -930,6 +931,7 @@ class WormholeGame {
           if (victimWh) {
             victimWh.killSelf(this.particles, this.sound);
           }
+          this.rebuildTableWormholes();
           this.updateTableRosterUI();
           const deadName = this.tablePlayers[deadSlot]?.name || `Player ${deadSlot}`;
           const cause = pkt.cause ? ` [Cause: ${pkt.cause}]` : '';
@@ -956,6 +958,7 @@ class WormholeGame {
           let isLocalWin = false;
           let isTeamWin = false;
           let winnerName = pkt.winnerName || 'WINNER';
+          const winnerSlot = typeof winnerRef === 'number' ? winnerRef : (pkt.winnerSlot !== undefined ? pkt.winnerSlot : -1);
 
           if (typeof winnerRef === 'number') {
             isLocalWin = (winnerRef === this.player.slot);
@@ -972,7 +975,7 @@ class WormholeGame {
 
           const maxWins = Math.max(...this.tablePlayers.filter(p => !!p).map(p => p!.wins), pkt.p1Score, pkt.p2Score);
           if (maxWins >= this.gameState.targetWins) {
-            this.gameState.finishMatchManually(isLocalWin ? 'PLAYER 1' : 'PLAYER 2');
+            this.finishMatchWithWinner(winnerRef, winnerSlot, winnerName, isLocalWin, isTeamWin);
           } else {
             this.gameState.phase = 'ROUND_OVER';
             this.gameState.roundOverTimer = 4.0;
@@ -984,8 +987,8 @@ class WormholeGame {
               );
             } else {
               this.showDefeatModal(
-                isTeamWin ? `${winnerName} VICTORIOUS` : `${winnerName.toUpperCase()} WON THE ROUND`,
-                'YOUR SHIP WAS DESTROYED'
+                'YOU DIED',
+                isTeamWin ? `${winnerName} VICTORIOUS` : `${winnerName.toUpperCase()} WON THE ROUND`
               );
             }
             if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(this.gameState.roundWinner, pkt.p1Score, pkt.p2Score);
@@ -1663,10 +1666,15 @@ class WormholeGame {
     // Active opponents:
     // In TEAM mode: ONLY include participants on opposing team (p.team !== myTeam)
     // In FFA mode: include all participants except local player
+    // During active combat: ONLY show wormholes for alive, participating combatants (not spectating/waiting or dead)
+    const isCombatActive = this.inArena && (this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN');
     const activeOpponents: TablePlayer[] = [];
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
       if (p && !p.isLocal && p.slot !== this.player.slot) {
+        if (isCombatActive && (p.isSpectating || !p.isAlive)) {
+          continue; // Wormhole is eliminated / not in this active round
+        }
         if (isTeamMode) {
           if (p.team !== myTeam) {
             activeOpponents.push(p);
@@ -1678,10 +1686,13 @@ class WormholeGame {
     }
 
     if (activeOpponents.length === 0) {
-      const defaultOpponentSlot = this.player.slot === 0 ? 1 : 0;
-      this.wormholes.push(
-        new Wormhole('OPPONENT', defaultOpponentSlot, 0, orbitDistance, true)
-      );
+      const hasOtherTablePlayers = this.tablePlayers.some((p) => p && !p.isLocal && p.slot !== this.player.slot);
+      if (!hasOtherTablePlayers) {
+        const defaultOpponentSlot = this.player.slot === 0 ? 1 : 0;
+        this.wormholes.push(
+          new Wormhole('OPPONENT', defaultOpponentSlot, 0, orbitDistance, true)
+        );
+      }
     } else {
       const angleStep = 360 / activeOpponents.length;
       activeOpponents.forEach((opp, idx) => {
@@ -1692,8 +1703,8 @@ class WormholeGame {
       });
     }
 
-    // Rebuild multi-wormholes across all simulated bot realms so they fight each other (with enemy-only wormhole filter)
-    this.simulatedRealm.rebuildTableWormholes(this.tablePlayers, orbitDistance, isTeamMode);
+    // Rebuild multi-wormholes across all simulated bot realms so they fight each other
+    this.simulatedRealm.rebuildTableWormholes(this.tablePlayers, orbitDistance, isTeamMode, isCombatActive);
   }
 
   public resetArenaForNewRound(): void {
@@ -1713,21 +1724,23 @@ class WormholeGame {
     // 2. Reset Player Ship & Upgrades
     this.respawnPlayer();
 
-    // 3. Reset All Opponent Bot / Remote Realms
+    // 3. Reset All Opponent Bot / Remote Realms & Clear Spectating Flags
     this.simulatedRealm.resetForNewRound();
     for (let i = 0; i < 8; i++) {
-      if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
-        const realm = this.simulatedRealm.botRealms.get(i);
-        if (realm) {
-          realm.botShip.respawn(0, this.simulatedRealm.orbitDistance);
-          this.tablePlayers[i]!.health = realm.botShip.maxHealth;
-          this.tablePlayers[i]!.isAlive = true;
-        }
-      } else if (this.tablePlayers[i] && !this.tablePlayers[i]!.isLocal) {
+      if (this.tablePlayers[i]) {
         this.tablePlayers[i]!.health = this.tablePlayers[i]!.maxHealth || 280;
         this.tablePlayers[i]!.isAlive = true;
+        this.tablePlayers[i]!.isSpectating = false;
+        if (this.tablePlayers[i]!.isBot) {
+          const realm = this.simulatedRealm.botRealms.get(i);
+          if (realm) {
+            realm.botShip.respawn(0, this.simulatedRealm.orbitDistance);
+            this.tablePlayers[i]!.health = realm.botShip.maxHealth;
+          }
+        }
       }
     }
+    this.isSpectating = false;
 
     // 4. Rebuild & Re-space all active wormholes evenly with warp-in animation
     this.rebuildTableWormholes();
@@ -2186,7 +2199,7 @@ class WormholeGame {
     // Check if match won
     const maxWins = Math.max(...this.tablePlayers.filter(p => !!p).map(p => p!.wins), this.gameState.player1Score, this.gameState.player2Score);
     if (maxWins >= this.gameState.targetWins) {
-      this.gameState.finishMatchManually(isLocalWin ? 'PLAYER 1' : 'PLAYER 2');
+      this.finishMatchWithWinner(winnerRef, winnerSlot, winnerName, isLocalWin, isTeamWin);
       return;
     }
 
@@ -2208,6 +2221,60 @@ class WormholeGame {
 
     if (this.gameState.onRoundEnd) this.gameState.onRoundEnd(this.gameState.roundWinner, this.gameState.player1Score, this.gameState.player2Score);
     if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('ROUND_OVER');
+  }
+
+  private finishMatchWithWinner(
+    _winnerRef: number | 'TEAM_A' | 'TEAM_B' | 'DRAW',
+    _winnerSlot: number,
+    winnerName: string,
+    isLocalWin: boolean,
+    isTeamWin: boolean
+  ): void {
+    this.gameState.phase = 'MATCH_OVER';
+    const matchModal = document.getElementById('match-modal')!;
+    matchModal.classList.add('active');
+    matchModal.style.display = 'block';
+
+    if (isLocalWin) {
+      this.totalMatchWins++;
+      localStorage.setItem('wh_total_wins', this.totalMatchWins.toString());
+      this.buildShipGrid();
+    }
+
+    const titleEl = document.getElementById('modal-title')!;
+    const subEl = document.getElementById('modal-subtitle')!;
+    const scoreEl = document.getElementById('stat-final-score')!;
+
+    titleEl.innerText = isLocalWin ? 'VICTORY!' : 'DEFEAT!';
+    titleEl.style.color = isLocalWin ? 'var(--neon-cyan)' : '#ff3344';
+    titleEl.style.textShadow = isLocalWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
+    subEl.innerText = isLocalWin ? 'YOU WON THE MATCH!' : (isTeamWin ? `${winnerName} WON THE MATCH!` : `${winnerName.toUpperCase()} WON THE MATCH!`);
+
+    if (scoreEl) {
+      scoreEl.innerText = this.formatMatchScoreDisplay();
+    }
+
+    if (isLocalWin) {
+      this.sound.playVictoryFanfare();
+      const activeBot = this.tablePlayers.find((p) => p && p.isBot);
+      if (activeBot) {
+        const botColor = this.getPlayerColor(activeBot.slot);
+        setTimeout(() => {
+          this.addChatLog(`${activeBot.name}: "Match concluded. Commendable piloting, human."`, 'bot', botColor);
+        }, 600);
+      }
+    } else {
+      this.sound.playDefeatFanfare();
+      const winningBot = this.tablePlayers.find((p) => p && p.isBot);
+      if (winningBot) {
+        const botColor = this.getPlayerColor(winningBot.slot);
+        setTimeout(() => {
+          this.addChatLog(`${winningBot.name}: "Match finalized. Dominance confirmed!"`, 'bot', botColor);
+        }, 600);
+      }
+    }
+
+    if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('MATCH_OVER');
   }
 
   private handlePlayerElimination(): void {
@@ -2482,6 +2549,7 @@ class WormholeGame {
             targetWins: this.gameState.targetWins,
             round: this.gameState.currentRound,
             seed: Math.random(),
+            roster: this.tablePlayers,
           },
         });
       } else if (this.network.isConnected && this.network.isHost) {
