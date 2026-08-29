@@ -3240,24 +3240,28 @@ class WormholeGame {
     const btnMenuOptions = document.getElementById('btn-menu-options');
     const btnPauseOptions = document.getElementById('btn-pause-options');
     const btnCloseOptions = document.getElementById('btn-close-options');
+    const btnCloseOptionsX = document.getElementById('btn-close-options-x');
 
     const openOptions = () => {
       if (optionsModal) {
         optionsModal.classList.add('active');
-        optionsModal.style.display = 'block';
+        optionsModal.style.display = 'flex';
         this.renderKeybindGrid();
         this.updateGamepadStatusUI();
       }
     };
 
-    if (btnMenuOptions) btnMenuOptions.onclick = openOptions;
-    if (btnPauseOptions) btnPauseOptions.onclick = openOptions;
-    if (btnCloseOptions && optionsModal) {
-      btnCloseOptions.onclick = () => {
+    const closeOptions = () => {
+      if (optionsModal) {
         optionsModal.classList.remove('active');
         optionsModal.style.display = 'none';
-      };
-    }
+      }
+    };
+
+    if (btnMenuOptions) btnMenuOptions.onclick = openOptions;
+    if (btnPauseOptions) btnPauseOptions.onclick = openOptions;
+    if (btnCloseOptions) btnCloseOptions.onclick = closeOptions;
+    if (btnCloseOptionsX) btnCloseOptionsX.onclick = closeOptions;
 
     // Option Tab Switching
     const optTabBtns = document.querySelectorAll<HTMLButtonElement>('[data-opttab]');
@@ -3273,6 +3277,30 @@ class WormholeGame {
         if (targetPane) targetPane.style.display = 'block';
       };
     });
+
+    // Audio & Sound FX Options (Persistent)
+    const chkSound = document.getElementById('chk-opt-sound-enabled') as HTMLInputElement | null;
+    const volSlider = document.getElementById('opt-volume-slider') as HTMLInputElement | null;
+    const volVal = document.getElementById('opt-volume-val');
+
+    if (chkSound) {
+      chkSound.checked = !this.sound.isMuted;
+      chkSound.onchange = () => {
+        if (chkSound.checked === this.sound.isMuted) {
+          this.sound.toggleMute();
+        }
+      };
+    }
+
+    if (volSlider && volVal) {
+      volSlider.value = (this.sound.volume ?? 0.55).toString();
+      volVal.innerText = `${Math.round(parseFloat(volSlider.value) * 100)}%`;
+      volSlider.oninput = () => {
+        const v = parseFloat(volSlider.value);
+        volVal.innerText = `${Math.round(v * 100)}%`;
+        this.sound.setVolume(v);
+      };
+    }
 
     // FPS Counter Toggle (Persistent)
     const chkFps = document.getElementById('chk-opt-fps') as HTMLInputElement | null;

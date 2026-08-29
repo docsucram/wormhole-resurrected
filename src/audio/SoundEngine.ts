@@ -1,6 +1,7 @@
 export class SoundEngine {
   private ctx: AudioContext | null = null;
   public isMuted = false;
+  public volume = 0.55;
   private masterGain: GainNode | null = null;
   private filterNode: BiquadFilterNode | null = null;
 
@@ -11,6 +12,21 @@ export class SoundEngine {
 
   constructor() {
     this.preloadOriginalSounds();
+  }
+
+  public setVolume(vol: number): void {
+    this.volume = Math.max(0, Math.min(1.0, vol));
+    if (this.masterGain && this.ctx && !this.isMuted) {
+      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+    }
+  }
+
+  public toggleMute(): boolean {
+    this.isMuted = !this.isMuted;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.ctx.currentTime);
+    }
+    return this.isMuted;
   }
 
   private initCtx(): boolean {
@@ -100,14 +116,6 @@ export class SoundEngine {
       } catch {}
     };
     return true;
-  }
-
-  public toggleMute(): boolean {
-    this.isMuted = !this.isMuted;
-    if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.55, this.ctx.currentTime);
-    }
-    return this.isMuted;
   }
 
   /**
