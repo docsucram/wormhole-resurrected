@@ -995,21 +995,47 @@
 
       .styled-input, .styled-select {
         width: 100%;
-        background: #060e20;
-        border: 1px solid rgba(0, 229, 255, 0.4);
-        border-radius: 6px;
+        height: 38px;
+        background: #08142a;
+        border: 1.5px solid rgba(0, 229, 255, 0.35);
+        border-radius: 8px;
+        color: #ffffff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 0 12px;
+        outline: none;
+        box-sizing: border-box;
+        transition: all 0.12s ease-out;
+      }
+
+      .styled-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg fill='%2300e5ff' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px;
+        padding-right: 32px;
+        cursor: pointer;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .styled-select option {
+        background-color: #060e20;
         color: #ffffff;
         font-family: 'Orbitron', sans-serif;
         font-size: 12px;
-        font-weight: 700;
-        padding: 8px 12px;
-        outline: none;
-        transition: all 0.08s ease-out;
+        padding: 6px 10px;
       }
 
       .styled-input:focus, .styled-select:focus {
         border-color: var(--neon-cyan);
-        box-shadow: 0 0 12px var(--neon-cyan-glow);
+        box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
+        background: #0b1a38;
       }
 
       .btn-singleplayer {
@@ -2383,24 +2409,25 @@
       }
 
       .solo-diff-card {
-        background: rgba(4, 12, 28, 0.75);
-        border: 1.5px solid rgba(0, 229, 255, 0.25);
-        border-radius: 8px;
-        padding: 9px 12px;
+        background: rgba(6, 14, 30, 0.85);
+        border: 1.5px solid rgba(0, 229, 255, 0.2);
+        border-radius: 9px;
+        padding: 10px 14px;
         text-align: left;
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all 0.12s ease;
         display: block;
         width: 100%;
+        box-sizing: border-box;
       }
       .solo-diff-card:hover {
-        border-color: var(--neon-cyan);
-        background: rgba(0, 229, 255, 0.1);
+        border-color: rgba(0, 229, 255, 0.6);
+        background: rgba(0, 229, 255, 0.08);
       }
       .solo-diff-card.active {
-        border-color: #00ff88 !important;
-        background: rgba(0, 255, 136, 0.14) !important;
-        box-shadow: 0 0 14px rgba(0, 255, 136, 0.3);
+        border-color: var(--neon-cyan) !important;
+        background: rgba(0, 229, 255, 0.12) !important;
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.3);
       }
 
       #spawner-modal.active {
@@ -3158,79 +3185,81 @@
     </div>
 
     <!-- Host Custom Match Modal -->
-    <div id="create-match-modal">
-      <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">HOST NEW MATCH</div>
-      <div class="host-modal-subtitle" style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SET MATCH RULES</div>
+    <div id="create-match-modal" style="max-width: 520px; width: 94vw; padding: 22px 26px; border: 2px solid var(--neon-cyan); border-radius: 14px; background: rgba(5, 12, 26, 0.98); box-shadow: 0 0 35px rgba(0, 229, 255, 0.35);">
+      <div class="host-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px; text-shadow: 0 0 16px rgba(0, 229, 255, 0.5);">HOST NEW MATCH</div>
+      <div class="host-modal-subtitle" style="font-family: 'Orbitron', sans-serif; font-size: 10.5px; font-weight: 700; color: #88bbdd; letter-spacing: 1.5px; margin-bottom: 16px;">SET MATCH RULES</div>
 
-      <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 480px; margin: 0 auto;">
+      <div style="display: flex; flex-direction: column; gap: 12px; text-align: left; max-width: 480px; margin: 0 auto;">
         <div class="input-group">
-          <span class="input-label">MATCH NAME:</span>
-          <input type="text" class="styled-input" id="host-match-name" value="Sector 7 Match" maxlength="24" />
+          <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">MATCH NAME:</span>
+          <input type="text" class="styled-input" id="host-match-name" value="Revelations's Match" maxlength="24" />
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
-            <span class="input-label">MATCH MODE:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">MATCH MODE:</span>
             <select class="styled-select" id="host-match-type">
-              <option value="FFA" selected>Free-For-All</option>
-              <option value="TEAM">Team Battle</option>
+              <option value="TEAM" selected>Team Battle</option>
+              <option value="FFA">Free-For-All</option>
             </select>
           </div>
 
           <div class="input-group">
-            <span class="input-label">ARENA BOARD SIZE:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">ARENA BOARD SIZE:</span>
             <select class="styled-select" id="host-match-size">
               <option value="SMALL">Small</option>
-              <option value="MEDIUM" selected>Medium (Default)</option>
+              <option value="MEDIUM" selected>Medium</option>
               <option value="LARGE">Large</option>
-              <option value="HUGE">Huge (8-Player)</option>
+              <option value="HUGE">Colossal</option>
             </select>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
-            <span class="input-label">TARGET WINS:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">TARGET WINS:</span>
             <select class="styled-select" id="host-target-wins">
-              <option value="2" selected>Best of 3 (Default)</option>
+              <option value="1">First to 1</option>
+              <option value="2" selected>Best of 3</option>
               <option value="3">Best of 5</option>
-              <option value="4">Best of 7</option>
+              <option value="5">First to 5</option>
+              <option value="10">First to 10</option>
               <option value="999999">Endless</option>
             </select>
           </div>
 
           <div class="input-group">
-            <span class="input-label">BOT BACKFILL:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">BOT BACKFILL:</span>
             <select class="styled-select" id="host-bot-diff">
-              <option value="none" selected>NO BOTS (WAIT FOR PLAYERS)</option>
-              <option value="easy">FILL SLOTS: NOVICE (EASY AI)</option>
-              <option value="medium">FILL SLOTS: PILOT (MED AI)</option>
-              <option value="hard">FILL SLOTS: ACE (HARD AI)</option>
-              <option value="insane">FILL SLOTS: CYBORG (INSANE AI)</option>
+              <option value="none" selected>None (Wait for Players)</option>
+              <option value="easy">Novice (Easy Bots)</option>
+              <option value="medium">Pilot (Medium Bots)</option>
+              <option value="hard">Ace (Hard Bots)</option>
+              <option value="insane">Cyborg (Insane Bots)</option>
             </select>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
-            <span class="input-label">POWERUP ARSENAL:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">POWERUP ARSENAL:</span>
             <select class="styled-select" id="host-powerup-pool">
               <option value="STANDARD" selected>Standard (17 Items)</option>
-              <option value="EXTENDED">Extended (20 Items)</option>
+              <option value="EXTENDED">Full Chaos (All 20)</option>
             </select>
           </div>
 
           <div class="input-group">
-            <span class="input-label">SHIP CLASS RESTRICTION:</span>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">SHIP CLASS RESTRICTION:</span>
             <select class="styled-select" id="host-ship-restriction">
-              <option value="STANDARD" selected>Standard (First 3 Ships)</option>
-              <option value="ALL">All 8 Classes Allowed</option>
+              <option value="STANDARD" selected>Starter (3 Ships)</option>
+              <option value="ALL">All Classes (9 Ships)</option>
             </select>
           </div>
         </div>
 
         <div class="input-group">
-          <span class="input-label">PASSWORD (OPTIONAL):</span>
+          <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">PASSWORD (OPTIONAL):</span>
           <input type="text" class="styled-input" id="host-match-password" placeholder="Leave empty for public" maxlength="12" />
         </div>
 
@@ -3242,59 +3271,59 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 18px;">
-        <button class="action-btn" id="btn-create-match-confirm" style="padding: 10px 24px; border-color: #00e5ff; color: #00e5ff; font-weight: 900;">CREATE & ENGAGE MATCH</button>
-        <button class="action-btn" id="btn-create-match-cancel" style="padding: 10px 18px; border-color: #88bbdd; color: #88bbdd;">CANCEL</button>
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+        <button class="action-btn" id="btn-create-match-confirm" style="background: var(--neon-cyan); border: 1px solid var(--neon-cyan); color: #020c15; font-weight: 900; font-family: 'Orbitron', sans-serif; font-size: 11.5px; letter-spacing: 1px; padding: 10px 24px; border-radius: 8px; box-shadow: 0 0 16px rgba(0, 229, 255, 0.4); cursor: pointer;">CREATE & ENGAGE MATCH</button>
+        <button class="action-btn" id="btn-create-match-cancel" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 11.5px; letter-spacing: 1px; padding: 10px 20px; border-radius: 8px; cursor: pointer;">CANCEL</button>
       </div>
     </div>
 
     <!-- Solo Practice AI Difficulty Modal -->
-    <div id="solo-difficulty-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px;">SOLO PRACTICE SIMULATION</div>
-      <div style="font-size: 11px; color: #88bbdd; margin-bottom: 14px;">SELECT ENEMY AI DIFFICULTY:</div>
+    <div id="solo-difficulty-modal" style="max-width: 480px; width: 92vw; padding: 22px 24px; border: 2px solid var(--neon-cyan); border-radius: 14px; background: rgba(5, 12, 26, 0.98); box-shadow: 0 0 35px rgba(0, 229, 255, 0.35);">
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 2px; margin-bottom: 4px; text-shadow: 0 0 15px rgba(0, 229, 255, 0.5);">SOLO PRACTICE SIMULATION</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; color: #88bbdd; letter-spacing: 1px; margin-bottom: 16px;">SELECT ENEMY AI DIFFICULTY:</div>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto 16px auto;">
+      <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px;">
         <button class="solo-diff-card" data-diff="easy" id="btn-solo-diff-easy">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: #00ff88; font-size: 13px; font-family: 'Orbitron', sans-serif;">NOVICE (EASY)</strong>
-            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">TRAINING</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <strong style="color: #00ff88; font-size: 14px; font-weight: 900; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">EASY</strong>
+            <span style="font-size: 10px; font-weight: 700; color: #64748b; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">TRAINING</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Basic navigation and slow aim. Ideal for learning flight controls.</p>
+          <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.4; margin: 0; font-family: sans-serif; text-align: left;">Basic navigation and slow aim. Ideal for learning flight controls.</p>
         </button>
 
         <button class="solo-diff-card active" data-diff="medium" id="btn-solo-diff-med">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: var(--neon-cyan); font-size: 13px; font-family: 'Orbitron', sans-serif;">PILOT (MEDIUM)</strong>
-            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">STANDARD</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <strong style="color: var(--neon-cyan); font-size: 14px; font-weight: 900; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">MEDIUM</strong>
+            <span style="font-size: 10px; font-weight: 700; color: #64748b; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">STANDARD</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Leads targets, avoids mines, and faster reflexes.</p>
+          <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.4; margin: 0; font-family: sans-serif; text-align: left;">Leads targets, avoids mines, and faster reflexes.</p>
         </button>
 
         <button class="solo-diff-card" data-diff="hard" id="btn-solo-diff-hard">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: var(--neon-magenta); font-size: 13px; font-family: 'Orbitron', sans-serif;">ACE (HARD)</strong>
-            <span style="font-size: 9px; color: #94a3b8; font-family: 'Orbitron', sans-serif;">VETERAN</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <strong style="color: #bd53ed; font-size: 14px; font-weight: 900; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">HARD</strong>
+            <span style="font-size: 10px; font-weight: 700; color: #64748b; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">VETERAN</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Predictive aim, aggressive hazard clearing, and fast wormhole attacks.</p>
+          <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.4; margin: 0; font-family: sans-serif; text-align: left;">Predictive aim, aggressive hazard clearing, and fast wormhole attacks.</p>
         </button>
 
         <button class="solo-diff-card" data-diff="insane" id="btn-solo-diff-insane">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <strong style="color: #bd53ed; font-size: 13px; font-family: 'Orbitron', sans-serif;">CYBORG (INSANE)</strong>
-            <span style="font-size: 9px; color: #bd53ed; font-family: 'Orbitron', sans-serif; font-weight: 800;">APEX COMBAT</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <strong style="color: #ff00cc; font-size: 14px; font-weight: 900; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">INSANE</strong>
+            <span style="font-size: 10px; font-weight: 700; color: #64748b; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">CYBORG</span>
           </div>
-          <p style="font-size: 11px; color: #cbd5e1; margin-top: 3px;">Near-instant reflexes, intercept drift maneuvers, and ruthless offensive pressure.</p>
+          <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.4; margin: 0; font-family: sans-serif; text-align: left;">Near-instant reflexes, intercept drift maneuvers, and ruthless offensive pressure.</p>
         </button>
       </div>
 
-      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 14px;">
-        <button class="action-btn" id="btn-solo-confirm" style="border-color: #00ff88; color: #00ff88; font-weight: 900; padding: 8px 22px;">ENGAGE SIMULATION</button>
-        <button class="action-btn" id="btn-solo-cancel" style="border-color: #ff3344; color: #ff3344; padding: 8px 18px;">CANCEL</button>
+      <div style="display: flex; justify-content: center; gap: 14px; margin-bottom: 16px;">
+        <button class="action-btn" id="btn-solo-confirm" style="background: #00e676; border: 1px solid #00e676; color: #020c15; font-weight: 900; font-family: 'Orbitron', sans-serif; font-size: 11.5px; letter-spacing: 1px; padding: 10px 24px; border-radius: 8px; box-shadow: 0 0 16px rgba(0, 230, 118, 0.4); cursor: pointer;">ENGAGE SIMULATION</button>
+        <button class="action-btn" id="btn-solo-cancel" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 11.5px; letter-spacing: 1px; padding: 10px 20px; border-radius: 8px; cursor: pointer;">CANCEL</button>
       </div>
 
       <div style="display: flex; justify-content: center;">
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="solo-test-mode-toggle" style="accent-color: var(--neon-cyan); cursor: pointer; width: 13px; height: 13px;">
+          <input type="checkbox" id="solo-test-mode-toggle" style="accent-color: var(--neon-cyan); cursor: pointer; width: 14px; height: 14px;">
           <span style="font-size: 11px; color: #cbd5e1; font-family: 'Orbitron', sans-serif; letter-spacing: 0.5px;">ENABLE TEST MODE</span>
         </label>
       </div>
