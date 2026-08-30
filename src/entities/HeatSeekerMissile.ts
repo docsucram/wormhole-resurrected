@@ -16,6 +16,8 @@ export class HeatSeekerMissile {
   public color = '#00ffff';
   public radius = 10;
   public wormholeImmunity = 0.8; // Ignore wormhole collision for first 0.8s so it escapes
+  public isPlayerWeapon = false;
+  public ownerSlot = -1;
 
   private joints: Point2D[] = [];
   private jointCount = 16;

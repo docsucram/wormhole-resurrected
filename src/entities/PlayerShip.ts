@@ -478,18 +478,18 @@ export class PlayerShip {
       // The Hunter - Heat Seeker Missile
       if (this.heatSeekerRounds > 0) {
         this.heatSeekerRounds--;
-        this.specialCooldown = 0.5;
         const cos = Math.cos(this.angle);
         const sin = Math.sin(this.angle);
-        missiles.push(
-          new HeatSeekerMissile(
-            this.x + cos * 20,
-            this.y + sin * 20,
-            this.angle,
-            0,
-            (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary
-          )
+        const m = new HeatSeekerMissile(
+          this.x + cos * 24,
+          this.y + sin * 24,
+          this.angle,
+          0,
+          (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary
         );
+        m.isPlayerWeapon = true;
+        m.ownerSlot = this.slot;
+        missiles.push(m);
         sound.playSpecial(3);
         if (popups) popups.push(new TextPopup(this.x, this.y, 'PIRANHA MISSILE LAUNCHED', '#ff8800'));
       }

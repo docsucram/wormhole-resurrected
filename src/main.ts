@@ -5593,27 +5593,92 @@ class WormholeGame {
     // 8. Update Homing Missiles
     for (let i = this.missiles.length - 1; i >= 0; i--) {
       const m = this.missiles[i];
-      if (!m.update(dt, this.player.isAlive ? this.player.x : undefined, this.player.isAlive ? this.player.y : undefined)) {
-        this.missiles.splice(i, 1);
-        continue;
-      }
+      if (m.isPlayerWeapon) {
+        // Player-fired missile: seeks closest active hostile hazard or enemy wormhole
+        let targetX: number | undefined;
+        let targetY: number | undefined;
+        let bestDist = Infinity;
 
-      if (this.player.isAlive && Collision.testCircleCircle(m.x, m.y, 6, this.player.x, this.player.y, 16)) {
-        this.player.takeDamage(m.damage, this.particles, this.sound, { weapon: 'Heat Seeker' });
-        this.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
-        this.missiles.splice(i, 1);
-        continue;
-      }
+        for (const h of this.hazardManager.hazards) {
+          if (!h.isAlive) continue;
+          const d = Math.hypot(h.x - m.x, h.y - m.y);
+          if (d < bestDist) {
+            bestDist = d;
+            targetX = h.x;
+            targetY = h.y;
+          }
+        }
 
-      if (m.wormholeImmunity <= 0) {
-        for (const wh of this.wormholes) {
-          if (!wh.isAlive) continue;
-          const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
-          if (dist < 35) {
-            wh.absorbDamage(m.damage, this.powerups, this.particles, this.sound);
-            this.particles.createExplosion(m.x, m.y, '#00ffcc', 12);
+        if (targetX === undefined) {
+          for (const wh of this.wormholes) {
+            if (!wh.isAlive) continue;
+            const d = Math.hypot(wh.x - m.x, wh.y - m.y);
+            if (d < bestDist) {
+              bestDist = d;
+              targetX = wh.x;
+              targetY = wh.y;
+            }
+          }
+        }
+
+        if (!m.update(dt, targetX, targetY)) {
+          this.missiles.splice(i, 1);
+          continue;
+        }
+
+        // Check collision against hazards
+        let missileDestroyed = false;
+        for (const h of this.hazardManager.hazards) {
+          if (!h.isAlive) continue;
+          const r = (h as unknown as { radius?: number }).radius || 15;
+          if (Collision.testCircleCircle(m.x, m.y, 6, h.x, h.y, r)) {
+            h.takeDamage(m.damage, this.particles, this.sound);
+            this.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
+            this.sound.playExplosion(false);
             this.missiles.splice(i, 1);
+            missileDestroyed = true;
             break;
+          }
+        }
+        if (missileDestroyed) continue;
+
+        // Check collision against wormholes
+        if (m.wormholeImmunity <= 0) {
+          for (const wh of this.wormholes) {
+            if (!wh.isAlive) continue;
+            const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
+            if (dist < 35) {
+              wh.absorbDamage(m.damage, this.powerups, this.particles, this.sound);
+              this.particles.createExplosion(m.x, m.y, '#00ffcc', 16);
+              this.missiles.splice(i, 1);
+              break;
+            }
+          }
+        }
+      } else {
+        // Hostile hazard missile: tracks local player ship
+        if (!m.update(dt, this.player.isAlive ? this.player.x : undefined, this.player.isAlive ? this.player.y : undefined)) {
+          this.missiles.splice(i, 1);
+          continue;
+        }
+
+        if (this.player.isAlive && Collision.testCircleCircle(m.x, m.y, 6, this.player.x, this.player.y, 16)) {
+          this.player.takeDamage(m.damage, this.particles, this.sound, { weapon: 'Heat Seeker' });
+          this.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
+          this.missiles.splice(i, 1);
+          continue;
+        }
+
+        if (m.wormholeImmunity <= 0) {
+          for (const wh of this.wormholes) {
+            if (!wh.isAlive) continue;
+            const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
+            if (dist < 35) {
+              wh.absorbDamage(m.damage, this.powerups, this.particles, this.sound);
+              this.particles.createExplosion(m.x, m.y, '#00ffcc', 12);
+              this.missiles.splice(i, 1);
+              break;
+            }
           }
         }
       }

@@ -30,13 +30,13 @@ const DIFFICULTY_CONFIGS: Record<BotDifficulty, DifficultyConfig> = {
     specialAbilityChance: 0.45,
   },
   medium: {
-    thinkInterval: 0.08,
-    reactionDelay: 0.25,
-    aimErrorRad: 0.08,
-    deadZone: 0.045,
-    powerupPerceptionRadius: 360,
-    hazardEngagementRadius: 340,
-    launchCooldownTime: 3.0,
+    thinkInterval: 0.12,
+    reactionDelay: 0.45,
+    aimErrorRad: 0.10,
+    deadZone: 0.05,
+    powerupPerceptionRadius: 320,
+    hazardEngagementRadius: 280,
+    launchCooldownTime: 3.5,
     specialAbilityChance: 0.85,
   },
   hard: {
@@ -71,6 +71,9 @@ export class BotController {
   private totalTime = 0;
   private inventoryHoldTimer = 0;
   private lastInventoryCount = 0;
+  private flagshipActiveTime = 0;
+  private flashStanceCooldown = 0;
+  private hunterFireCooldown = 0;
   private currentInput: InputState = {
     up: false,
     left: false,
@@ -109,7 +112,7 @@ export class BotController {
     hazards: Hazard[] = [],
     mines: Hazard[] = []
   ): InputState {
-    if (!this.isEnabled || !botShip.isAlive) {
+    if (!this.isEnabled) {
       return {
         up: false,
         left: false,
@@ -124,6 +127,17 @@ export class BotController {
 
     if (this.launchCooldown > 0) {
       this.launchCooldown -= dt;
+    }
+    if (this.flashStanceCooldown > 0) {
+      this.flashStanceCooldown -= dt;
+    }
+    if (this.hunterFireCooldown > 0) {
+      this.hunterFireCooldown -= dt;
+    }
+    if (botShip.isAttractorActive) {
+      this.flagshipActiveTime += dt;
+    } else {
+      this.flagshipActiveTime = 0;
     }
 
     // Track inventory changes & hold timer
@@ -355,32 +369,80 @@ export class BotController {
     // Special Ability Autonomous Decision Logic
     if (botShip.specialType > 0 && botShip.specialCooldown <= 0) {
       if (botShip.specialType === 1) {
-        // Turtle Cannon: If surrounded by 2+ threats within 220px and health > 40
-        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 220).length;
-        if (botShip.health > 40 && nearThreats >= 2) {
+        // 1. The Turtle - Screen-Wide Hazard Wipe:
+        // Only trigger if cornered by 3+ active threats or a lethal high-threat projectile is closing in fast (< 130px).
+        // Check HP buffer (> 30 HP, or > 15 HP if imminent death) to prevent unnecessary self-damage.
+        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 240).length;
+        const lethalThreat = hazards.find(
+          (h) => h.isAlive && (h.powerupType === 6 || h.powerupType === 9 || h.powerupType === 14) && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 130
+        );
+        if ((nearThreats >= 3 || lethalThreat) && (botShip.health > 30 || lethalThreat)) {
           this.currentInput.tertiaryFire = true;
         }
       } else if (botShip.specialType === 2) {
-        // Flash Shapeshifter:
-        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 200).length;
-        if (nearThreats > 0 && botShip.shapeShifterState === 1) {
-          this.currentInput.tertiaryFire = true; // Switch to Tank for heavy firepower / durability
-        } else if (nearThreats === 0 && powerups.length > 0 && botShip.shapeShifterState === 0) {
-          this.currentInput.tertiaryFire = true; // Switch to Squid for extreme speed
+        // 2. The Flash - Shapeshifter:
+        // Enhanced improvements active for Hard and Insane AI.
+        // Insane AI has zero cooldown and switches instantly on demand. Hard AI has 3.0s stance cooldown hysteresis.
+        const isEligible = this.difficulty === 'insane' || (this.difficulty === 'hard' && this.flashStanceCooldown <= 0);
+        if (isEligible) {
+          const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 200).length;
+          const isFighting = nearThreats > 0 || (wormholes.length > 0 && this.isUnloadingBarrage);
+          if (isFighting && botShip.shapeShifterState === 1) {
+            // Switch to Tank (mode 0) for heavy armor and dual cannon firepower
+            this.currentInput.tertiaryFire = true;
+            this.flashStanceCooldown = 3.0;
+          } else if (!isFighting && powerups.length > 0 && botShip.shapeShifterState === 0) {
+            // Switch to Squid (mode 1) for extreme speed & powerup retrieval
+            this.currentInput.tertiaryFire = true;
+            this.flashStanceCooldown = 3.0;
+          }
         }
       } else if (botShip.specialType === 3) {
-        // Hunter: Fire Heat Seeker if has missiles and targets exist
-        if (botShip.heatSeekerRounds > 0 && hazards.length > 0) {
-          this.currentInput.tertiaryFire = true;
+        // 3. The Hunter - Target-Seeking Piranha Missiles:
+        // Align target in a 60-degree forward cone and preserve volley discipline
+        if (botShip.heatSeekerRounds > 0 && this.hunterFireCooldown <= 0) {
+          const targets = [
+            ...hazards.filter((h) => h.isAlive),
+            ...wormholes.filter((w) => w.isAlive && w.slot !== botShip.slot),
+          ];
+          let bestTarget: { x: number; y: number } | null = null;
+          let bestDist = 500;
+          for (const t of targets) {
+            const d = Math.hypot(t.x - botShip.x, t.y - botShip.y);
+            if (d < bestDist && d > 80) {
+              const targetAngle = Math.atan2(t.y - botShip.y, t.x - botShip.x);
+              let diff = targetAngle - botShip.angle;
+              while (diff < -Math.PI) diff += Math.PI * 2;
+              while (diff > Math.PI) diff -= Math.PI * 2;
+              if (Math.abs(diff) < (35 * Math.PI) / 180) {
+                bestDist = d;
+                bestTarget = t;
+              }
+            }
+          }
+          if (bestTarget) {
+            this.currentInput.tertiaryFire = true;
+            this.hunterFireCooldown = 1.2; // Don't dump all 3 at once
+          }
         }
       } else if (botShip.specialType === 4) {
-        // Flagship: Toggle Attractor when loose powerups or hazards near
+        // 4. The Flagship - Attractor / Repulser Gravity Well (Pulse Mode):
+        const spd = Math.hypot(botShip.vx, botShip.vy);
+        const nearWall = Math.abs(botShip.x) > 310 || Math.abs(botShip.y) > 310;
         const loosePups = powerups.filter((p) => p.isAlive && Math.hypot(p.x - botShip.x, p.y - botShip.y) < 320).length;
-        const nearHazards = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 240).length;
-        if ((loosePups > 0 || nearHazards > 0) && !botShip.isAttractorActive) {
-          this.currentInput.tertiaryFire = true;
-        } else if (loosePups === 0 && nearHazards === 0 && botShip.isAttractorActive) {
-          this.currentInput.tertiaryFire = true;
+        const nearHazards = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 220).length;
+
+        if (botShip.isAttractorActive) {
+          // Auto-cut: burst duration reached (1.2s), stalled momentum, near wall, or threats cleared
+          if (this.flagshipActiveTime >= 1.2 || nearWall || (spd < 1.2 && this.flagshipActiveTime > 0.6) || (loosePups === 0 && nearHazards === 0)) {
+            this.currentInput.tertiaryFire = true; // Turn OFF field to restore momentum
+          }
+        } else {
+          // Trigger short pulse only when safe from walls and either deflecting 2+ hazards or vacuuming powerups
+          if (!nearWall && (nearHazards >= 2 || (loosePups > 0 && nearHazards === 0))) {
+            this.currentInput.tertiaryFire = true; // Turn ON short pulse
+            this.flagshipActiveTime = 0;
+          }
         }
       }
     }

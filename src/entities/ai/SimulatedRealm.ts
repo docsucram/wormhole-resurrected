@@ -514,19 +514,94 @@ export class SimulatedRealm {
         }
       }
 
-      // 6. Update Missiles (actively homing onto AI bot ship)
+      // 6. Update Missiles
       for (let i = realm.missiles.length - 1; i >= 0; i--) {
         const m = realm.missiles[i];
-        if (!m.update(dt, realm.botShip.isAlive ? realm.botShip.x : undefined, realm.botShip.isAlive ? realm.botShip.y : undefined)) {
-          realm.missiles.splice(i, 1);
-          continue;
-        }
+        if (m.isPlayerWeapon) {
+          // Bot-fired missile: seeks closest active hostile hazard or enemy wormhole
+          let targetX: number | undefined;
+          let targetY: number | undefined;
+          let bestDist = Infinity;
 
-        if (realm.botShip.isAlive && Collision.testCircleCircle(m.x, m.y, 6, realm.botShip.x, realm.botShip.y, 16)) {
-          realm.botShip.takeDamage(m.damage, realm.particles, sound, { weapon: 'Heat Seeker' });
-          realm.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
-          realm.missiles.splice(i, 1);
-          continue;
+          for (const h of realm.hazardManager.hazards) {
+            if (!h.isAlive) continue;
+            const d = Math.hypot(h.x - m.x, h.y - m.y);
+            if (d < bestDist) {
+              bestDist = d;
+              targetX = h.x;
+              targetY = h.y;
+            }
+          }
+
+          if (targetX === undefined) {
+            for (const wh of realm.wormholes) {
+              if (!wh.isAlive) continue;
+              const d = Math.hypot(wh.x - m.x, wh.y - m.y);
+              if (d < bestDist) {
+                bestDist = d;
+                targetX = wh.x;
+                targetY = wh.y;
+              }
+            }
+          }
+
+          if (!m.update(dt, targetX, targetY)) {
+            realm.missiles.splice(i, 1);
+            continue;
+          }
+
+          let missileDestroyed = false;
+          for (const h of realm.hazardManager.hazards) {
+            if (!h.isAlive) continue;
+            const r = (h as unknown as { radius?: number }).radius || 15;
+            if (Collision.testCircleCircle(m.x, m.y, 6, h.x, h.y, r)) {
+              h.takeDamage(m.damage, realm.particles, sound);
+              realm.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
+              realm.missiles.splice(i, 1);
+              missileDestroyed = true;
+              break;
+            }
+          }
+          if (missileDestroyed) continue;
+
+          if (m.wormholeImmunity <= 0) {
+            for (const wh of realm.wormholes) {
+              if (!wh.isAlive) continue;
+              const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
+              if (dist < 35) {
+                wh.absorbDamage(m.damage, realm.powerups, realm.particles, sound);
+                realm.particles.createExplosion(m.x, m.y, '#00ffcc', 16);
+                realm.missiles.splice(i, 1);
+                break;
+              }
+            }
+          }
+        } else {
+          // Hostile hazard missile: tracks bot ship
+          if (!m.update(dt, realm.botShip.isAlive ? realm.botShip.x : undefined, realm.botShip.isAlive ? realm.botShip.y : undefined)) {
+            realm.missiles.splice(i, 1);
+            continue;
+          }
+
+          if (realm.botShip.isAlive && Collision.testCircleCircle(m.x, m.y, 6, realm.botShip.x, realm.botShip.y, 16)) {
+            realm.botShip.takeDamage(m.damage, realm.particles, sound, { weapon: 'Heat Seeker' });
+            realm.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
+            realm.missiles.splice(i, 1);
+            continue;
+          }
+
+          if (m.wormholeImmunity <= 0) {
+            for (const wh of realm.wormholes) {
+              if (!wh.isAlive) continue;
+              const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
+              if (dist < 35) {
+                wh.absorbDamage(m.damage, realm.powerups, realm.particles, sound);
+                realm.particles.createExplosion(m.x, m.y, '#00ffcc', 12);
+                realm.missiles.splice(i, 1);
+                break;
+              }
+            }
+          }
         }
       }
 

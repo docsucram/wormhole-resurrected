@@ -128,8 +128,8 @@ export const SHIP_CONFIGS: ShipConfig[] = [
     name: 'The Turtle',
     subtitle: 'Heavy Siege Defender',
     description: [
-      'Max armor plating and heavy hull mass.',
-      'Fires a massive piercing kinetic shell that obliterates targets in its path.',
+      'The Turtle is the heaviest and most armored vessel in the fleet.',
+      'Special ability emits a massive shockwave that wipes all hazards across the arena. The drawback is that it often damages itself.',
       'Activate with [SPECIAL] / [R] / [Y].',
     ],
     offsetY: 0.0,
@@ -179,7 +179,7 @@ export const SHIP_CONFIGS: ShipConfig[] = [
     subtitle: 'Missile Corvette',
     description: [
       'Fast strike craft with balanced handling.',
-      'Launches a 3-missile tracking salvo to overwhelm evasive targets.',
+      'Launches target-seeking Piranha missiles. Starts with 3 missiles; regenerates 1 round every 20s (max 3).',
       'Launch missiles with [SPECIAL] / [R] / [Y].',
     ],
     offsetY: 0.0,
