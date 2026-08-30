@@ -38,6 +38,7 @@ export interface TablePlayer {
   wins: number;
   color: string;
   team?: 'A' | 'B';
+  inventory?: number[];
 }
 
 export interface LobbyMatch {
@@ -4461,7 +4462,11 @@ class WormholeGame {
     for (let i = 0; i < 8; i++) {
       const p = this.tablePlayers[i];
       if (p) {
-        rosterSig += `[${i}:${p.name}:${p.team}:${p.wins}:${p.isBot ? 1 : 0}:${p.isSpectating ? 1 : 0}:${Math.ceil(p.health)}]`;
+        const inv = p.isLocal
+          ? this.player.powerupInventory
+          : (p.isBot ? (this.simulatedRealm.botRealms.get(i)?.botShip.powerupInventory || p.inventory || []) : (p.inventory || []));
+        const invStr = inv.join(',');
+        rosterSig += `[${i}:${p.name}:${p.team}:${p.wins}:${p.isBot ? 1 : 0}:${p.isSpectating ? 1 : 0}:${Math.ceil(p.health)}:${invStr}]`;
       }
     }
 
@@ -4532,6 +4537,13 @@ class WormholeGame {
     let botCount = 0;
     let occupiedCount = 0;
 
+    const pupColors: Record<number, string> = {
+      6: '#00ffff', 7: '#ffaa00', 8: '#ff7700', 9: '#3399ff',
+      10: '#33ff33', 11: '#ffff00', 12: '#ff6600', 13: '#33ff99',
+      14: '#ff0033', 15: '#ff00ff', 16: '#00e5ff', 17: '#ffffff',
+      18: '#9966ff', 19: '#ffcc00'
+    };
+
     const renderCard = (p: TablePlayer, slot: number) => {
       occupiedCount++;
       if (p.isBot) botCount++;
@@ -4559,10 +4571,28 @@ class WormholeGame {
         ? `<button class="btn-toggle-team" data-slot="${slot}" title="Swap Faction (Alpha / Omega)">⇄</button>`
         : '';
 
+      const inv = p.isLocal
+        ? this.player.powerupInventory
+        : (p.isBot ? (this.simulatedRealm.botRealms.get(slot)?.botShip.powerupInventory || p.inventory || []) : (p.inventory || []));
+
+      let pipsHtml = '<div class="roster-inv-bar" style="display: inline-flex; gap: 2.5px; align-items: center; margin: 0 4px;" title="Offensive Powerups Held (Max 5)">';
+      for (let i = 0; i < 5; i++) {
+        if (i < inv.length) {
+          const pupType = inv[i];
+          const pupCol = pupColors[pupType] || '#00e5ff';
+          const pupName = POWERUP_NAMES[pupType] || `Hazard ${pupType}`;
+          pipsHtml += `<div class="roster-inv-pip" title="${pupName}" style="width: 6.5px; height: 6.5px; border-radius: 2px; background: ${pupCol}; box-shadow: 0 0 5px ${pupCol}; border: 1px solid rgba(255,255,255,0.7); flex-shrink: 0;"></div>`;
+        } else {
+          pipsHtml += `<div class="roster-inv-pip empty" style="width: 6.5px; height: 6.5px; border-radius: 2px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); flex-shrink: 0;"></div>`;
+        }
+      }
+      pipsHtml += '</div>';
+
       card.innerHTML = `
         <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <span class="roster-player-name">${pilotTypeIcon}${p.name}${waitingBadge}</span>
-          <div style="display: flex; align-items: center; gap: 5px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            ${pipsHtml}
             ${swapTeamBtn}
             <span class="roster-player-stats">W: ${p.wins}</span>
             ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${slot}" title="Remove Bot">✕</button>` : ''}
@@ -5665,12 +5695,68 @@ class WormholeGame {
       retrosEl.style.color = this.player.hasRetros ? '#00ff88' : '#ffaa00';
     }
 
-    const specialNames = ['RAPID FIRE', 'TURTLE CANNON', 'SHAPESHIFTER', 'HEAT SEEKER', 'ATTRACTOR/REPULSER'];
-    const specialText = specialNames[this.player.specialType] || 'RAPID FIRE';
     const specialEl = this.getHudEl('hud-classic-special');
+    const specialBarTrack = this.getHudEl('hud-special-bar-track');
+    const specialBarFill = this.getHudEl('hud-special-bar-fill');
+
+    let specialText = '';
+    let specialColor = '#ffaa00';
+    let showBar = false;
+    let barPct = 100;
+    let barColor = '#00ff88';
+
+    if (this.player.specialType === 1) {
+      // Turtle Screen Wipe (4.0s cooldown)
+      showBar = true;
+      if (this.player.specialCooldown <= 0) {
+        specialText = 'TURTLE WIPE: READY [R]';
+        specialColor = '#00ff88';
+        barPct = 100;
+        barColor = '#00ff88';
+      } else {
+        const cd = this.player.specialCooldown;
+        specialText = `TURTLE WIPE: ${cd.toFixed(1)}s`;
+        specialColor = '#ff6677';
+        barPct = Math.max(0, Math.min(100, Math.round((1 - cd / 4.0) * 100)));
+        barColor = '#ffaa00';
+      }
+    } else if (this.player.specialType === 2) {
+      // Flash Shapeshifter
+      const isTank = this.player.shapeShifterState === 0;
+      specialText = `FLASH: ${isTank ? 'TANK' : 'SQUID'} [R]`;
+      specialColor = isTank ? '#00e5ff' : '#df70ff';
+      showBar = false;
+    } else if (this.player.specialType === 3) {
+      // Hunter Piranha Missiles
+      showBar = true;
+      const rounds = this.player.heatSeekerRounds;
+      specialText = `PIRANHAS: ${rounds}/3 [R]`;
+      specialColor = rounds > 0 ? '#00ffff' : '#ff6677';
+      barPct = Math.round((rounds / 3) * 100);
+      barColor = rounds > 0 ? '#00ffff' : '#ff6677';
+    } else if (this.player.specialType === 4) {
+      // Flagship Gravity Unit
+      const active = this.player.isAttractorActive;
+      specialText = `GRAVITY: ${active ? 'ACTIVE' : 'IDLE'} [R]`;
+      specialColor = active ? '#00ff88' : '#ffaa00';
+      showBar = false;
+    } else {
+      specialText = 'SPECIAL: PASSIVE';
+      specialColor = '#64748b';
+      showBar = false;
+    }
+
     if (specialEl && this.lastHudValues['specialText'] !== specialText) {
       this.lastHudValues['specialText'] = specialText;
       specialEl.textContent = specialText;
+      specialEl.style.color = specialColor;
+    }
+    if (specialBarTrack) {
+      specialBarTrack.style.display = showBar ? 'block' : 'none';
+      if (specialBarFill) {
+        specialBarFill.style.width = `${barPct}%`;
+        specialBarFill.style.background = barColor;
+      }
     }
 
     // 3. Update Match Score
