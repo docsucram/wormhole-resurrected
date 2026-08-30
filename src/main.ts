@@ -164,6 +164,25 @@ class WormholeGame {
   // Mobile device adaptation flag
   public isMobile = false;
 
+  // DOM Cache & Dirty Checking for high-performance zero-reflow HUD rendering
+  private hudElementsCache: Map<string, HTMLElement> = new Map();
+  private lastHudValues: Record<string, string | number | boolean> = {};
+  private lastTableRosterSignature = '';
+  private lastMobRosterSignature = '';
+
+  private getHudEl<T extends HTMLElement = HTMLElement>(id: string): T | null {
+    let el = this.hudElementsCache.get(id) as T | undefined;
+    if (!el) {
+      const found = document.getElementById(id) as T | null;
+      if (found) {
+        this.hudElementsCache.set(id, found);
+        return found;
+      }
+      return null;
+    }
+    return el;
+  }
+
   private checkIsMobile(): boolean {
     const isMobileUA = /Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
     const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
@@ -4267,8 +4286,23 @@ class WormholeGame {
   }
 
   private updateTableRosterUI(): void {
-    const rosterList = document.getElementById('match-roster-list') || document.getElementById('table-roster-list');
+    const rosterList = this.getHudEl('match-roster-list') || this.getHudEl('table-roster-list');
     if (!rosterList) return;
+
+    // Quick signature check to prevent 10Hz DOM tear-down and rebuilds
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+    let rosterSig = `${isTeamMode ? 'T' : 'F'}_sel:${this.selectedOpponentSlot}_`;
+    for (let i = 0; i < 8; i++) {
+      const p = this.tablePlayers[i];
+      if (p) {
+        rosterSig += `[${i}:${p.name}:${p.team}:${p.wins}:${p.isBot ? 1 : 0}:${p.isSpectating ? 1 : 0}:${Math.ceil(p.health)}]`;
+      }
+    }
+
+    if (this.lastTableRosterSignature === rosterSig) {
+      return;
+    }
+    this.lastTableRosterSignature = rosterSig;
 
     // Persistent event delegation for reliable bot removal and slot selection
     if (!(rosterList as unknown as { _hasBotClickListener?: boolean })._hasBotClickListener) {
@@ -4305,8 +4339,8 @@ class WormholeGame {
           const p = this.tablePlayers[slot];
           if (p && !p.isLocal) {
             this.selectedOpponentSlot = slot;
-            const nameEl = document.getElementById('pip-opponent-name');
-            if (nameEl) nameEl.innerText = `FEED // ${p.name.toUpperCase()}`;
+            const nameEl = this.getHudEl('pip-opponent-name');
+            if (nameEl) nameEl.textContent = `FEED // ${p.name.toUpperCase()}`;
             this.updateTableRosterUI();
           }
         }
@@ -4318,7 +4352,6 @@ class WormholeGame {
     let firstOpponent: TablePlayer | null = null;
     let botCount = 0;
     let occupiedCount = 0;
-    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
 
     const renderCard = (p: TablePlayer, slot: number) => {
       occupiedCount++;
@@ -5279,35 +5312,88 @@ class WormholeGame {
   }
 
   private updateHUD(): void {
+    if (!this.inArena) return;
+
     // 1. Update Pilot & Hull Integrity
     const hpRatio = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
-    const hpFill = document.getElementById('hud-hp-fill');
-    if (hpFill) hpFill.style.width = `${hpRatio * 100}%`;
-    const hpVal = document.getElementById('hud-hp-val');
-    if (hpVal) hpVal.innerText = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
+    const hpFill = this.getHudEl('hud-hp-fill');
+    if (hpFill) {
+      const widthStr = `${(hpRatio * 100).toFixed(1)}%`;
+      if (this.lastHudValues['hpFill'] !== widthStr) {
+        this.lastHudValues['hpFill'] = widthStr;
+        hpFill.style.width = widthStr;
+      }
+    }
 
-    const shipTag = document.getElementById('hud-ship-name-tag');
-    if (shipTag) shipTag.innerText = this.player.compiled.config.name.toUpperCase();
+    const hpText = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
+    const hpVal = this.getHudEl('hud-hp-val');
+    if (hpVal && this.lastHudValues['hpVal'] !== hpText) {
+      this.lastHudValues['hpVal'] = hpText;
+      hpVal.textContent = hpText;
+    }
+
+    const shipName = this.player.compiled.config.name.toUpperCase();
+    const shipTag = this.getHudEl('hud-ship-name-tag');
+    if (shipTag && this.lastHudValues['shipTag'] !== shipName) {
+      this.lastHudValues['shipTag'] = shipName;
+      shipTag.textContent = shipName;
+    }
 
     // 2. Update Telemetry
-    document.getElementById('hud-classic-gun')!.innerText = `GUN: x${this.player.bulletLevel + 1}`;
+    const gunText = `GUN: x${this.player.bulletLevel + 1}`;
+    const gunEl = this.getHudEl('hud-classic-gun');
+    if (gunEl && this.lastHudValues['gunText'] !== gunText) {
+      this.lastHudValues['gunText'] = gunText;
+      gunEl.textContent = gunText;
+    }
+
     const speed = Math.hypot(this.player.vx, this.player.vy).toFixed(1);
-    document.getElementById('hud-classic-thrust')!.innerText = `THRUST: ${speed}`;
-    document.getElementById('hud-classic-retros')!.innerText = this.player.hasRetros ? 'RETROS: ON' : 'NO RETROS';
-    document.getElementById('hud-classic-retros')!.style.color = this.player.hasRetros ? '#00ff88' : '#ffaa00';
+    const thrustText = `THRUST: ${speed}`;
+    const thrustEl = this.getHudEl('hud-classic-thrust');
+    if (thrustEl && this.lastHudValues['thrustText'] !== thrustText) {
+      this.lastHudValues['thrustText'] = thrustText;
+      thrustEl.textContent = thrustText;
+    }
+
+    const retrosText = this.player.hasRetros ? 'RETROS: ON' : 'NO RETROS';
+    const retrosEl = this.getHudEl('hud-classic-retros');
+    if (retrosEl && this.lastHudValues['retrosText'] !== retrosText) {
+      this.lastHudValues['retrosText'] = retrosText;
+      retrosEl.textContent = retrosText;
+      retrosEl.style.color = this.player.hasRetros ? '#00ff88' : '#ffaa00';
+    }
 
     const specialNames = ['RAPID FIRE', 'TURTLE CANNON', 'SHAPESHIFTER', 'HEAT SEEKER', 'ATTRACTOR/REPULSER'];
-    document.getElementById('hud-classic-special')!.innerText = specialNames[this.player.specialType] || 'RAPID FIRE';
+    const specialText = specialNames[this.player.specialType] || 'RAPID FIRE';
+    const specialEl = this.getHudEl('hud-classic-special');
+    if (specialEl && this.lastHudValues['specialText'] !== specialText) {
+      this.lastHudValues['specialText'] = specialText;
+      specialEl.textContent = specialText;
+    }
 
     // 3. Update Match Score
-    const winsEl = document.getElementById('hud-classic-wins');
-    if (winsEl) winsEl.innerText = this.gameState.player1Score.toString();
-    const lossEl = document.getElementById('hud-classic-losses');
-    if (lossEl) lossEl.innerText = this.gameState.player2Score.toString();
-    const roundEl = document.getElementById('hud-round-label');
-    if (roundEl) roundEl.innerText = `ROUND ${this.gameState.currentRound} // ARENA`;
+    const p1Score = this.gameState.player1Score.toString();
+    const winsEl = this.getHudEl('hud-classic-wins');
+    if (winsEl && this.lastHudValues['p1Score'] !== p1Score) {
+      this.lastHudValues['p1Score'] = p1Score;
+      winsEl.textContent = p1Score;
+    }
 
-    // 4. Update Powerup Mini Slots with clear icons & colored badges
+    const p2Score = this.gameState.player2Score.toString();
+    const lossEl = this.getHudEl('hud-classic-losses');
+    if (lossEl && this.lastHudValues['p2Score'] !== p2Score) {
+      this.lastHudValues['p2Score'] = p2Score;
+      lossEl.textContent = p2Score;
+    }
+
+    const roundText = `ROUND ${this.gameState.currentRound} // ARENA`;
+    const roundEl = this.getHudEl('hud-round-label');
+    if (roundEl && this.lastHudValues['roundText'] !== roundText) {
+      this.lastHudValues['roundText'] = roundText;
+      roundEl.textContent = roundText;
+    }
+
+    // 4. Update Powerup Mini Slots with dirty checking
     const inv = this.player.powerupInventory;
     const badgeInfo: Record<number, { label: string; icon: string; col: string }> = {
       6: { label: 'HEAT SEEKER', icon: 'HS', col: '#00ffff' },
@@ -5326,69 +5412,121 @@ class WormholeGame {
       19: { label: 'ARTILLERY', icon: 'ART', col: '#ffcc00' },
     };
 
-    for (let i = 0; i < 5; i++) {
-      const slotEl = document.getElementById(`slot-${i}`);
-      if (!slotEl) continue;
-      if (i < inv.length) {
-        const type = inv[i];
-        const info = badgeInfo[type] || { label: 'HAZARD', icon: `#${type}`, col: '#00e5ff' };
-        slotEl.className = 'mini-pup-slot filled';
-        slotEl.style.borderColor = info.col;
-        slotEl.style.boxShadow = `0 0 10px ${info.col}`;
-        slotEl.title = `[F] Launch ${info.label}`;
-        slotEl.innerHTML = `<span style="font-size: 8px; font-weight: 900; color: ${info.col};">${info.icon}</span>`;
-      } else {
-        slotEl.className = 'mini-pup-slot';
-        slotEl.style.borderColor = 'rgba(0, 229, 255, 0.35)';
-        slotEl.style.boxShadow = 'none';
-        slotEl.title = 'Empty Powerup Slot';
-        slotEl.innerHTML = '';
+    const invSig = inv.join(',');
+    if (this.lastHudValues['invSig'] !== invSig) {
+      this.lastHudValues['invSig'] = invSig;
+      for (let i = 0; i < 5; i++) {
+        const slotEl = this.getHudEl(`slot-${i}`);
+        if (!slotEl) continue;
+        if (i < inv.length) {
+          const type = inv[i];
+          const info = badgeInfo[type] || { label: 'HAZARD', icon: `#${type}`, col: '#00e5ff' };
+          slotEl.className = 'mini-pup-slot filled';
+          slotEl.style.borderColor = info.col;
+          slotEl.style.boxShadow = `0 0 10px ${info.col}`;
+          slotEl.title = `[F] Launch ${info.label}`;
+          slotEl.innerHTML = `<span style="font-size: 8px; font-weight: 900; color: ${info.col};">${info.icon}</span>`;
+        } else {
+          slotEl.className = 'mini-pup-slot';
+          slotEl.style.borderColor = 'rgba(0, 229, 255, 0.35)';
+          slotEl.style.boxShadow = 'none';
+          slotEl.title = 'Empty Powerup Slot';
+          slotEl.innerHTML = '';
+        }
+      }
+
+      if (this.isMobile) {
+        for (let i = 0; i < 5; i++) {
+          const mSlot = this.getHudEl(`mob-slot-${i}`);
+          if (!mSlot) continue;
+          if (i < inv.length) {
+            const type = inv[i];
+            const info = badgeInfo[type] || { col: '#ff00ff' };
+            mSlot.className = 'mob-pup-slot active';
+            mSlot.style.backgroundColor = info.col;
+            mSlot.style.borderColor = info.col;
+          } else {
+            mSlot.className = 'mob-pup-slot';
+            mSlot.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            mSlot.style.borderColor = 'rgba(0, 229, 255, 0.3)';
+          }
+        }
       }
     }
 
     // 5. Update Streamlined Mobile HUD
     if (this.isMobile) {
-      const mobHpFill = document.getElementById('mob-hp-fill');
-      if (mobHpFill) mobHpFill.style.width = `${hpRatio * 100}%`;
-      const mobCallsign = document.getElementById('mob-callsign');
-      if (mobCallsign) mobCallsign.innerText = this.playerName;
-      const mobShipName = document.getElementById('mob-ship-name');
-      if (mobShipName) mobShipName.innerText = this.player.compiled.config.name.toUpperCase();
-
-      const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-      const mobTeamBadge = document.getElementById('mob-team-badge');
-      if (mobTeamBadge) {
-        if (isTeamMode) {
-          mobTeamBadge.style.display = 'inline-block';
-          const myTeam = this.tablePlayers[this.player.slot]?.team || 'A';
-          if (myTeam === 'A') {
-            mobTeamBadge.style.color = '#00e5ff';
-            mobTeamBadge.style.borderColor = '#00e5ff';
-            mobTeamBadge.style.background = 'rgba(0, 229, 255, 0.2)';
-            mobTeamBadge.innerText = 'TEAM α';
-          } else {
-            mobTeamBadge.style.color = '#df70ff';
-            mobTeamBadge.style.borderColor = '#df70ff';
-            mobTeamBadge.style.background = 'rgba(223, 112, 255, 0.2)';
-            mobTeamBadge.innerText = 'TEAM Ω';
-          }
-        } else {
-          mobTeamBadge.style.display = 'none';
+      const mobHpFill = this.getHudEl('mob-hp-fill');
+      if (mobHpFill) {
+        const mobHpWidth = `${(hpRatio * 100).toFixed(1)}%`;
+        if (this.lastHudValues['mobHpWidth'] !== mobHpWidth) {
+          this.lastHudValues['mobHpWidth'] = mobHpWidth;
+          mobHpFill.style.width = mobHpWidth;
         }
       }
 
-      const mobGun = document.getElementById('mob-hud-gun');
-      if (mobGun) mobGun.innerText = `G${this.player.bulletLevel + 1}`;
-
-      const mobRetros = document.getElementById('mob-hud-retros');
-      if (mobRetros) {
-        mobRetros.className = this.player.hasRetros ? 'mob-hud-badge retros-on' : 'mob-hud-badge';
+      const mobCallsign = this.getHudEl('mob-callsign');
+      if (mobCallsign && this.lastHudValues['mobCallsign'] !== this.playerName) {
+        this.lastHudValues['mobCallsign'] = this.playerName;
+        mobCallsign.textContent = this.playerName;
       }
 
-      const mobScore = document.getElementById('mob-score-display');
-      if (mobScore) mobScore.innerText = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+      const mobShipName = this.getHudEl('mob-ship-name');
+      if (mobShipName && this.lastHudValues['mobShipName'] !== shipName) {
+        this.lastHudValues['mobShipName'] = shipName;
+        mobShipName.textContent = shipName;
+      }
 
-      const btnTouchSpecial = document.getElementById('btn-touch-special');
+      const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+      const myTeam = this.tablePlayers[this.player.slot]?.team || 'A';
+      const teamSig = `${isTeamMode ? 1 : 0}-${myTeam}`;
+      if (this.lastHudValues['teamSig'] !== teamSig) {
+        this.lastHudValues['teamSig'] = teamSig;
+        const mobTeamBadge = this.getHudEl('mob-team-badge');
+        if (mobTeamBadge) {
+          if (isTeamMode) {
+            mobTeamBadge.style.display = 'inline-block';
+            if (myTeam === 'A') {
+              mobTeamBadge.style.color = '#00e5ff';
+              mobTeamBadge.style.borderColor = '#00e5ff';
+              mobTeamBadge.style.background = 'rgba(0, 229, 255, 0.2)';
+              mobTeamBadge.textContent = 'TEAM α';
+            } else {
+              mobTeamBadge.style.color = '#df70ff';
+              mobTeamBadge.style.borderColor = '#df70ff';
+              mobTeamBadge.style.background = 'rgba(223, 112, 255, 0.2)';
+              mobTeamBadge.textContent = 'TEAM Ω';
+            }
+          } else {
+            mobTeamBadge.style.display = 'none';
+          }
+        }
+      }
+
+      const gunLevelStr = `G${this.player.bulletLevel + 1}`;
+      const mobGun = this.getHudEl('mob-hud-gun');
+      if (mobGun && this.lastHudValues['mobGun'] !== gunLevelStr) {
+        this.lastHudValues['mobGun'] = gunLevelStr;
+        mobGun.textContent = gunLevelStr;
+      }
+
+      const hasRetrosBool = this.player.hasRetros;
+      if (this.lastHudValues['hasRetros'] !== hasRetrosBool) {
+        this.lastHudValues['hasRetros'] = hasRetrosBool;
+        const mobRetros = this.getHudEl('mob-hud-retros');
+        if (mobRetros) {
+          mobRetros.className = hasRetrosBool ? 'mob-hud-badge retros-on' : 'mob-hud-badge';
+        }
+      }
+
+      const mobScoreStr = `${this.gameState.player1Score} - ${this.gameState.player2Score}`;
+      const mobScore = this.getHudEl('mob-score-display');
+      if (mobScore && this.lastHudValues['mobScore'] !== mobScoreStr) {
+        this.lastHudValues['mobScore'] = mobScoreStr;
+        mobScore.textContent = mobScoreStr;
+      }
+
+      const btnTouchSpecial = this.getHudEl('btn-touch-special');
       if (btnTouchSpecial) {
         if (this.player.specialType > 0) {
           btnTouchSpecial.style.display = 'flex';
@@ -5400,40 +5538,32 @@ class WormholeGame {
         }
       }
 
-      for (let i = 0; i < 5; i++) {
-        const mSlot = document.getElementById(`mob-slot-${i}`);
-        if (!mSlot) continue;
-        if (i < inv.length) {
-          const type = inv[i];
-          const info = badgeInfo[type] || { col: '#ff00ff' };
-          mSlot.className = 'mob-pup-slot active';
-          mSlot.style.backgroundColor = info.col;
-          mSlot.style.borderColor = info.col;
-        } else {
-          mSlot.className = 'mob-pup-slot';
-          mSlot.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-          mSlot.style.borderColor = 'rgba(0, 229, 255, 0.3)';
-        }
+      // Update mobile mini roster strip with dirty checking
+      let mobSig = `${isTeamMode ? 'T' : 'F'}:`;
+      for (const p of this.tablePlayers) {
+        if (!p || p.slot === this.player.slot || p.isLocal) continue;
+        mobSig += `${p.slot}_${p.name}_${Math.ceil(p.health)}_${p.isAlive ? 1 : 0}_${p.team}|`;
       }
 
-      // Update mobile mini roster strip
-      const mobRosterStrip = document.getElementById('mob-roster-strip');
-      if (mobRosterStrip) {
-        let html = '';
-        for (const p of this.tablePlayers) {
-          if (!p) continue;
-          if (p.slot === this.player.slot || p.isLocal) continue; // Filter out local player (already displayed in top-left cluster)
-          const ratio = Math.max(0, Math.min(1, p.health / p.maxHealth));
-          const isTeamA = p.team === 'A';
-          const teamColor = isTeamA ? '#00e5ff' : '#df70ff';
-          const teamPrefix = isTeamMode ? (isTeamA ? '[α] ' : '[Ω] ') : '';
-          html += `
-            <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}; border-color: ${isTeamMode ? teamColor : 'rgba(0, 229, 255, 0.4)'};">
-              <span style="${isTeamMode ? `color: ${teamColor}; font-weight: 800;` : ''}">${teamPrefix}${p.name || 'PILOT'}</span>
-              <div class="mob-roster-hp"><div class="mob-roster-hp-fill" style="width: ${ratio * 100}%; background: ${p.isAlive ? '#00ff88' : '#ff3344'};"></div></div>
-            </div>`;
+      if (this.lastMobRosterSignature !== mobSig) {
+        this.lastMobRosterSignature = mobSig;
+        const mobRosterStrip = this.getHudEl('mob-roster-strip');
+        if (mobRosterStrip) {
+          let html = '';
+          for (const p of this.tablePlayers) {
+            if (!p || p.slot === this.player.slot || p.isLocal) continue;
+            const ratio = Math.max(0, Math.min(1, p.health / p.maxHealth));
+            const isTeamA = p.team === 'A';
+            const teamColor = isTeamA ? '#00e5ff' : '#df70ff';
+            const teamPrefix = isTeamMode ? (isTeamA ? '[α] ' : '[Ω] ') : '';
+            html += `
+              <div class="mob-roster-pill" style="${p.isAlive ? '' : 'opacity: 0.4;'}; border-color: ${isTeamMode ? teamColor : 'rgba(0, 229, 255, 0.4)'};">
+                <span style="${isTeamMode ? `color: ${teamColor}; font-weight: 800;` : ''}">${teamPrefix}${p.name || 'PILOT'}</span>
+                <div class="mob-roster-hp"><div class="mob-roster-hp-fill" style="width: ${Math.round(ratio * 100)}%; background: ${p.isAlive ? '#00ff88' : '#ff3344'};"></div></div>
+              </div>`;
+          }
+          mobRosterStrip.innerHTML = html;
         }
-        mobRosterStrip.innerHTML = html;
       }
     }
   }
