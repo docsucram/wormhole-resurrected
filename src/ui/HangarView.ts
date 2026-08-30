@@ -81,7 +81,7 @@ export class HangarView {
     poly.setAngle(this.rotationAngle);
 
     // Scale calibrated for prominent showcase
-    const scale = this.uiPrefix === 'manual-' ? 2.6 : this.uiPrefix === 'modal-' ? 2.4 : 3.4;
+    const scale = this.uiPrefix === 'manual-' ? 2.6 : this.uiPrefix === 'modal-' ? 2.8 : 3.4;
     this.renderer.drawRotationalPolygon(
       poly,
       cx,

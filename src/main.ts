@@ -3956,6 +3956,72 @@ class WormholeGame {
       }
     };
 
+    const shipSelect = document.getElementById('spawner-ship-select') as HTMLSelectElement | null;
+    if (shipSelect) {
+      shipSelect.value = this.selectedShipIndex.toString();
+      shipSelect.onchange = () => {
+        const newShipId = parseInt(shipSelect.value, 10);
+        this.selectedShipIndex = newShipId;
+        localStorage.setItem('wh_selected_ship', newShipId.toString());
+        this.player.setShip(newShipId);
+        this.player.respawn(this.player.x, this.player.y);
+        this.modalHangarView.setShip(newShipId);
+        this.manualHangarView.setShip(newShipId);
+        this.updateHUD();
+        const shipName = ShipCatalog.get(newShipId).config.name;
+        this.showAlert(`SHIP CHANGED // ${shipName.toUpperCase()}`);
+        this.addChatLog(`[TEST] Switched ship to ${shipName}`, 'system');
+      };
+    }
+
+    const sizeSelect = document.getElementById('spawner-size-select') as HTMLSelectElement | null;
+    if (sizeSelect) {
+      sizeSelect.value = this.currentArenaSize;
+      sizeSelect.onchange = () => {
+        const newSize = sizeSelect.value as 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
+        this.currentArenaSize = newSize;
+        const sizeCfg = GAME_CONSTANTS.SIZES[newSize] || GAME_CONSTANTS.SIZES.MEDIUM;
+        const bound = Math.round(sizeCfg.boardWidth / 2);
+        this.hazardManager.arenaBound = bound;
+        this.simulatedRealm.arenaBound = bound;
+        this.simulatedRealm.orbitDistance = sizeCfg.orbitDistance;
+        if (this.currentMatchConfig) {
+          this.currentMatchConfig.size = newSize;
+          this.currentMatchConfig.maxPlayers = newSize === 'SMALL' ? 2 : newSize === 'MEDIUM' ? 4 : newSize === 'LARGE' ? 6 : 8;
+        }
+        this.rebuildTableWormholes();
+        this.updateTableRosterUI();
+        this.resetArenaForNewRound();
+        this.gameState.startMatch(this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5);
+        this.showAlert(`ARENA RESIZED // ${newSize} (${bound * 2}x${bound * 2}px)`);
+        this.addChatLog(`[TEST] Arena resized to ${newSize}`, 'system');
+      };
+    }
+
+    const modeSelect = document.getElementById('spawner-match-type-select') as HTMLSelectElement | null;
+    if (modeSelect) {
+      modeSelect.value = this.currentMatchConfig?.matchType || 'FFA';
+      modeSelect.onchange = () => {
+        const newMode = (modeSelect.value || 'FFA') as 'FFA' | 'TEAM';
+        if (this.currentMatchConfig) {
+          this.currentMatchConfig.matchType = newMode;
+        }
+        if (newMode === 'TEAM') {
+          for (let i = 0; i < 8; i++) {
+            if (this.tablePlayers[i]) {
+              this.tablePlayers[i]!.team = i % 2 === 0 ? 'A' : 'B';
+            }
+          }
+        }
+        this.rebuildTableWormholes();
+        this.updateTableRosterUI();
+        this.resetArenaForNewRound();
+        this.gameState.startMatch(this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5);
+        this.showAlert(`MATCH TYPE CHANGED // ${newMode === 'TEAM' ? 'TEAM BATTLE' : 'FREE-FOR-ALL'}`);
+        this.addChatLog(`[TEST] Match mode changed to ${newMode}`, 'system');
+      };
+    }
+
     const pilotSelect = document.getElementById('spawner-pilot-select') as HTMLSelectElement;
     if (pilotSelect) {
       pilotSelect.value = this.playerPilotMode;
@@ -4015,7 +4081,7 @@ class WormholeGame {
       };
     }
 
-    // 3. Clear Arena Hazards
+    // 3. Clear Arena Hazards & Restart Round Utilities
     const btnClear = document.getElementById('btn-drill-clear');
     if (btnClear) {
       btnClear.onclick = () => {
@@ -4045,8 +4111,21 @@ class WormholeGame {
       };
     }
 
+    const btnRestart = document.getElementById('btn-drill-restart');
+    if (btnRestart) {
+      btnRestart.onclick = () => {
+        this.resetArenaForNewRound();
+        this.gameState.startMatch(this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5);
+        this.showAlert('ROUND RESTARTED');
+        this.addChatLog('[TEST] Round restarted', 'system');
+      };
+    }
+
     const openSpawner = () => {
       populateTargets();
+      if (shipSelect) shipSelect.value = this.selectedShipIndex.toString();
+      if (sizeSelect) sizeSelect.value = this.currentArenaSize;
+      if (modeSelect) modeSelect.value = this.currentMatchConfig?.matchType || 'FFA';
       if (pilotSelect) pilotSelect.value = this.playerPilotMode;
       if (brainToggle) brainToggle.checked = this.showAiBrainOverlay;
       if (godToggle) godToggle.checked = this.isGodModeEnabled;
