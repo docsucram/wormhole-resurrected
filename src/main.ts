@@ -760,6 +760,13 @@ class WormholeGame {
               }
             }
           }
+        } else if (pkt.type === 'EVICT_TIMEOUT') {
+          if (this.isLanMatchClient) {
+            this.showAlert('DISCONNECTED // INACTIVITY TIMEOUT');
+            this.addChatLog('Disconnected from host due to inactivity / timeout.', 'system');
+            this.leaveMatchToLobby('TIMEOUT_INACTIVE');
+            return;
+          }
         } else if (pkt.type === 'ROSTER_UPDATE') {
           if (pkt.roster && Array.isArray(pkt.roster) && data.fromSlot !== this.player.slot) {
             const prevNames = this.tablePlayers.filter((p) => p !== null && !p.isLocal).map((p) => p!.name);
@@ -779,6 +786,17 @@ class WormholeGame {
                 isLocal: p.slot === this.player.slot,
               };
             });
+
+            // If this client was connected to a match but is no longer present in the host's roster:
+            if (this.isLanMatchClient && (this.inArena || document.getElementById('match-modal')?.classList.contains('active'))) {
+              const myEntry = this.tablePlayers[this.player.slot];
+              if (!myEntry) {
+                this.showAlert('DISCONNECTED // EJECTED FROM ROSTER');
+                this.addChatLog('Disconnected: you were removed from the match roster by the host.', 'system');
+                this.leaveMatchToLobby('EJECTED');
+                return;
+              }
+            }
 
             // If local color was shifted by host, update local player color
             const myEntry = this.tablePlayers[this.player.slot];
@@ -1015,6 +1033,15 @@ class WormholeGame {
             if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('ROUND_OVER');
           }
         } else if (pkt.type === 'MATCH_START') {
+          if (this.isLanMatchClient) {
+            const myEntry = pkt.roster ? pkt.roster[this.player.slot] : this.tablePlayers[this.player.slot];
+            if (!myEntry) {
+              this.showAlert('DISCONNECTED // EJECTED FROM ROSTER');
+              this.addChatLog('Disconnected: you are no longer in the host match roster.', 'system');
+              this.leaveMatchToLobby('EJECTED');
+              return;
+            }
+          }
           this.isSpectating = false;
           if (pkt.roster && Array.isArray(pkt.roster)) {
             this.tablePlayers = pkt.roster.map((p: TablePlayer | null) => {
@@ -2581,6 +2608,38 @@ class WormholeGame {
     }
   }
 
+  public leaveMatchToLobby(reason?: string): void {
+    if (this.currentMatchConfig && this.isLanMatchClient) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'PLAYER_LEAVE',
+          slot: this.player.slot,
+          playerName: this.playerName,
+          clientId: this.localClientId,
+        },
+      });
+    }
+    this.network.disconnect();
+    // Remove hosted match if we were host
+    if (this.currentMatchConfig && this.currentMatchConfig.hostName === this.playerName) {
+      this.sendLanPacket({
+        type: 'MATCH_TERMINATED',
+        matchId: this.currentMatchConfig.id,
+      });
+      this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
+      this.broadcastMatches();
+    }
+    this.isLanMatchClient = false;
+    this.isLanMatchHost = false;
+    this.currentMatchConfig = null;
+    this.lastTableRosterSignature = '';
+    this.setDeckActive(true, reason);
+    this.renderLobbyMatches();
+  }
+
   private setupNetworkCallbacks(): void {
     const btnHost = document.getElementById('btn-create-host')!;
 
@@ -3133,36 +3192,7 @@ class WormholeGame {
 
     const btnMatchLeave = document.getElementById('btn-match-leave') || document.getElementById('btn-table-leave');
     if (btnMatchLeave) {
-      btnMatchLeave.onclick = () => {
-        if (this.currentMatchConfig && this.isLanMatchClient) {
-          this.sendLanPacket({
-            type: 'MATCH_PACKET',
-            matchId: this.currentMatchConfig.id,
-            fromSlot: this.player.slot,
-            packet: {
-              type: 'PLAYER_LEAVE',
-              slot: this.player.slot,
-              playerName: this.playerName,
-              clientId: this.localClientId,
-            },
-          });
-        }
-        this.network.disconnect();
-        // Remove hosted match if we were host
-        if (this.currentMatchConfig && this.currentMatchConfig.hostName === this.playerName) {
-          this.sendLanPacket({
-            type: 'MATCH_TERMINATED',
-            matchId: this.currentMatchConfig.id,
-          });
-          this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
-          this.broadcastMatches();
-        }
-        this.isLanMatchClient = false;
-        this.isLanMatchHost = false;
-        this.currentMatchConfig = null;
-        this.setDeckActive(true);
-        this.renderLobbyMatches();
-      };
+      btnMatchLeave.onclick = () => this.leaveMatchToLobby();
     }
 
     const btnMatchSound = document.getElementById('btn-match-sound') || document.getElementById('btn-table-sound');
@@ -3400,6 +3430,24 @@ class WormholeGame {
       document.getElementById('match-modal')?.classList.remove('active');
       this.setDeckActive(true);
     };
+
+    // Send immediate heartbeat upon re-focusing window/tab
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.inArena && this.isLanMatchClient && this.currentMatchConfig) {
+        this.sendLanPacket({
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'HEALTH_SYNC',
+            slot: this.player.slot,
+            hp: this.player.health,
+            maxHp: this.player.maxHealth,
+            isAlive: this.player.isAlive,
+          },
+        });
+      }
+    });
     const btnRoundMenu = document.getElementById('btn-round-menu');
     if (btnRoundMenu) {
       btnRoundMenu.onclick = () => {
@@ -5014,6 +5062,17 @@ class WormholeGame {
             if (now - lastSeen > 7000) {
               // Stale peer timed out
               const name = p.name;
+              this.sendLanPacket({
+                type: 'MATCH_PACKET',
+                matchId: this.currentMatchConfig.id,
+                fromSlot: 0,
+                toSlot: i,
+                packet: {
+                  type: 'EVICT_TIMEOUT',
+                  slot: i,
+                  reason: 'Heartbeat timeout / inactivity',
+                },
+              });
               this.tablePlayers[i] = null;
               this.playerLastSeen.delete(i);
               const victimWh = this.wormholes.find((w) => w.slot === i);
