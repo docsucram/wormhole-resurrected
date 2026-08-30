@@ -1832,7 +1832,7 @@
         position: absolute;
         top: 86px;
         right: 16px;
-        width: 320px;
+        width: 290px;
         max-height: calc(100vh - 100px);
         pointer-events: auto;
         display: flex;
@@ -2043,16 +2043,18 @@
 
       /* PiP Opponent Camera Box */
       .pip-camera-card {
-        width: 280px;
+        width: 100%;
+        box-sizing: border-box;
         height: 175px;
         background: rgba(5, 12, 24, 0.94);
-        border: 1.5px solid var(--neon-magenta);
+        border: 1.5px solid var(--pip-color, var(--neon-magenta));
         border-radius: 8px;
         box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
         display: flex;
         flex-direction: column;
         overflow: hidden;
         pointer-events: auto;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
 
       .pip-camera-card.expanded {
@@ -2066,24 +2068,26 @@
       }
 
       .pip-header {
-        background: rgba(22, 5, 18, 0.95);
+        background: rgba(8, 14, 26, 0.95);
         padding: 5px 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid rgba(255, 0, 127, 0.3);
+        transition: border-color 0.2s ease;
       }
 
       .pip-title {
         font-family: 'Orbitron', sans-serif;
         font-size: 9px;
         font-weight: 800;
-        color: var(--neon-magenta);
+        color: var(--pip-color, var(--neon-magenta));
         letter-spacing: 0.5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 140px;
+        transition: color 0.2s ease, text-shadow 0.2s ease;
       }
 
       .pip-nav-btns {
@@ -2092,19 +2096,19 @@
       }
 
       .pip-nav-btn {
-        background: #140410;
-        border: 1px solid var(--neon-magenta);
-        color: var(--neon-magenta);
+        background: #081220;
+        border: 1px solid var(--pip-color, var(--neon-magenta));
+        color: var(--pip-color, var(--neon-magenta));
         font-size: 9px;
         font-weight: bold;
         padding: 2px 6px;
         border-radius: 3px;
         cursor: pointer;
-        transition: all 0.08s ease-out;
+        transition: all 0.1s ease-out;
       }
 
       .pip-nav-btn:hover {
-        background: var(--neon-magenta);
+        background: var(--pip-color, var(--neon-magenta));
         color: #ffffff;
       }
 

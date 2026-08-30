@@ -4720,14 +4720,29 @@ class WormholeGame {
     }
 
     const pipCard = document.getElementById('pip-camera-card');
+    const pipNameEl = document.getElementById('pip-opponent-name');
+    const pipHeader = document.querySelector('.pip-header') as HTMLElement | null;
+    const btnPipPrev = document.getElementById('btn-pip-prev');
+    const btnPipNext = document.getElementById('btn-pip-next');
+    const btnPipExpand = document.getElementById('btn-pip-expand');
+
+    const currentOpp = this.tablePlayers[this.selectedOpponentSlot] || (firstOpponent as TablePlayer | null);
+    const oppColor = currentOpp?.color || (PLAYER_COLORS[this.selectedOpponentSlot % PLAYER_COLORS.length]?.primary) || '#00e5ff';
+
     if (pipCard) {
       const hasBots = botCount > 0 || this.simulatedRealm.botRealms.size > 0;
       pipCard.style.display = (hasBots || isSolo || occupiedCount > 1) && !this.isMobile ? 'flex' : 'none';
+      pipCard.style.borderColor = oppColor;
+      pipCard.style.boxShadow = `0 0 18px ${oppColor}44, 0 4px 20px rgba(0, 0, 0, 0.6)`;
     }
 
-    const pipNameEl = document.getElementById('pip-opponent-name');
+    if (pipHeader) {
+      pipHeader.style.borderBottomColor = `${oppColor}44`;
+    }
+
     if (pipNameEl) {
-      const currentOpp = this.tablePlayers[this.selectedOpponentSlot];
+      pipNameEl.style.color = oppColor;
+      pipNameEl.style.textShadow = `0 0 8px ${oppColor}`;
       if (currentOpp && !currentOpp.isLocal) {
         pipNameEl.innerText = `FEED // ${currentOpp.name.toUpperCase()}`;
       } else if (firstOpponent) {
@@ -4735,6 +4750,19 @@ class WormholeGame {
       } else {
         pipNameEl.innerText = 'OPPONENT // WAITING FOR PILOT';
       }
+    }
+
+    if (btnPipPrev) {
+      btnPipPrev.style.borderColor = oppColor;
+      btnPipPrev.style.color = oppColor;
+    }
+    if (btnPipNext) {
+      btnPipNext.style.borderColor = oppColor;
+      btnPipNext.style.color = oppColor;
+    }
+    if (btnPipExpand) {
+      btnPipExpand.style.borderColor = oppColor;
+      btnPipExpand.style.color = oppColor;
     }
 
     if (occupiedCount < 8) {
@@ -6268,7 +6296,9 @@ class WormholeGame {
         this.pipRenderer.beginFrame('#020612');
         const pipW = this.pipRenderer.width;
         const pipH = this.pipRenderer.height;
-        this.simulatedRealm.drawMiniView(this.pipRenderer, 0, 0, pipW, pipH, this.selectedOpponentSlot, this.showAiBrainOverlay);
+        const currentOpp = this.tablePlayers[this.selectedOpponentSlot];
+        const oppColor = currentOpp?.color || (PLAYER_COLORS[this.selectedOpponentSlot % PLAYER_COLORS.length]?.primary) || '#00e5ff';
+        this.simulatedRealm.drawMiniView(this.pipRenderer, 0, 0, pipW, pipH, this.selectedOpponentSlot, this.showAiBrainOverlay, oppColor);
         this.pipRenderer.endFrame();
       }
     }

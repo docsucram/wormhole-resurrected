@@ -617,7 +617,8 @@ export class SimulatedRealm {
     w: number,
     h: number,
     targetSlot = 1,
-    showAiBrainOverlay = false
+    showAiBrainOverlay = false,
+    overrideColor?: string
   ): void {
     const ctx = renderer.ctx;
     ctx.save();
@@ -661,8 +662,9 @@ export class SimulatedRealm {
       return;
     }
 
-    const borderColor = (PLAYER_COLORS[targetSlot % PLAYER_COLORS.length] || PLAYER_COLORS[1]).primary;
-    ctx.strokeStyle = this.isRemotePlayer ? '#00ffcc' : borderColor;
+    const defaultBorder = (PLAYER_COLORS[targetSlot % PLAYER_COLORS.length] || PLAYER_COLORS[1]).primary;
+    const borderColor = overrideColor || (this.isRemotePlayer ? '#00ffcc' : defaultBorder);
+    ctx.strokeStyle = borderColor;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(x, y, w, h);
 
@@ -677,7 +679,7 @@ export class SimulatedRealm {
 
     // Arena perimeter outline
     const half = this.arenaBound + 20;
-    ctx.strokeStyle = this.isRemotePlayer ? 'rgba(0, 255, 204, 0.4)' : `${borderColor}66`;
+    ctx.strokeStyle = `${borderColor}66`;
     ctx.lineWidth = 2;
     ctx.strokeRect(-half, -half, half * 2, half * 2);
 
