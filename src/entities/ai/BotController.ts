@@ -368,16 +368,22 @@ export class BotController {
 
     // Special Ability Autonomous Decision Logic
     if (botShip.specialType > 0 && botShip.specialCooldown <= 0) {
+      const isApex = this.difficulty === 'hard' || this.difficulty === 'insane';
+
       if (botShip.specialType === 1) {
         // 1. The Turtle - Screen-Wide Hazard Wipe:
-        // Only trigger if cornered by 3+ active threats or a lethal high-threat projectile is closing in fast (< 130px).
-        // Check HP buffer (> 30 HP, or > 15 HP if imminent death) to prevent unnecessary self-damage.
-        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 240).length;
-        const lethalThreat = hazards.find(
-          (h) => h.isAlive && (h.powerupType === 6 || h.powerupType === 9 || h.powerupType === 14) && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 130
-        );
-        if ((nearThreats >= 3 || lethalThreat) && (botShip.health > 30 || lethalThreat)) {
-          this.currentInput.tertiaryFire = true;
+        // Hard and Insane AI do NOT use Turtle ability if health < 35% of max
+        const hpRatio = botShip.health / botShip.maxHealth;
+        const minHpThreshold = isApex ? 0.35 : 0.20;
+
+        if (hpRatio >= minHpThreshold) {
+          const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 240).length;
+          const lethalThreat = hazards.find(
+            (h) => h.isAlive && (h.powerupType === 6 || h.powerupType === 9 || h.powerupType === 14) && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 130
+          );
+          if (nearThreats >= 3 || (lethalThreat && hpRatio >= 0.35)) {
+            this.currentInput.tertiaryFire = true;
+          }
         }
       } else if (botShip.specialType === 2) {
         // 2. The Flash - Shapeshifter:
@@ -399,12 +405,14 @@ export class BotController {
         }
       } else if (botShip.specialType === 3) {
         // 3. The Hunter - Target-Seeking Piranha Missiles:
-        // Align target in a 60-degree forward cone and preserve volley discipline
+        // Hard and Insane AI do NOT waste missiles attacking wormholes!
         if (botShip.heatSeekerRounds > 0 && this.hunterFireCooldown <= 0) {
-          const targets = [
-            ...hazards.filter((h) => h.isAlive),
-            ...wormholes.filter((w) => w.isAlive && w.slot !== botShip.slot),
-          ];
+          const targets = isApex
+            ? hazards.filter((h) => h.isAlive)
+            : [
+                ...hazards.filter((h) => h.isAlive),
+                ...wormholes.filter((w) => w.isAlive && w.slot !== botShip.slot),
+              ];
           let bestTarget: { x: number; y: number } | null = null;
           let bestDist = 500;
           for (const t of targets) {
@@ -888,27 +896,41 @@ export class BotController {
             this.debugState = `COLLECT PUP (#${bestPup.type})`;
             this.debugTargetPos = { x: bestPup.x, y: bestPup.y };
 
-            const navAngle = this.findClearNavigationAngle(botShip, bestPup.x, bestPup.y, hazards);
-            const targetDirX = Math.cos(navAngle);
-            const targetDirY = Math.sin(navAngle);
-
+            const pupVx = bestPup.vx || 0;
+            const pupVy = bestPup.vy || 0;
             const currentSpeed = Math.hypot(botShip.vx, botShip.vy);
-            const dotToTarget = currentSpeed > 0.05 ? (botShip.vx * targetDirX + botShip.vy * targetDirY) / currentSpeed : 0;
-            const lateralSpeed = currentSpeed > 0.05 ? Math.abs(botShip.vx * (-targetDirY) + botShip.vy * targetDirX) : 0;
+
+            // True Predictive Lead Calculation:
+            // Intercept time estimate based on distance and closing/cruising speed
+            const approxSpeed = Math.max(currentSpeed, 3.5);
+            const leadSec = Math.max(0.08, Math.min(1.2, directDist / (approxSpeed * 60)));
+            const targetX = bestPup.x + pupVx * leadSec * 60;
+            const targetY = bestPup.y + pupVy * leadSec * 60;
+
+            const navAngle = this.findClearNavigationAngle(botShip, targetX, targetY, hazards);
+
+            const dx = bestPup.x - botShip.x;
+            const dy = bestPup.y - botShip.y;
+            const dirX = dx / (directDist || 1);
+            const dirY = dy / (directDist || 1);
+
+            const relShipVx = botShip.vx - pupVx;
+            const relShipVy = botShip.vy - pupVy;
+            const closingSpeed = relShipVx * dirX + relShipVy * dirY;
+            const lateralRelSpeed = Math.abs(relShipVx * (-dirY) + relShipVy * dirX);
 
             if (isApex) {
               // Proportional Navigation & Drift Vector Compensation:
-              // Scale desired speed by distance to prevent overshoot
-              const targetSpeed = Math.min(5.2, Math.max(2.4, directDist * 0.032));
-              const desVx = targetDirX * targetSpeed;
-              const desVy = targetDirY * targetSpeed;
+              // Ensure positive closing velocity toward the floating powerup
+              const desRelSpeed = Math.min(5.5, Math.max(2.8, directDist * 0.038));
+              const desVx = dirX * desRelSpeed + pupVx;
+              const desVy = dirY * desRelSpeed + pupVy;
 
-              // Correction vector to cancel lateral drift and thrust toward target
               const corrX = desVx - botShip.vx;
               const corrY = desVy - botShip.vy;
               const corrMag = Math.hypot(corrX, corrY);
 
-              if (corrMag > 0.45) {
+              if (corrMag > 0.35) {
                 this.targetAngle = Math.atan2(corrY, corrX);
               } else {
                 this.targetAngle = navAngle;
@@ -918,12 +940,11 @@ export class BotController {
               while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
               while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
-              // Thrust modulation:
-              // Coast cleanly if already heading straight into the powerup at sufficient speed
-              const isMovingFastTowards = directDist < 95 && dotToTarget > 0.82 && currentSpeed > 2.0 && lateralSpeed < 1.1;
-              if (isMovingFastTowards || directDist < 26) {
+              // Coast only if touching/overlapping or already closing in at very high speed and accurate heading
+              const isGuaranteedSweep = directDist < 45 && closingSpeed > 2.8 && lateralRelSpeed < 0.8;
+              if (isGuaranteedSweep || directDist < 24) {
                 this.currentInput.up = false;
-              } else if (Math.abs(angleDiff) < 0.45) {
+              } else if (Math.abs(angleDiff) < 0.48) {
                 this.currentInput.up = true;
               } else {
                 this.currentInput.up = false;
@@ -935,7 +956,7 @@ export class BotController {
               while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
 
               if (Math.abs(angleDiff) < 0.6) {
-                if (directDist > 25 && !(directDist < 60 && currentSpeed > 3.0)) {
+                if (directDist > 25 && !(directDist < 50 && closingSpeed > 2.5)) {
                   this.currentInput.up = true;
                 } else {
                   this.currentInput.up = false;
