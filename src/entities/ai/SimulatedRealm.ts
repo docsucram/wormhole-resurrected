@@ -455,57 +455,59 @@ export class SimulatedRealm {
           }
         }
 
-        // Gravity & Absorption across all orbital wormholes in realm
+        // Gravity & Absorption across all orbital wormholes in realm (Player/Bot shots only)
         let bulletAbsorbed = false;
-        for (const wh of realm.wormholes) {
-          if (!wh.isAlive) continue;
-          if (b.isPowerup || b.ownerSlot === realm.botShip.slot) {
-            const pullDx = wh.x - b.x;
-            const pullDy = wh.y - b.y;
-            const dist = Math.hypot(pullDx, pullDy);
-            const gravityRadius = b.isPowerup ? 130 : 70;
+        if (!b.isEnemyBullet) {
+          for (const wh of realm.wormholes) {
+            if (!wh.isAlive) continue;
+            if (b.isPowerup || b.ownerSlot === realm.botShip.slot) {
+              const pullDx = wh.x - b.x;
+              const pullDy = wh.y - b.y;
+              const dist = Math.hypot(pullDx, pullDy);
+              const gravityRadius = b.isPowerup ? 130 : 70;
 
-            if (dist > 0 && dist < gravityRadius) {
-              const pullStrength = ((gravityRadius - dist) / gravityRadius) * (b.isPowerup ? 4.5 : 1.5) * dt * 60;
-              b.vx += (pullDx / dist) * pullStrength;
-              b.vy += (pullDy / dist) * pullStrength;
+              if (dist > 0 && dist < gravityRadius) {
+                const pullStrength = ((gravityRadius - dist) / gravityRadius) * (b.isPowerup ? 4.5 : 1.5) * dt * 60;
+                b.vx += (pullDx / dist) * pullStrength;
+                b.vy += (pullDy / dist) * pullStrength;
+              }
             }
-          }
 
-          const dx = (b.x - wh.x) / (wh.width / 2);
-          const dy = (b.y - wh.y) / (wh.height / 2);
-          if (dx * dx + dy * dy <= 1.0) {
-            bulletAbsorbed = true;
-            if (b.isPowerup && b.powerupType >= 6) {
-              wh.absorbPowerupShot(b.powerupType, realm.particles, sound);
-              if (this.onSendHazardToParticipant) {
-                this.onSendHazardToParticipant(b.powerupType, realm.slot, wh.slot);
-              } else if (wh.slot === 0) {
-                // Forward hazard into Player 1 realm
-                if (this.onSendHazardToPlayer1) {
-                  this.onSendHazardToPlayer1(b.powerupType, realm.slot);
+            const dx = (b.x - wh.x) / (wh.width / 2);
+            const dy = (b.y - wh.y) / (wh.height / 2);
+            if (dx * dx + dy * dy <= 1.0) {
+              bulletAbsorbed = true;
+              if (b.isPowerup && b.powerupType >= 6) {
+                wh.absorbPowerupShot(b.powerupType, realm.particles, sound);
+                if (this.onSendHazardToParticipant) {
+                  this.onSendHazardToParticipant(b.powerupType, realm.slot, wh.slot);
+                } else if (wh.slot === 0) {
+                  // Forward hazard into Player 1 realm
+                  if (this.onSendHazardToPlayer1) {
+                    this.onSendHazardToPlayer1(b.powerupType, realm.slot);
+                  }
+                } else {
+                  // Forward hazard into target Bot realm (FFA!)
+                  const targetRealm = this.botRealms.get(wh.slot);
+                  if (targetRealm) {
+                    const destWh = targetRealm.wormholes.find((w) => w.slot === realm.slot) || targetRealm.wormholes[0];
+                    targetRealm.hazardManager.spawnHazard(
+                      b.powerupType,
+                      destWh,
+                      targetRealm.botShip,
+                      targetRealm.missiles
+                    );
+                  }
                 }
               } else {
-                // Forward hazard into target Bot realm (FFA!)
-                const targetRealm = this.botRealms.get(wh.slot);
-                if (targetRealm) {
-                  const destWh = targetRealm.wormholes.find((w) => w.slot === realm.slot) || targetRealm.wormholes[0];
-                  targetRealm.hazardManager.spawnHazard(
-                    b.powerupType,
-                    destWh,
-                    targetRealm.botShip,
-                    targetRealm.missiles
-                  );
-                }
+                wh.absorbDamage(b.damage, realm.powerups, realm.particles, sound, {
+                  hasRetros: realm.botShip.hasRetros,
+                  bulletLevel: realm.botShip.bulletLevel,
+                  isMaxThrust: realm.botShip.maxThrust >= 11,
+                });
               }
-            } else {
-              wh.absorbDamage(b.damage, realm.powerups, realm.particles, sound, {
-                hasRetros: realm.botShip.hasRetros,
-                bulletLevel: realm.botShip.bulletLevel,
-                isMaxThrust: realm.botShip.maxThrust >= 11,
-              });
+              break;
             }
-            break;
           }
         }
 
@@ -577,7 +579,7 @@ export class SimulatedRealm {
             }
           }
         } else {
-          // Hostile hazard missile: tracks bot ship
+          // Hostile hazard missile: tracks bot ship (never collides with or damages wormholes)
           if (!m.update(dt, realm.botShip.isAlive ? realm.botShip.x : undefined, realm.botShip.isAlive ? realm.botShip.y : undefined)) {
             realm.missiles.splice(i, 1);
             continue;
@@ -588,19 +590,6 @@ export class SimulatedRealm {
             realm.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
             realm.missiles.splice(i, 1);
             continue;
-          }
-
-          if (m.wormholeImmunity <= 0) {
-            for (const wh of realm.wormholes) {
-              if (!wh.isAlive) continue;
-              const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
-              if (dist < 35) {
-                wh.absorbDamage(m.damage, realm.powerups, realm.particles, sound);
-                realm.particles.createExplosion(m.x, m.y, '#00ffcc', 12);
-                realm.missiles.splice(i, 1);
-                break;
-              }
-            }
           }
         }
       }
@@ -682,6 +671,18 @@ export class SimulatedRealm {
     ctx.strokeStyle = `${borderColor}66`;
     ctx.lineWidth = 2;
     ctx.strokeRect(-half, -half, half * 2, half * 2);
+
+    // Wormhole Orbital Ring
+    const orbitDist = this.orbitDistance || 270;
+    ctx.save();
+    ctx.strokeStyle = `${borderColor}38`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.arc(0, 0, orbitDist, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
 
     if (realm) {
       // Wormholes (only active living wormholes)

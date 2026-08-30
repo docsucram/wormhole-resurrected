@@ -5539,92 +5539,94 @@ class WormholeGame {
         }
       }
 
-      for (const wh of this.wormholes) {
-        if (!wh.isAlive) continue;
-        // Gravitational vortex funneling for launched powerup bullets near wormhole
-        if (b.isPowerup) {
-          const distToWh = Math.hypot(wh.x - b.x, wh.y - b.y);
-          if (distToWh < 160) {
-            const pull = (1 - distToWh / 160) * dt * 20.0;
-            b.vx += (wh.x - b.x) * pull;
-            b.vy += (wh.y - b.y) * pull;
+      if (!b.isEnemyBullet) {
+        for (const wh of this.wormholes) {
+          if (!wh.isAlive) continue;
+          // Gravitational vortex funneling for launched powerup bullets near wormhole
+          if (b.isPowerup) {
+            const distToWh = Math.hypot(wh.x - b.x, wh.y - b.y);
+            if (distToWh < 160) {
+              const pull = (1 - distToWh / 160) * dt * 20.0;
+              b.vx += (wh.x - b.x) * pull;
+              b.vy += (wh.y - b.y) * pull;
+            }
           }
-        }
 
-        const rx = wh.width / 2 + (b.isPowerup ? 26 : 8);
-        const ry = wh.height / 2 + (b.isPowerup ? 20 : 8);
-        const normDist = ((b.x - wh.x) * (b.x - wh.x)) / (rx * rx) + ((b.y - wh.y) * (b.y - wh.y)) / (ry * ry);
+          const rx = wh.width / 2 + (b.isPowerup ? 26 : 8);
+          const ry = wh.height / 2 + (b.isPowerup ? 20 : 8);
+          const normDist = ((b.x - wh.x) * (b.x - wh.x)) / (rx * rx) + ((b.y - wh.y) * (b.y - wh.y)) / (ry * ry);
 
-        if (normDist <= 1.0) {
-          if (b.isPowerup && b.powerupType >= 6) {
-            const hitX = b.x;
-            const hitY = b.y;
-            const targetWh = wh;
-            const hazardType = b.powerupType;
-            const hazardColor = b.color;
-            const bVx = b.vx;
-            const bVy = b.vy;
+          if (normDist <= 1.0) {
+            if (b.isPowerup && b.powerupType >= 6) {
+              const hitX = b.x;
+              const hitY = b.y;
+              const targetWh = wh;
+              const hazardType = b.powerupType;
+              const hazardColor = b.color;
+              const bVx = b.vx;
+              const bVy = b.vy;
 
-            // Trigger vortex spiral ingestion animation into singularity!
-            this.particles.createHazardIngestion(
-              hitX,
-              hitY,
-              targetWh.x,
-              targetWh.y,
-              hazardType,
-              hazardColor,
-              () => {
-                targetWh.absorbPowerupShot(hazardType, this.particles, this.sound);
-                this.sound.playWormholeCharge();
+              // Trigger vortex spiral ingestion animation into singularity!
+              this.particles.createHazardIngestion(
+                hitX,
+                hitY,
+                targetWh.x,
+                targetWh.y,
+                hazardType,
+                hazardColor,
+                () => {
+                  targetWh.absorbPowerupShot(hazardType, this.particles, this.sound);
+                  this.sound.playWormholeCharge();
 
-                const warpPayload: WarpPayload = {
-                  hazardId: `haz-${Date.now()}-${Math.random()}`,
-                  hazardType: hazardType,
-                  fromSlot: this.player.slot,
-                  toSlot: targetWh.slot,
-                  angle: Math.atan2(bVy, bVx),
-                  speed: Math.hypot(bVy, bVx),
-                  seed: Math.floor(Math.random() * 10000),
-                };
+                  const warpPayload: WarpPayload = {
+                    hazardId: `haz-${Date.now()}-${Math.random()}`,
+                    hazardType: hazardType,
+                    fromSlot: this.player.slot,
+                    toSlot: targetWh.slot,
+                    angle: Math.atan2(bVy, bVx),
+                    speed: Math.hypot(bVy, bVx),
+                    seed: Math.floor(Math.random() * 10000),
+                  };
 
-                const targetPlayer = this.tablePlayers[targetWh.slot];
-                const isTargetBot = targetPlayer ? targetPlayer.isBot : (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected);
+                  const targetPlayer = this.tablePlayers[targetWh.slot];
+                  const isTargetBot = targetPlayer ? targetPlayer.isBot : (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected);
 
-                if (isTargetBot || (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected)) {
-                  this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetWh.slot);
-                } else {
-                  if (this.isLanMatchHost || this.isLanMatchClient) {
-                    if (this.currentMatchConfig) {
-                      this.sendLanPacket({
-                        type: 'MATCH_PACKET',
-                        matchId: this.currentMatchConfig.id,
-                        fromSlot: this.player.slot,
-                        packet: {
-                          type: 'WARP_HAZARD',
-                          payload: warpPayload,
-                        },
-                      });
+                  if (isTargetBot || (!this.isLanMatchClient && !this.isLanMatchHost && !this.network.isConnected)) {
+                    this.simulatedRealm.receiveHazardFromPlayer1(hazardType, targetWh.slot);
+                  } else {
+                    if (this.isLanMatchHost || this.isLanMatchClient) {
+                      if (this.currentMatchConfig) {
+                        this.sendLanPacket({
+                          type: 'MATCH_PACKET',
+                          matchId: this.currentMatchConfig.id,
+                          fromSlot: this.player.slot,
+                          packet: {
+                            type: 'WARP_HAZARD',
+                            payload: warpPayload,
+                          },
+                        });
+                      }
+                    } else if (this.network.isConnected) {
+                      this.network.sendWarpHazard(warpPayload);
                     }
-                  } else if (this.network.isConnected) {
-                    this.network.sendWarpHazard(warpPayload);
                   }
+
+                  this.gameState.stats.p1HazardsSent++;
+                  this.addChatLog(`Transmitted ${POWERUP_NAMES[hazardType]} -> ${targetWh.ownerName}'s Wormhole`, 'player');
                 }
+              );
 
-                this.gameState.stats.p1HazardsSent++;
-                this.addChatLog(`Transmitted ${POWERUP_NAMES[hazardType]} -> ${targetWh.ownerName}'s Wormhole`, 'player');
-              }
-            );
-
-            this.bullets.splice(i, 1);
-            break;
-          } else {
-            wh.absorbDamage(b.damage, this.powerups, this.particles, this.sound, {
-              hasRetros: this.player.hasRetros,
-              bulletLevel: this.player.bulletLevel,
-              isMaxThrust: this.player.maxThrust >= 11,
-            });
-            this.bullets.splice(i, 1);
-            break;
+              this.bullets.splice(i, 1);
+              break;
+            } else {
+              wh.absorbDamage(b.damage, this.powerups, this.particles, this.sound, {
+                hasRetros: this.player.hasRetros,
+                bulletLevel: this.player.bulletLevel,
+                isMaxThrust: this.player.maxThrust >= 11,
+              });
+              this.bullets.splice(i, 1);
+              break;
+            }
           }
         }
       }
@@ -5696,7 +5698,7 @@ class WormholeGame {
           }
         }
       } else {
-        // Hostile hazard missile: tracks local player ship
+        // Hostile hazard missile: tracks local player ship (never collides with or damages wormholes)
         if (!m.update(dt, this.player.isAlive ? this.player.x : undefined, this.player.isAlive ? this.player.y : undefined)) {
           this.missiles.splice(i, 1);
           continue;
@@ -5707,19 +5709,6 @@ class WormholeGame {
           this.particles.createExplosion(m.x, m.y, '#ffaa00', 16);
           this.missiles.splice(i, 1);
           continue;
-        }
-
-        if (m.wormholeImmunity <= 0) {
-          for (const wh of this.wormholes) {
-            if (!wh.isAlive) continue;
-            const dist = Math.hypot(wh.x - m.x, wh.y - m.y);
-            if (dist < 35) {
-              wh.absorbDamage(m.damage, this.powerups, this.particles, this.sound);
-              this.particles.createExplosion(m.x, m.y, '#00ffcc', 12);
-              this.missiles.splice(i, 1);
-              break;
-            }
-          }
         }
       }
     }

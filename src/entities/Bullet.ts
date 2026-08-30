@@ -14,6 +14,7 @@ export class Bullet {
   public isAlive = true;
   public isPowerup = false;
   public powerupType = -1;
+  public isEnemyBullet = false;
 
   // Luminous trail nodes
   private trailHistory: { x: number; y: number }[] = [];
@@ -29,7 +30,8 @@ export class Bullet {
     glowColor = '#00e5ff',
     ownerSlot = 0,
     isPowerup = false,
-    powerupType = -1
+    powerupType = -1,
+    isEnemyBullet = false
   ) {
     this.x = x;
     this.y = y;
@@ -42,6 +44,7 @@ export class Bullet {
     this.ownerSlot = ownerSlot;
     this.isPowerup = isPowerup;
     this.powerupType = powerupType;
+    this.isEnemyBullet = ownerSlot === -1 || isEnemyBullet;
   }
 
   public update(dt: number): boolean {
