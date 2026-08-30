@@ -117,6 +117,9 @@ export class SimulatedRealm {
     const controller = new BotController(difficulty);
     const wh = new Wormhole('PLAYER 1', 0, 0, this.orbitDistance, true);
     const hazards = new HazardManager(this.arenaBound);
+    ship.onClearScreen = () => {
+      hazards.clearAll(new NullParticleSystem(), this.silentSound);
+    };
     hazards.onWarpHazard = (hazardType: number, targetSlot: number) => {
       if (this.onSendHazardToParticipant) {
         this.onSendHazardToParticipant(hazardType, slot, targetSlot);
@@ -344,6 +347,23 @@ export class SimulatedRealm {
       }
 
       // 3. Update Hazards
+      if (realm.botShip.isAlive && realm.botShip.isAttractorActive) {
+        for (const h of realm.hazardManager.hazards) {
+          if (h.isAlive) {
+            const dx = h.x - realm.botShip.x;
+            const dy = h.y - realm.botShip.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 380 && dist > 1) {
+              const push = 0.3 * ((380 - dist) / 380) * 140 * dt;
+              h.x += (dx / dist) * push * 60 * dt;
+              h.y += (dy / dist) * push * 60 * dt;
+              if ('vx' in h) (h as any).vx += (dx / dist) * push;
+              if ('vy' in h) (h as any).vy += (dy / dist) * push;
+            }
+          }
+        }
+      }
+
       realm.hazardManager.update(
         dt,
         realm.botShip,
@@ -358,6 +378,18 @@ export class SimulatedRealm {
       // 4. Update Powerups
       for (let i = realm.powerups.length - 1; i >= 0; i--) {
         const pup = realm.powerups[i];
+
+        if (realm.botShip.isAlive && realm.botShip.isAttractorActive) {
+          const dx = realm.botShip.x - pup.x;
+          const dy = realm.botShip.y - pup.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 450 && dist > 1) {
+            const factor = 0.3 * ((450 - dist) / 450);
+            pup.vx += (dx / dist) * factor * 160 * dt;
+            pup.vy += (dy / dist) * factor * 160 * dt;
+          }
+        }
+
         if (!pup.update(dt, boundX, boundY)) {
           realm.powerups.splice(i, 1);
           continue;

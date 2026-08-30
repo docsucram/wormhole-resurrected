@@ -257,6 +257,18 @@ class WormholeGame {
     );
     this.player.onDeath = () => this.handlePlayerElimination();
     this.player.onPowerupLaunched = () => this.tutorialManager.onOffensiveLaunched();
+    this.player.onClearScreen = () => {
+      this.screenFlash = 1.0;
+      this.particles.createExplosion(this.player.x, this.player.y, '#00ffff', 40);
+      this.hazardManager.clearAll(this.particles, this.sound);
+      this.gameState.stats.p1HazardsCleared += 5;
+      this.addChatLog('Turtle Cannon Discharged // Screen Cleared!', 'system');
+    };
+    this.player.onShapeshift = (mode) => {
+      this.screenFlash = 0.35;
+      this.addChatLog(`Shapeshifted to ${mode} mode`, 'system');
+      this.updateHUD();
+    };
 
     this.manualHangarView.setColor(this.selectedColorIndex);
     this.modalHangarView.setColor(this.selectedColorIndex);
@@ -3106,11 +3118,14 @@ class WormholeGame {
     if (btnConfirmCreate && createModal) {
       btnConfirmCreate.onclick = () => {
         const nameInput = (document.getElementById('host-match-name') as HTMLInputElement).value.trim() || `${this.playerName}'s Match`;
-        const matchTypeSelect = ((document.getElementById('host-match-type') as HTMLSelectElement)?.value as 'FFA' | 'TEAM') || 'FFA';
+        const isTeam = (document.getElementById('host-match-team') as HTMLInputElement)?.checked ?? true;
+        const matchTypeSelect: 'FFA' | 'TEAM' = isTeam ? 'TEAM' : 'FFA';
         const sizeSelect = (document.getElementById('host-match-size') as HTMLSelectElement).value as 'SMALL' | 'MEDIUM' | 'LARGE' | 'HUGE';
         const winsSelect = parseInt((document.getElementById('host-target-wins') as HTMLSelectElement).value, 10) || 5;
-        const pupsSelect = (document.getElementById('host-powerup-pool') as HTMLSelectElement).value as 'STANDARD' | 'EXTENDED';
-        const shipSelect = (document.getElementById('host-ship-restriction') as HTMLSelectElement).value as 'STANDARD' | 'ALL';
+        const allPups = (document.getElementById('host-powerup-all') as HTMLInputElement)?.checked ?? false;
+        const pupsSelect: 'STANDARD' | 'EXTENDED' = allPups ? 'EXTENDED' : 'STANDARD';
+        const allShips = (document.getElementById('host-ships-all') as HTMLInputElement)?.checked ?? false;
+        const shipSelect: 'STANDARD' | 'ALL' = allShips ? 'ALL' : 'STANDARD';
         const botDiff = (document.getElementById('host-bot-diff') as HTMLSelectElement).value as BotDifficulty | 'none';
         const passInput = (document.getElementById('host-match-password') as HTMLInputElement).value.trim();
         const testModeCheck = document.getElementById('host-test-mode') as HTMLInputElement | null;
@@ -4980,7 +4995,8 @@ class WormholeGame {
       this.missiles,
       playerTargets,
       boundX,
-      boundY
+      boundY,
+      this.popups
     );
 
     if (this.tablePlayers[0]) {
@@ -5147,6 +5163,24 @@ class WormholeGame {
 
     // 5. Update Hazards & Mines (Strictly active during PLAYING phase)
     if (this.gameState.phase === 'PLAYING' && !this.isMatchWaitingForPilots) {
+      // Flagship Gravity Well Repulser Field: Repels enemy hazards away from ship
+      if (this.player.isAlive && this.player.isAttractorActive) {
+        for (const h of this.hazardManager.hazards) {
+          if (h.isAlive) {
+            const dx = h.x - this.player.x;
+            const dy = h.y - this.player.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 380 && dist > 1) {
+              const push = 0.3 * ((380 - dist) / 380) * 140 * dt;
+              h.x += (dx / dist) * push * 60 * dt;
+              h.y += (dy / dist) * push * 60 * dt;
+              if ('vx' in h) (h as any).vx += (dx / dist) * push;
+              if ('vy' in h) (h as any).vy += (dy / dist) * push;
+            }
+          }
+        }
+      }
+
       this.hazardManager.update(
         dt,
         this.player,
@@ -5163,6 +5197,18 @@ class WormholeGame {
     if (this.gameState.phase === 'PLAYING' && !this.isMatchWaitingForPilots) {
       for (let i = this.powerups.length - 1; i >= 0; i--) {
         const pup = this.powerups[i];
+
+        // Flagship Gravity Well Attractor Field: Pulls loose powerups toward the ship
+        if (this.player.isAlive && this.player.isAttractorActive) {
+          const dx = this.player.x - pup.x;
+          const dy = this.player.y - pup.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 450 && dist > 1) {
+            const factor = 0.3 * ((450 - dist) / 450);
+            pup.vx += (dx / dist) * factor * 160 * dt;
+            pup.vy += (dy / dist) * factor * 160 * dt;
+          }
+        }
 
         if (!pup.update(dt, boundX, boundY)) {
           this.powerups.splice(i, 1);
@@ -5202,6 +5248,19 @@ class WormholeGame {
     // 7. Update Bullets
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
+
+      // Flagship Gravity Well: Deflects enemy bullets away
+      if (this.player.isAlive && this.player.isAttractorActive && b.ownerSlot !== this.player.slot) {
+        const dx = b.x - this.player.x;
+        const dy = b.y - this.player.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 260 && dist > 1) {
+          const push = 0.3 * ((260 - dist) / 260) * 180 * dt;
+          b.vx += (dx / dist) * push;
+          b.vy += (dy / dist) * push;
+        }
+      }
+
       if (!b.update(dt)) {
         this.bullets.splice(i, 1);
         continue;

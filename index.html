@@ -3553,14 +3553,6 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
-            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">MATCH MODE:</span>
-            <select class="styled-select" id="host-match-type">
-              <option value="TEAM" selected>Team Battle</option>
-              <option value="FFA">Free-For-All</option>
-            </select>
-          </div>
-
-          <div class="input-group">
             <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">ARENA BOARD SIZE:</span>
             <select class="styled-select" id="host-match-size">
               <option value="SMALL">Small</option>
@@ -3569,9 +3561,7 @@
               <option value="HUGE">Colossal</option>
             </select>
           </div>
-        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
             <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">TARGET WINS:</span>
             <select class="styled-select" id="host-target-wins">
@@ -3583,7 +3573,9 @@
               <option value="999999">Endless</option>
             </select>
           </div>
+        </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="input-group">
             <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">BOT BACKFILL:</span>
             <select class="styled-select" id="host-bot-diff">
@@ -3594,36 +3586,47 @@
               <option value="insane">Cyborg (Insane Bots)</option>
             </select>
           </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="input-group">
-            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">POWERUP ARSENAL:</span>
-            <select class="styled-select" id="host-powerup-pool">
-              <option value="STANDARD" selected>Standard (17 Items)</option>
-              <option value="EXTENDED">Full Chaos (All 20)</option>
-            </select>
-          </div>
 
           <div class="input-group">
-            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">SHIP CLASS RESTRICTION:</span>
-            <select class="styled-select" id="host-ship-restriction">
-              <option value="STANDARD" selected>Starter (3 Ships)</option>
-              <option value="ALL">All Classes (9 Ships)</option>
-            </select>
+            <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">PASSWORD (OPTIONAL):</span>
+            <input type="text" class="styled-input" id="host-match-password" placeholder="Leave empty for public" maxlength="12" />
           </div>
         </div>
 
-        <div class="input-group">
-          <span class="input-label" style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 4px; display: block;">PASSWORD (OPTIONAL):</span>
-          <input type="text" class="styled-input" id="host-match-password" placeholder="Leave empty for public" maxlength="12" />
-        </div>
-
-        <div class="input-group host-test-mode-group" id="host-test-mode-group" style="margin-top: 2px;">
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; font-weight: 800; color: #ffaa00;">
-            <input type="checkbox" id="host-test-mode" style="accent-color: #ffaa00; width: 15px; height: 15px; cursor: pointer;" />
-            <span>ENABLE TEST MODE (Dev Controls & Bot PiP)</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+          <label class="host-checkbox-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(0, 229, 255, 0.06); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 6px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="host-match-team" checked style="accent-color: var(--neon-cyan); width: 16px; height: 16px; cursor: pointer;" />
+            <div>
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #ffffff; display: block; letter-spacing: 0.5px;">TEAM BATTLE</span>
+              <span style="font-size: 8.5px; color: #88bbdd; display: block;">Alpha vs Omega</span>
+            </div>
           </label>
+
+          <label class="host-checkbox-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(0, 229, 255, 0.06); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 6px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="host-ships-all" style="accent-color: var(--neon-cyan); width: 16px; height: 16px; cursor: pointer;" />
+            <div>
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #ffffff; display: block; letter-spacing: 0.5px;">ALL SHIPS</span>
+              <span style="font-size: 8.5px; color: #88bbdd; display: block;">All 9 Classes</span>
+            </div>
+          </label>
+
+          <label class="host-checkbox-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(0, 229, 255, 0.06); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 6px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="host-powerup-all" style="accent-color: var(--neon-cyan); width: 16px; height: 16px; cursor: pointer;" />
+            <div>
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #ffffff; display: block; letter-spacing: 0.5px;">ALL POWERUPS</span>
+              <span style="font-size: 8.5px; color: #88bbdd; display: block;">Full Chaos (All 20)</span>
+            </div>
+          </label>
+
+          <div class="host-test-mode-group" id="host-test-mode-group">
+            <label class="host-checkbox-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(255, 170, 0, 0.06); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 6px; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="host-test-mode" style="accent-color: #ffaa00; width: 16px; height: 16px; cursor: pointer;" />
+              <div>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: #ffaa00; display: block; letter-spacing: 0.5px;">TEST MODE</span>
+                <span style="font-size: 8.5px; color: #cbd5e1; display: block;">Dev PiP & Spawner</span>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 

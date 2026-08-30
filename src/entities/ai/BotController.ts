@@ -352,6 +352,39 @@ export class BotController {
     this.currentInput.tertiaryFire = false;
     this.currentInput.up = false;
 
+    // Special Ability Autonomous Decision Logic
+    if (botShip.specialType > 0 && botShip.specialCooldown <= 0) {
+      if (botShip.specialType === 1) {
+        // Turtle Cannon: If surrounded by 2+ threats within 220px and health > 40
+        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 220).length;
+        if (botShip.health > 40 && nearThreats >= 2) {
+          this.currentInput.tertiaryFire = true;
+        }
+      } else if (botShip.specialType === 2) {
+        // Flash Shapeshifter:
+        const nearThreats = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 200).length;
+        if (nearThreats > 0 && botShip.shapeShifterState === 1) {
+          this.currentInput.tertiaryFire = true; // Switch to Tank for heavy firepower / durability
+        } else if (nearThreats === 0 && powerups.length > 0 && botShip.shapeShifterState === 0) {
+          this.currentInput.tertiaryFire = true; // Switch to Squid for extreme speed
+        }
+      } else if (botShip.specialType === 3) {
+        // Hunter: Fire Heat Seeker if has missiles and targets exist
+        if (botShip.heatSeekerRounds > 0 && hazards.length > 0) {
+          this.currentInput.tertiaryFire = true;
+        }
+      } else if (botShip.specialType === 4) {
+        // Flagship: Toggle Attractor when loose powerups or hazards near
+        const loosePups = powerups.filter((p) => p.isAlive && Math.hypot(p.x - botShip.x, p.y - botShip.y) < 320).length;
+        const nearHazards = hazards.filter((h) => h.isAlive && Math.hypot(h.x - botShip.x, h.y - botShip.y) < 240).length;
+        if ((loosePups > 0 || nearHazards > 0) && !botShip.isAttractorActive) {
+          this.currentInput.tertiaryFire = true;
+        } else if (loosePups === 0 && nearHazards === 0 && botShip.isAttractorActive) {
+          this.currentInput.tertiaryFire = true;
+        }
+      }
+    }
+
     this.debugState = 'ORBITAL PATROL';
     this.debugTargetPos = null;
     this.debugThreatPos = null;

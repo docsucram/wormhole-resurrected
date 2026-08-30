@@ -49,8 +49,10 @@ export class PlayerShip {
 
   // Special Ship Mechanics
   public specialType = 0;
-  public shapeShifterState = 0; // 0=Tank, 2=Squid for Flash
+  public shapeShifterState = 0; // 0=Tank, 1=Squid for Flash
   public isAttractorActive = false;
+  public onClearScreen?: () => void;
+  public onShapeshift?: (mode: 'TANK' | 'SQUID') => void;
 
   // EMP Effect
   public isUnderEMP = false;
@@ -126,7 +128,8 @@ export class PlayerShip {
     missiles: HeatSeekerMissile[],
     targets: Point2D[],
     boundX = 420,
-    boundY = 420
+    boundY = 420,
+    popups?: TextPopup[]
   ): void {
     if (!this.isAlive) return;
 
@@ -266,9 +269,9 @@ export class PlayerShip {
       this.firePrimary(bullets, sound, particles);
     }
 
-    // Tertiary Special Ability trigger (Key R / D)
+    // Tertiary Special Ability trigger (Key R / D / Touch Special)
     if (input.tertiaryFire && this.specialCooldown <= 0) {
-      this.triggerSpecial(sound, missiles);
+      this.triggerSpecial(sound, missiles, popups, particles);
     }
 
     // Auto-tracking turrets update
@@ -425,16 +428,52 @@ export class PlayerShip {
     }
   }
 
-  private triggerSpecial(sound: SoundEngine, missiles: HeatSeekerMissile[]): void {
+  public shapeshift(mode?: number, sound?: SoundEngine, particles?: ParticleSystem, popups?: TextPopup[]): void {
+    // Toggle between Tank (mode 0, shipId 0) and Squid (mode 1, shipId 2)
+    this.shapeShifterState = mode !== undefined ? mode : (this.shapeShifterState === 0 ? 1 : 0);
+    const targetShipId = this.shapeShifterState === 0 ? 0 : 2; // 0 = Tank, 2 = Squid
+    this.compiled = ShipCatalog.get(targetShipId);
+    const cfg = this.compiled.config;
+    this.maxThrust = cfg.maxThrust;
+    this.thrust = cfg.accel;
+    this.rotateSpeed = (cfg.rotateSpeed * Math.PI) / 180;
+    this.bulletLevel = cfg.startGunLevel;
+    this.hasRetros = cfg.startThrustLevel >= 1;
+    this.specialCooldown = 0.6;
+
+    if (sound) sound.playSpecial(2);
+    if (particles) {
+      particles.createExplosion(this.x, this.y, '#00ffff', 20);
+    }
+    const modeLabel = this.shapeShifterState === 0 ? 'SHAPESHIFT // TANK' : 'SHAPESHIFT // SQUID';
+    if (popups) popups.push(new TextPopup(this.x, this.y, modeLabel, '#00ffff'));
+    if (this.onShapeshift) {
+      this.onShapeshift(this.shapeShifterState === 0 ? 'TANK' : 'SQUID');
+    }
+  }
+
+  private triggerSpecial(sound: SoundEngine, missiles: HeatSeekerMissile[], popups?: TextPopup[], particles?: ParticleSystem): void {
     if (this.specialType === 1) {
-      // The Turtle - Turtle Cannon: 360-degree omni-directional blast
-      this.specialCooldown = 12.0;
-      sound.playSpecial(1);
+      // The Turtle - Turtle Cannon: Clears screen of all hazards/bullets, 75% chance of 20 HP recoil
+      if (this.health > 20) {
+        this.specialCooldown = 4.0;
+        if (Math.random() < 0.75) {
+          this.health = Math.max(1, this.health - 20);
+          if (popups) popups.push(new TextPopup(this.x, this.y, '-20 HP RECOIL', '#ff3344'));
+        }
+        sound.playSpecial(1);
+        sound.playExplosion(true);
+        if (this.onClearScreen) {
+          this.onClearScreen();
+        }
+        if (popups) popups.push(new TextPopup(this.x, this.y, 'TURTLE CANNON // BLAST!', '#00ffff'));
+      } else {
+        sound.playClick();
+        if (popups) popups.push(new TextPopup(this.x, this.y, 'LOW HP // CANNON INACTIVE', '#ff5566'));
+      }
     } else if (this.specialType === 2) {
       // The Flash - Shapeshifter: swap between Tank / Squid modes
-      this.specialCooldown = 1.0;
-      this.shapeShifterState = (this.shapeShifterState + 1) % 3;
-      sound.playSpecial(2);
+      this.shapeshift(undefined, sound, particles, popups);
     } else if (this.specialType === 3) {
       // The Hunter - Heat Seeker Missile
       if (this.heatSeekerRounds > 0) {
@@ -448,15 +487,20 @@ export class PlayerShip {
             this.y + sin * 20,
             this.angle,
             0,
-            (PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary
+            (PLAYER_COLORS[this.colorIndex] || PLAYER_COLORS[this.slot] || PLAYER_COLORS[0]).primary
           )
         );
         sound.playSpecial(3);
+        if (popups) popups.push(new TextPopup(this.x, this.y, 'PIRANHA MISSILE LAUNCHED', '#ff8800'));
       }
     } else if (this.specialType === 4) {
       // The Flagship - Attractor / Repulser Gravity Well
       this.isAttractorActive = !this.isAttractorActive;
+      this.specialCooldown = 0.4;
       sound.playSpecial(4);
+      const statusLabel = this.isAttractorActive ? 'GRAVITY WELL: ACTIVE' : 'GRAVITY WELL: OFFLINE';
+      const statusColor = this.isAttractorActive ? '#00ffff' : '#888888';
+      if (popups) popups.push(new TextPopup(this.x, this.y, statusLabel, statusColor));
     }
   }
 
@@ -588,6 +632,13 @@ export class PlayerShip {
     this.vx = 0;
     this.vy = 0;
     this.angle = 0;
+    if (this.specialType === 2) {
+      this.shapeShifterState = 0;
+      this.compiled = ShipCatalog.get(0);
+    } else {
+      this.compiled = ShipCatalog.get(this.shipId);
+    }
+    this.maxHealth = this.compiled.config.hitPoints;
     this.health = this.maxHealth;
     this.isAlive = true;
     this.shieldTime = 3.5; // 3.5s spawn shield
@@ -596,7 +647,7 @@ export class PlayerShip {
     this.bulletLevel = this.compiled.config.startGunLevel;
     this.thrust = this.compiled.config.accel;
     this.maxThrust = this.compiled.config.maxThrust;
-    this.hasRetros = false;
+    this.hasRetros = this.compiled.config.startThrustLevel >= 1;
     this.heatSeekerRounds = 3;
     this.isAttractorActive = false;
     this.shotCooldown = 0;
