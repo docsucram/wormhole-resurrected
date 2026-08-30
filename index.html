@@ -1913,10 +1913,23 @@
         box-shadow: none !important;
       }
 
-      .roster-card.empty:hover {
-        border-color: rgba(0, 229, 255, 0.25) !important;
-        background: rgba(8, 18, 36, 0.5) !important;
-        box-shadow: none !important;
+      .roster-card.add-bot-slot {
+        opacity: 0.95 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        border: 1.5px dashed rgba(0, 229, 255, 0.45) !important;
+        background: rgba(0, 229, 255, 0.04) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 38px !important;
+        padding: 4px 6px !important;
+        box-sizing: border-box !important;
+        transition: all 0.15s ease !important;
+      }
+      .roster-card.add-bot-slot:hover {
+        border-color: var(--neon-cyan) !important;
+        background: rgba(0, 229, 255, 0.08) !important;
       }
 
       .roster-card-header {
@@ -2239,20 +2252,20 @@
       /* In-Game Test & Spawner Panel - Movable / Draggable */
       #spawner-modal {
         position: fixed !important;
-        top: 50px;
+        top: 40px;
         left: 20px;
-        background: rgba(6, 12, 24, 0.98);
-        border: 2px solid #ffaa00;
-        box-shadow: 0 0 30px rgba(255, 170, 0, 0.4), 0 10px 40px rgba(0, 0, 0, 0.92);
-        padding: 14px 16px;
-        border-radius: 12px;
+        background: rgba(10, 15, 30, 0.98);
+        border: 1.5px solid rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.25), 0 10px 40px rgba(0, 0, 0, 0.92);
+        padding: 12px 14px;
+        border-radius: 10px;
         text-align: left;
         display: none;
         z-index: 99999 !important;
         pointer-events: auto;
-        width: 360px;
-        max-width: 94vw;
-        max-height: 88vh;
+        width: 380px;
+        max-width: 95vw;
+        max-height: 92vh;
         overflow-y: auto;
         contain: content;
         user-select: none;
@@ -2262,9 +2275,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 10px;
-        border-bottom: 1.5px solid rgba(255, 170, 0, 0.35);
-        padding-bottom: 8px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+        padding-bottom: 6px;
         touch-action: none;
       }
       .spawner-drag-header:active {
@@ -2275,13 +2288,14 @@
         background: rgba(10, 20, 40, 0.85);
         border: 1.5px solid rgba(0, 229, 255, 0.3);
         border-radius: 6px;
-        padding: 5px 9px;
+        padding: 4px 6px;
         color: #88bbdd;
         font-family: 'Orbitron', sans-serif;
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 800;
         cursor: pointer;
         transition: all 0.15s ease;
+        white-space: nowrap;
       }
       .modal-ship-btn:hover {
         border-color: var(--neon-cyan);
@@ -4071,114 +4085,116 @@
     <div id="spawner-modal">
       <div id="spawner-modal-header" class="spawner-drag-header">
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="color: #ffaa00; font-size: 14px; opacity: 0.75; cursor: grab;">⋮⋮</span>
-          <span style="font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; color: #ffaa00; letter-spacing: 0.8px;">TEST CONTROL PANEL</span>
+          <span style="color: #38bdf8; font-size: 14px; opacity: 0.75; cursor: grab;">⋮⋮</span>
+          <span style="font-family: 'Orbitron', sans-serif; font-size: 12.5px; font-weight: 900; color: #38bdf8; letter-spacing: 0.8px;">TEST CONTROL PANEL</span>
         </div>
         <button id="btn-close-spawner-top" style="background: transparent; border: none; color: #94a3b8; font-size: 15px; font-weight: bold; cursor: pointer; padding: 0 4px; line-height: 1;">✕</button>
       </div>
       
-      <!-- Section 1: Ship & Match Environment Modifiers -->
-      <div style="background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.8px;">MATCH & SHIP CONFIG:</div>
-        
-        <!-- Ship Class Dropdown (All 8 Classes) -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #cbd5e1;">SHIP CLASS:</span>
-          <select id="spawner-ship-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; color: #00ff88; border-color: rgba(0, 255, 136, 0.5); font-weight: 800; flex: 1; max-width: 190px;">
-            <option value="0">0. THE TANK</option>
-            <option value="1">1. THE WING</option>
-            <option value="2">2. THE SQUID</option>
-            <option value="3">3. THE RABBIT</option>
-            <option value="4">4. THE TURTLE</option>
-            <option value="5">5. THE FLASH</option>
-            <option value="6">6. THE HUNTER</option>
-            <option value="7">7. THE FLAGSHIP</option>
-          </select>
-        </div>
-
-        <!-- Arena Size Dropdown -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #cbd5e1;">ARENA SIZE:</span>
-          <select id="spawner-size-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; color: #ffffff; border-color: rgba(0, 229, 255, 0.4); font-weight: 800; flex: 1; max-width: 190px;">
-            <option value="SMALL">SMALL (1v1 Dual)</option>
-            <option value="MEDIUM">MEDIUM (4P Quad)</option>
-            <option value="LARGE">LARGE (6P Hex)</option>
-            <option value="HUGE">COLOSSAL (8P Oct)</option>
-          </select>
-        </div>
-
-        <!-- Match Mode Dropdown -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #cbd5e1;">MATCH TYPE:</span>
-          <select id="spawner-match-type-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; color: #ffffff; border-color: rgba(0, 229, 255, 0.4); font-weight: 800; flex: 1; max-width: 190px;">
-            <option value="FFA">FREE-FOR-ALL (FFA)</option>
-            <option value="TEAM">TEAM BATTLE (A vs B)</option>
-          </select>
-        </div>
-
-        <!-- Player 1 Pilot Mode -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #cbd5e1;">P1 PILOT:</span>
-          <select id="spawner-pilot-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; color: #ffffff; border-color: rgba(0, 255, 136, 0.6); font-weight: 800; flex: 1; max-width: 190px;">
-            <option value="human">HUMAN (MANUAL)</option>
-            <option value="easy">AI // NOVICE</option>
-            <option value="medium">AI // PILOT</option>
-            <option value="hard">AI // ACE</option>
-            <option value="insane">AI // CYBORG (INSANE)</option>
-          </select>
-        </div>
-
-        <!-- Target Opponent Arena -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #ffaa00;">TARGET REALM:</span>
-          <select id="spawner-target-select" class="styled-select" style="padding: 3px 8px; font-size: 10px; color: #ffffff; border-color: rgba(255, 170, 0, 0.6); font-weight: 800; flex: 1; max-width: 190px;"></select>
-        </div>
-      </div>
-
-      <!-- Section 2: Overlays, Cheats & Actions -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-        <label style="display: flex; align-items: center; gap: 6px; background: rgba(255, 51, 68, 0.1); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(255, 51, 68, 0.35); cursor: pointer;">
-          <input type="checkbox" id="spawner-godmode-toggle" style="accent-color: #ff3344; cursor: pointer;">
-          <span style="font-size: 9.5px; font-weight: 800; color: #ff6677;">GOD MODE (HP)</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 6px; background: rgba(0, 229, 255, 0.1); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.35); cursor: pointer;">
-          <input type="checkbox" id="spawner-ai-brain-toggle" style="accent-color: var(--neon-cyan); cursor: pointer;">
-          <span style="font-size: 9.5px; font-weight: 800; color: var(--neon-cyan);">AI OVERLAY</span>
-        </label>
-        <label style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 170, 0, 0.1); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(255, 170, 0, 0.35); cursor: pointer;">
-          <span style="font-size: 9.5px; font-weight: 800; color: #ffaa00;">AI AVOID PERIMETER:</span>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="spawner-perimeter-toggle" checked style="accent-color: #ffaa00; cursor: pointer;">
-            <span id="spawner-perimeter-status" style="font-size: 9.5px; font-weight: 900; color: #00ff88;">ENABLED</span>
+      <!-- Card 1: Match & Ship Config -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">MATCH & SHIP CONFIG</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px;">
+          <div>
+            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">SHIP CLASS:</div>
+            <select id="spawner-ship-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+              <option value="0">The Tank</option>
+              <option value="1">The Wing</option>
+              <option value="2">The Squid</option>
+              <option value="3">The Rabbit</option>
+              <option value="4">The Turtle</option>
+              <option value="5">The Flash</option>
+              <option value="6">The Hunter</option>
+              <option value="7">The Flagship</option>
+            </select>
           </div>
-        </label>
+          <div>
+            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">ARENA SIZE:</div>
+            <select id="spawner-size-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+              <option value="SMALL">Small (1v1 Dual)</option>
+              <option value="MEDIUM">Medium (4P Quad)</option>
+              <option value="LARGE">Large (6P Hex)</option>
+              <option value="HUGE">Colossal (8P Oct)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">MATCH TYPE:</div>
+            <select id="spawner-match-type-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+              <option value="FFA">Free-For-All (FFA)</option>
+              <option value="TEAM">Team Battle (A vs B)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">P1 PILOT:</div>
+            <select id="spawner-pilot-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+              <option value="human">Human (Manual)</option>
+              <option value="easy">AI // Novice</option>
+              <option value="medium">AI // Pilot</option>
+              <option value="hard">AI // Ace</option>
+              <option value="insane">AI // Cyborg</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <!-- Arena Utilities -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-        <button class="arena-btn" id="btn-drill-clear" style="border-color: #ffffff; color: #ffffff; font-size: 10px; font-weight: 800; padding: 6px 8px; background: rgba(255,255,255,0.08);">⚡ CLEAR HAZARDS</button>
-        <button class="arena-btn" id="btn-drill-restart" style="border-color: #ffaa00; color: #ffaa00; font-size: 10px; font-weight: 800; padding: 6px 8px; background: rgba(255,170,0,0.08);">🔄 RESTART ROUND</button>
+      <!-- Card 2: Toggles & Round State -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">TOGGLES & ROUND STATE</div>
+        
+        <!-- Unified 3-Column Toggle Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px;">
+          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(239, 68, 68, 0.4); cursor: pointer; text-align: center;">
+            <input type="checkbox" id="spawner-godmode-toggle" style="accent-color: #ef4444; cursor: pointer;">
+            <span style="font-size: 9px; font-weight: 800; color: #f87171;">GOD MODE</span>
+          </label>
+          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); cursor: pointer; text-align: center;">
+            <input type="checkbox" id="spawner-ai-brain-toggle" style="accent-color: #38bdf8; cursor: pointer;">
+            <span style="font-size: 9px; font-weight: 800; color: #38bdf8;">AI OVERLAY</span>
+          </label>
+          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(251, 191, 36, 0.4); cursor: pointer; text-align: center;">
+            <input type="checkbox" id="spawner-perimeter-toggle" checked style="accent-color: #fbbf24; cursor: pointer;">
+            <span style="font-size: 9px; font-weight: 800; color: #fbbf24;">AVOID WALLS</span>
+          </label>
+        </div>
+
+        <!-- Round Actions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+          <button class="action-btn" id="btn-drill-clear" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #cbd5e1; color: #f8fafc; background: rgba(255,255,255,0.06);">⚡ CLEAR HAZARDS</button>
+          <button class="action-btn" id="btn-drill-restart" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.06);">🔄 RESTART ROUND</button>
+        </div>
       </div>
 
-      <!-- Section 3: Wormhole Powerup Ejection -->
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: var(--neon-cyan); text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">EJECT POWERUP (FROM WORMHOLE):</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-bottom: 10px;" id="spawner-pups-grid">
-        <button class="arena-btn pup-eject-btn" data-puptype="-1" style="border-color: #00ff88; color: #00ff88; font-weight: 800; grid-column: span 2; padding: 5px 8px;">RANDOM POWERUP</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="0" style="border-color: #ff3344; color: #ff6677; font-weight: 700; padding: 4px 6px;">0. GUN (+1)</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="1" style="border-color: #ffaa00; color: #ffaa00; font-weight: 700; padding: 4px 6px;">1. THRUST (+1)</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="2" style="border-color: #3399ff; color: #3399ff; font-weight: 700; padding: 4px 6px;">2. RETROS</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="3" style="border-color: #ffff00; color: #ffff55; font-weight: 700; padding: 4px 6px;">3. SHIELD</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="4" style="border-color: #ffffff; color: #ffffff; font-weight: 700; padding: 4px 6px;">4. SCREEN ZAP</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="5" style="border-color: #df70ff; color: #df70ff; font-weight: 700; padding: 4px 6px;">5. +HP REPAIR</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="6" style="border-color: #00ffff; color: #00ffff; font-weight: 700; padding: 4px 6px;">6. HEATSEEKER</button>
-        <button class="arena-btn pup-eject-btn" data-puptype="14" style="border-color: #ff0033; color: #ff5566; font-weight: 700; padding: 4px 6px;">14. NUKE</button>
+      <!-- Card 3: Eject Powerup -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+          <span style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">EJECT POWERUP</span>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="font-size: 9px; font-weight: 700; color: #fbbf24;">TARGET:</span>
+            <select id="spawner-target-select" class="styled-select" style="padding: 2px 4px; font-size: 9.5px; color: #ffffff; border-color: rgba(251, 191, 36, 0.5); font-weight: 700; max-width: 140px;"></select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-pups-grid">
+          <button class="action-btn pup-eject-btn" data-puptype="-1" style="grid-column: span 3; padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.08);">Random Powerup</button>
+          <button class="action-btn pup-eject-btn" data-puptype="0" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Gun (+1)</button>
+          <button class="action-btn pup-eject-btn" data-puptype="1" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Thrust (+1)</button>
+          <button class="action-btn pup-eject-btn" data-puptype="2" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Retros</button>
+          <button class="action-btn pup-eject-btn" data-puptype="3" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Shield</button>
+          <button class="action-btn pup-eject-btn" data-puptype="4" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Screen Zap</button>
+          <button class="action-btn pup-eject-btn" data-puptype="5" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">+HP Repair</button>
+          <button class="action-btn pup-eject-btn" data-puptype="6" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Heatseeker</button>
+          <button class="action-btn pup-eject-btn" data-puptype="14" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Nuke</button>
+          <button class="action-btn pup-eject-btn" data-puptype="7" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Wall Crawler</button>
+        </div>
       </div>
 
-      <!-- Section 4: Direct Arena Hazard Spawn -->
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: #ffaa00; text-align: left; margin: 8px 0 5px 2px; letter-spacing: 0.5px;">SPAWN HAZARD DIRECTLY (6..19):</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; max-height: 180px; overflow-y: auto; padding-right: 2px;" id="spawner-btn-grid"></div>
+      <!-- Card 4: Spawn Hazard Directly -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">SPAWN HAZARD DIRECTLY</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-btn-grid"></div>
+      </div>
 
-      <button class="action-btn" id="btn-close-spawner" style="margin-top: 10px; width: 100%; padding: 8px 0; font-size: 11px; font-weight: 800;">CLOSE TEST PANEL</button>
+      <button class="action-btn" id="btn-close-spawner" style="margin-top: 4px; width: 100%; padding: 6px 0; font-size: 10px; font-weight: 800; border-color: #64748b; color: #cbd5e1;">CLOSE TEST PANEL</button>
     </div>
 
     <!-- Pause Menu Modal -->
@@ -4448,7 +4464,7 @@
     </div>
 
     <!-- Round Over / Match Staging Modal -->
-    <div id="round-modal" style="max-width: 580px; width: 94vw; max-height: 88vh; padding: 14px 18px; box-sizing: border-box; overflow-y: auto;">
+    <div id="round-modal" style="max-width: 630px; width: 95vw; max-height: 88vh; padding: 14px 18px; box-sizing: border-box; overflow-y: auto;">
       <div id="round-modal-title" style="font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 2px; color: var(--neon-cyan); margin-bottom: 2px;">TACTICAL MATCH STAGING</div>
       <div id="round-modal-subtitle" style="font-size: 11.5px; font-weight: 700; color: #88bbdd; margin-bottom: 2px;">SELECT YOUR FIGHTER CLASS & ENGAGE WHEN READY</div>
       <div id="round-modal-killer" style="font-size: 11.5px; font-weight: 800; color: #ff55aa; letter-spacing: 1px; margin-bottom: 4px;"></div>
@@ -4463,7 +4479,7 @@
             <div class="color-palette-bar" id="modal-round-color-bar"></div>
           </div>
         </div>
-        <div class="modal-ship-grid" id="modal-round-ship-bar" style="display: flex; gap: 5px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 8px;"></div>
+        <div class="modal-ship-grid" id="modal-round-ship-bar" style="display: flex; gap: 4px; justify-content: space-between; flex-wrap: nowrap; margin-bottom: 8px;"></div>
 
         <!-- 2-Column Hologram & Spec Inspector -->
         <div style="display: grid; grid-template-columns: 104px 1fr; gap: 14px; align-items: center; text-align: left;">

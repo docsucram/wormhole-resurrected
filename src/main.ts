@@ -3982,6 +3982,7 @@ class WormholeGame {
         this.currentArenaSize = newSize;
         const sizeCfg = GAME_CONSTANTS.SIZES[newSize] || GAME_CONSTANTS.SIZES.MEDIUM;
         const bound = Math.round(sizeCfg.boardWidth / 2);
+        this.arenaRing.setDimensions(sizeCfg.orbitDistance, sizeCfg.boardWidth, sizeCfg.boardHeight);
         this.hazardManager.arenaBound = bound;
         this.simulatedRealm.arenaBound = bound;
         this.simulatedRealm.orbitDistance = sizeCfg.orbitDistance;
@@ -3992,6 +3993,8 @@ class WormholeGame {
         this.rebuildTableWormholes();
         this.updateTableRosterUI();
         this.resetArenaForNewRound();
+        this.respawnPlayer();
+        this.simulatedRealm.resetForNewRound();
         this.gameState.startMatch(this.currentMatchConfig ? this.currentMatchConfig.targetWins : 5);
         this.showAlert(`ARENA RESIZED // ${newSize} (${bound * 2}x${bound * 2}px)`);
         this.addChatLog(`[TEST] Arena resized to ${newSize}`, 'system');
@@ -4183,34 +4186,37 @@ class WormholeGame {
       };
     });
 
-    // 5. Direct Hazard Spawner Grid
+    // 5. Direct Hazard Spawner Grid (3-column clean grid, no numeric prefix)
     const grid = document.getElementById('spawner-btn-grid');
     if (grid) {
       grid.innerHTML = '';
       for (let type = 6; type <= 19; type++) {
         const btn = document.createElement('button');
-        btn.className = 'arena-btn';
-        btn.style.padding = '5px 6px';
+        btn.className = 'action-btn';
+        btn.style.padding = '3px 2px';
         btn.style.fontSize = '9px';
-        btn.style.textAlign = 'left';
-        btn.style.display = 'flex';
-        btn.style.justifyContent = 'space-between';
-        btn.style.alignItems = 'center';
+        btn.style.textAlign = 'center';
+        btn.style.borderColor = 'rgba(148, 163, 184, 0.35)';
+        btn.style.color = '#e2e8f0';
+        btn.style.background = 'rgba(30, 41, 59, 0.6)';
+        btn.style.whiteSpace = 'nowrap';
+        btn.style.overflow = 'hidden';
+        btn.style.textOverflow = 'ellipsis';
 
-        const name = POWERUP_NAMES[type] || `HAZARD #${type}`;
-        btn.innerHTML = `<span>${type}. ${name}</span><span style="color: #ffaa00;">+</span>`;
+        const name = POWERUP_NAMES[type] || `Hazard ${type}`;
+        btn.innerText = name;
 
         btn.onclick = () => {
           const targetSlot = parseInt(targetSelect?.value || '0', 10);
           if (targetSlot === 0) {
             const targetWh = this.wormholes[0] || new Wormhole('TARGET', 1, 0, 240);
             this.hazardManager.spawnHazard(type, targetWh, this.player, this.missiles);
-            this.showAlert(`SPAWNED // ${name} -> YOUR REALM`);
+            this.showAlert(`SPAWNED // ${name.toUpperCase()} -> YOUR REALM`);
             this.addChatLog(`[TEST] Spawned ${name} in Your Realm`, 'system');
           } else {
             this.simulatedRealm.receiveHazardFromPlayer1(type, targetSlot);
             const oppName = this.tablePlayers[targetSlot]?.name || `OPPONENT ${targetSlot + 1}`;
-            this.showAlert(`SPAWNED // ${name} -> ${oppName.toUpperCase()}`);
+            this.showAlert(`SPAWNED // ${name.toUpperCase()} -> ${oppName.toUpperCase()}`);
             this.addChatLog(`[TEST] Spawned ${name} in ${oppName}'s Realm`, 'system');
           }
           this.sound.playSpecial(1);
@@ -4671,9 +4677,84 @@ class WormholeGame {
     }
 
     if (occupiedCount < 8) {
+      const isHostOrSolo = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected);
       const emptyCard = document.createElement('div');
-      emptyCard.className = 'roster-card empty';
-      emptyCard.innerText = `Slot ${occupiedCount + 1}: [Ready for Pilot / Bot]`;
+
+      if (isHostOrSolo) {
+        emptyCard.className = 'roster-card add-bot-slot';
+        let isSelectorOpen = false;
+
+        const renderDefault = () => {
+          emptyCard.innerHTML = `
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 10.5px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.8px; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; user-select: none;">
+              <span style="font-size: 13px; font-weight: 900;">+</span> ADD BOT (SLOT ${occupiedCount + 1})
+            </div>
+          `;
+        };
+
+        const renderSelector = () => {
+          emptyCard.innerHTML = '';
+          emptyCard.style.display = 'flex';
+          emptyCard.style.alignItems = 'center';
+          emptyCard.style.gap = '4px';
+          emptyCard.style.width = '100%';
+
+          const diffs: { id: BotDifficulty; label: string; color: string }[] = [
+            { id: 'easy', label: 'EAS', color: '#00ff88' },
+            { id: 'medium', label: 'MED', color: '#00e5ff' },
+            { id: 'hard', label: 'HAR', color: '#ffaa00' },
+            { id: 'insane', label: 'INS', color: '#ff3344' },
+          ];
+
+          diffs.forEach((d) => {
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.style.flex = '1';
+            btn.style.padding = '4px 2px';
+            btn.style.fontSize = '9.5px';
+            btn.style.fontFamily = "'Orbitron', sans-serif";
+            btn.style.fontWeight = '900';
+            btn.style.borderColor = d.color;
+            btn.style.color = d.color;
+            btn.style.background = 'rgba(0,0,0,0.5)';
+            btn.innerText = d.label;
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              this.addBotToTable(d.id);
+              this.sound.playClick();
+            };
+            emptyCard.appendChild(btn);
+          });
+
+          const btnCancel = document.createElement('button');
+          btnCancel.className = 'action-btn';
+          btnCancel.style.padding = '4px 6px';
+          btnCancel.style.fontSize = '10px';
+          btnCancel.style.borderColor = '#64748b';
+          btnCancel.style.color = '#94a3b8';
+          btnCancel.style.background = 'transparent';
+          btnCancel.innerText = '✕';
+          btnCancel.onclick = (e) => {
+            e.stopPropagation();
+            isSelectorOpen = false;
+            renderDefault();
+          };
+          emptyCard.appendChild(btnCancel);
+        };
+
+        renderDefault();
+
+        emptyCard.onclick = () => {
+          if (!isSelectorOpen) {
+            isSelectorOpen = true;
+            renderSelector();
+          }
+        };
+      } else {
+        emptyCard.className = 'roster-card empty';
+        emptyCard.innerText = `Slot ${occupiedCount + 1}: [Waiting for Pilot]`;
+      }
+
       rosterList.appendChild(emptyCard);
     }
 
