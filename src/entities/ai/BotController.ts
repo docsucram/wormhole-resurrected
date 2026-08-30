@@ -30,14 +30,14 @@ const DIFFICULTY_CONFIGS: Record<BotDifficulty, DifficultyConfig> = {
     specialAbilityChance: 0.45,
   },
   medium: {
-    thinkInterval: 0.12,
-    reactionDelay: 0.45,
-    aimErrorRad: 0.10,
-    deadZone: 0.05,
-    powerupPerceptionRadius: 320,
-    hazardEngagementRadius: 280,
-    launchCooldownTime: 3.5,
-    specialAbilityChance: 0.85,
+    thinkInterval: 0.16,
+    reactionDelay: 0.70,
+    aimErrorRad: 0.14,
+    deadZone: 0.06,
+    powerupPerceptionRadius: 290,
+    hazardEngagementRadius: 250,
+    launchCooldownTime: 4.0,
+    specialAbilityChance: 0.75,
   },
   hard: {
     thinkInterval: 0.04,
@@ -688,7 +688,7 @@ export class BotController {
       let minThreatDist = Infinity;
 
       for (const h of hazards) {
-        if (!h.isAlive || h.powerupType === 16) continue;
+        if (!h.isAlive || h.powerupType === 16 || h.powerupType === 18) continue;
 
         const isMine = h.powerupType === 8;
         const isMineLayer = h.powerupType === 11;

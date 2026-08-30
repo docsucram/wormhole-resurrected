@@ -1615,7 +1615,8 @@ class WormholeGame {
     }
 
     const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
-    const botShipId = isRestrictedToClassic ? (emptySlot - 1) % 3 : (emptySlot - 1) % 8;
+    const numShips = isRestrictedToClassic ? 3 : 8;
+    const botShipId = Math.floor(Math.random() * numShips);
     const botShip = ShipCatalog.get(botShipId);
     const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
     let assignedTeam: 'A' | 'B' | undefined = undefined;
@@ -1792,17 +1793,28 @@ class WormholeGame {
 
     // 3. Reset All Opponent Bot / Remote Realms & Clear Spectating Flags
     this.simulatedRealm.resetForNewRound();
+    const isRestrictedToClassic = this.currentMatchConfig && this.currentMatchConfig.shipRestriction === 'STANDARD';
+    const numShips = isRestrictedToClassic ? 3 : 8;
+
     for (let i = 0; i < 8; i++) {
       if (this.tablePlayers[i]) {
-        this.tablePlayers[i]!.health = this.tablePlayers[i]!.maxHealth || 280;
         this.tablePlayers[i]!.isAlive = true;
         this.tablePlayers[i]!.isSpectating = false;
         if (this.tablePlayers[i]!.isBot) {
+          // Randomly select a ship from available 3 or 8 fighter classes
+          const randomShipId = Math.floor(Math.random() * numShips);
+          const shipCfg = ShipCatalog.get(randomShipId);
+          this.tablePlayers[i]!.shipId = randomShipId;
+          this.tablePlayers[i]!.maxHealth = shipCfg.config.hitPoints;
+          this.tablePlayers[i]!.health = shipCfg.config.hitPoints;
+
           const realm = this.simulatedRealm.botRealms.get(i);
           if (realm) {
+            realm.botShip.setShip(randomShipId);
             realm.botShip.respawn(0, this.simulatedRealm.orbitDistance);
-            this.tablePlayers[i]!.health = realm.botShip.maxHealth;
           }
+        } else {
+          this.tablePlayers[i]!.health = this.tablePlayers[i]!.maxHealth || 280;
         }
       }
     }
@@ -3085,7 +3097,7 @@ class WormholeGame {
           size: 'MEDIUM',
           targetWins: 5,
           powerupRule: 'STANDARD',
-          shipRestriction: 'STANDARD',
+          shipRestriction: 'ALL',
           botDifficulty: selectedSoloDiff,
           maxPlayers: 2,
           currentPlayers: 2,
@@ -4589,12 +4601,12 @@ class WormholeGame {
       pipsHtml += '</div>';
 
       card.innerHTML = `
-        <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
           <span class="roster-player-name">${pilotTypeIcon}${p.name}${waitingBadge}</span>
-          <div style="display: flex; align-items: center; gap: 4px;">
+          <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap;">
             ${pipsHtml}
             ${swapTeamBtn}
-            <span class="roster-player-stats">W: ${p.wins}</span>
+            <span class="roster-player-stats" style="white-space: nowrap; flex-shrink: 0;">W: ${p.wins}</span>
             ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${slot}" title="Remove Bot">✕</button>` : ''}
           </div>
         </div>
