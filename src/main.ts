@@ -1617,7 +1617,12 @@ class WormholeGame {
     const botShipId = isRestrictedToClassic ? (emptySlot - 1) % 3 : (emptySlot - 1) % 8;
     const botShip = ShipCatalog.get(botShipId);
     const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
-    const assignedTeam: 'A' | 'B' | undefined = isTeamMode ? (emptySlot % 2 === 0 ? 'A' : 'B') : undefined;
+    let assignedTeam: 'A' | 'B' | undefined = undefined;
+    if (isTeamMode) {
+      const countA = this.tablePlayers.filter((p) => p && p.team === 'A').length;
+      const countB = this.tablePlayers.filter((p) => p && p.team === 'B').length;
+      assignedTeam = countA > countB ? 'B' : 'A';
+    }
 
     this.tablePlayers[emptySlot] = {
       slot: emptySlot,
@@ -3167,6 +3172,16 @@ class WormholeGame {
     const btnMatchStart = document.getElementById('btn-match-start') || document.getElementById('btn-table-start');
     if (btnMatchStart) {
       btnMatchStart.onclick = () => {
+        if (this.currentMatchConfig?.matchType === 'TEAM') {
+          const teamACount = this.tablePlayers.filter((p) => p && p.team === 'A').length;
+          const teamBCount = this.tablePlayers.filter((p) => p && p.team === 'B').length;
+          if (teamACount === 0 || teamBCount === 0) {
+            this.showAlert('CANNOT ENGAGE // BOTH TEAMS (α & Ω) REQUIRE PILOTS');
+            this.sound.playZap();
+            return;
+          }
+        }
+
         this.isMatchWaitingForPilots = false;
         const waitOverlay = document.getElementById('waiting-pilots-overlay');
         if (waitOverlay) waitOverlay.style.display = 'none';
@@ -4628,17 +4643,21 @@ class WormholeGame {
       if (pauseBotAdder) pauseBotAdder.style.display = 'block';
 
       const isCombatActive = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
+      const teamACount = isTeamMode ? this.tablePlayers.filter((p) => p && p.team === 'A').length : 0;
+      const teamBCount = isTeamMode ? this.tablePlayers.filter((p) => p && p.team === 'B').length : 0;
+      const isTeamUnbalanced = isTeamMode && (teamACount === 0 || teamBCount === 0);
+
       if (isCombatActive) {
         if (btnStart) {
-          btnStart.innerText = 'RESTART MATCH';
-          btnStart.style.borderColor = 'rgba(255, 170, 0, 0.6)';
-          btnStart.style.color = '#ffaa00';
+          btnStart.innerText = isTeamUnbalanced ? 'TEAM EMPTY' : 'RESTART MATCH';
+          btnStart.style.borderColor = isTeamUnbalanced ? 'rgba(255, 51, 68, 0.6)' : 'rgba(255, 170, 0, 0.6)';
+          btnStart.style.color = isTeamUnbalanced ? '#ff6677' : '#ffaa00';
         }
       } else {
         if (btnStart) {
-          btnStart.innerText = 'START MATCH';
-          btnStart.style.borderColor = 'rgba(0, 255, 136, 0.5)';
-          btnStart.style.color = '#00ff88';
+          btnStart.innerText = isTeamUnbalanced ? 'NEED BOTH TEAMS' : 'START MATCH';
+          btnStart.style.borderColor = isTeamUnbalanced ? 'rgba(255, 51, 68, 0.6)' : 'rgba(0, 255, 136, 0.5)';
+          btnStart.style.color = isTeamUnbalanced ? '#ff6677' : '#00ff88';
         }
       }
       if (btnPauseStart && btnPauseStart.dataset.confirming !== 'true') {
@@ -4685,61 +4704,50 @@ class WormholeGame {
         let isSelectorOpen = false;
 
         const renderDefault = () => {
+          emptyCard.className = 'roster-card add-bot-slot';
           emptyCard.innerHTML = `
-            <div style="font-family: 'Orbitron', sans-serif; font-size: 10.5px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.8px; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; user-select: none;">
-              <span style="font-size: 13px; font-weight: 900;">+</span> ADD BOT (SLOT ${occupiedCount + 1})
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.8px; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 100%; user-select: none;">
+              <span style="font-size: 12px; font-weight: 900;">+</span> ADD BOT
             </div>
           `;
         };
 
         const renderSelector = () => {
+          emptyCard.className = 'roster-card add-bot-slot active-selector';
           emptyCard.innerHTML = '';
-          emptyCard.style.display = 'flex';
-          emptyCard.style.alignItems = 'center';
-          emptyCard.style.gap = '4px';
-          emptyCard.style.width = '100%';
+
+          const container = document.createElement('div');
+          container.style.cssText = 'display: flex; flex-direction: row; align-items: stretch; gap: 4px; width: 100%; height: 100%; box-sizing: border-box;';
 
           const diffs: { id: BotDifficulty; label: string; color: string }[] = [
-            { id: 'easy', label: 'EAS', color: '#00ff88' },
+            { id: 'easy', label: 'EASY', color: '#00ff88' },
             { id: 'medium', label: 'MED', color: '#00e5ff' },
-            { id: 'hard', label: 'HAR', color: '#ffaa00' },
+            { id: 'hard', label: 'HARD', color: '#ffaa00' },
             { id: 'insane', label: 'INS', color: '#ff3344' },
           ];
 
           diffs.forEach((d) => {
             const btn = document.createElement('button');
             btn.className = 'action-btn';
-            btn.style.flex = '1';
-            btn.style.padding = '4px 2px';
-            btn.style.fontSize = '9.5px';
-            btn.style.fontFamily = "'Orbitron', sans-serif";
-            btn.style.fontWeight = '900';
-            btn.style.borderColor = d.color;
-            btn.style.color = d.color;
-            btn.style.background = 'rgba(0,0,0,0.5)';
+            btn.style.cssText = `flex: 1; min-width: 0; padding: 4px 2px; font-size: 9px; font-family: 'Orbitron', sans-serif; font-weight: 900; border: 1.5px solid ${d.color}; color: ${d.color}; background: rgba(0,0,0,0.65); border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; cursor: pointer; transition: all 0.12s ease;`;
             btn.innerText = d.label;
+            btn.onmouseenter = () => {
+              btn.style.background = d.color;
+              btn.style.color = '#000000';
+            };
+            btn.onmouseleave = () => {
+              btn.style.background = 'rgba(0,0,0,0.65)';
+              btn.style.color = d.color;
+            };
             btn.onclick = (e) => {
               e.stopPropagation();
               this.addBotToTable(d.id);
               this.sound.playClick();
             };
-            emptyCard.appendChild(btn);
+            container.appendChild(btn);
           });
 
-          const btnCancel = document.createElement('button');
-          btnCancel.className = 'action-btn';
-          btnCancel.style.padding = '4px 6px';
-          btnCancel.style.fontSize = '10px';
-          btnCancel.style.borderColor = '#64748b';
-          btnCancel.style.color = '#94a3b8';
-          btnCancel.style.background = 'transparent';
-          btnCancel.innerText = '✕';
-          btnCancel.onclick = (e) => {
-            e.stopPropagation();
-            isSelectorOpen = false;
-            renderDefault();
-          };
-          emptyCard.appendChild(btnCancel);
+          emptyCard.appendChild(container);
         };
 
         renderDefault();

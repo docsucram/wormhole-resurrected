@@ -1918,8 +1918,9 @@
         pointer-events: auto !important;
         cursor: pointer !important;
         border: 1.5px dashed rgba(0, 229, 255, 0.45) !important;
-        background: rgba(0, 229, 255, 0.04) !important;
+        background: rgba(0, 229, 255, 0.03) !important;
         display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
         min-height: 38px !important;
@@ -1930,6 +1931,12 @@
       .roster-card.add-bot-slot:hover {
         border-color: var(--neon-cyan) !important;
         background: rgba(0, 229, 255, 0.08) !important;
+      }
+      .roster-card.add-bot-slot.active-selector {
+        border: 1.5px solid rgba(0, 229, 255, 0.5) !important;
+        background: rgba(8, 18, 36, 0.95) !important;
+        padding: 3px 4px !important;
+        cursor: default !important;
       }
 
       .roster-card-header {
@@ -4141,19 +4148,15 @@
       <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
         <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">TOGGLES & ROUND STATE</div>
         
-        <!-- Unified 3-Column Toggle Row -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px;">
-          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(239, 68, 68, 0.4); cursor: pointer; text-align: center;">
+        <!-- Unified 2-Column Toggle Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 5px;">
+          <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(239, 68, 68, 0.4); cursor: pointer; text-align: center;">
             <input type="checkbox" id="spawner-godmode-toggle" style="accent-color: #ef4444; cursor: pointer;">
-            <span style="font-size: 9px; font-weight: 800; color: #f87171;">GOD MODE</span>
+            <span style="font-size: 9.5px; font-weight: 800; color: #f87171;">GOD MODE (HP)</span>
           </label>
-          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); cursor: pointer; text-align: center;">
+          <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); cursor: pointer; text-align: center;">
             <input type="checkbox" id="spawner-ai-brain-toggle" style="accent-color: #38bdf8; cursor: pointer;">
-            <span style="font-size: 9px; font-weight: 800; color: #38bdf8;">AI OVERLAY</span>
-          </label>
-          <label style="display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(30, 41, 59, 0.8); padding: 5px 3px; border-radius: 5px; border: 1px solid rgba(251, 191, 36, 0.4); cursor: pointer; text-align: center;">
-            <input type="checkbox" id="spawner-perimeter-toggle" checked style="accent-color: #fbbf24; cursor: pointer;">
-            <span style="font-size: 9px; font-weight: 800; color: #fbbf24;">AVOID WALLS</span>
+            <span style="font-size: 9.5px; font-weight: 800; color: #38bdf8;">AI OVERLAY</span>
           </label>
         </div>
 
