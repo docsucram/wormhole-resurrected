@@ -1646,6 +1646,7 @@ class WormholeGame {
       this.selectedOpponentSlot = activeSlots.length > 0 ? activeSlots[0] : 1;
     }
 
+    this.lastTableRosterSignature = '';
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
     this.broadcastRosterSync();
@@ -3359,10 +3360,12 @@ class WormholeGame {
       btnFsPause.onclick = () => this.toggleFullscreen();
     }
 
-    // Auto-enter fullscreen on mobile/touch gesture
-    const autoFsHandler = () => {
-      const isTouchOrMobile = this.isMobile || ('ontouchstart' in window) || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) || window.innerWidth <= 950 || window.innerHeight <= 580;
-      if (isTouchOrMobile) {
+    // Auto-enter fullscreen ONLY on genuine mobile/touch devices
+    const autoFsHandler = (e: Event) => {
+      if (e instanceof PointerEvent && e.pointerType === 'mouse') {
+        return;
+      }
+      if (this.isMobile && (e.type === 'touchstart' || (e instanceof PointerEvent && e.pointerType === 'touch'))) {
         this.tryEnterFullscreen();
       }
     };
@@ -4304,10 +4307,11 @@ class WormholeGame {
     }
     this.lastTableRosterSignature = rosterSig;
 
-    // Persistent event delegation for reliable bot removal and slot selection
+    // Persistent event delegation for reliable bot removal, team toggling, and slot selection
     if (!(rosterList as unknown as { _hasBotClickListener?: boolean })._hasBotClickListener) {
       (rosterList as unknown as { _hasBotClickListener?: boolean })._hasBotClickListener = true;
-      rosterList.addEventListener('click', (e) => {
+
+      const handleRosterAction = (e: Event) => {
         const target = e.target as HTMLElement;
         const removeBtn = target.closest('.btn-remove-bot') as HTMLElement | null;
         if (removeBtn && removeBtn.dataset.slot) {
@@ -4326,6 +4330,7 @@ class WormholeGame {
           const p = this.tablePlayers[slot];
           if (p) {
             p.team = p.team === 'A' ? 'B' : 'A';
+            this.lastTableRosterSignature = '';
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
             this.broadcastRosterSync();
@@ -4333,16 +4338,27 @@ class WormholeGame {
           return;
         }
 
-        const card = target.closest('.roster-card.occupied') as HTMLElement | null;
-        if (card && card.dataset.slot) {
-          const slot = parseInt(card.dataset.slot, 10);
-          const p = this.tablePlayers[slot];
-          if (p && !p.isLocal) {
-            this.selectedOpponentSlot = slot;
-            const nameEl = this.getHudEl('pip-opponent-name');
-            if (nameEl) nameEl.textContent = `FEED // ${p.name.toUpperCase()}`;
-            this.updateTableRosterUI();
+        if (e.type === 'click') {
+          const card = target.closest('.roster-card.occupied') as HTMLElement | null;
+          if (card && card.dataset.slot) {
+            const slot = parseInt(card.dataset.slot, 10);
+            const p = this.tablePlayers[slot];
+            if (p && !p.isLocal) {
+              this.selectedOpponentSlot = slot;
+              const nameEl = this.getHudEl('pip-opponent-name');
+              if (nameEl) nameEl.textContent = `FEED // ${p.name.toUpperCase()}`;
+              this.lastTableRosterSignature = '';
+              this.updateTableRosterUI();
+            }
           }
+        }
+      };
+
+      rosterList.addEventListener('click', handleRosterAction);
+      rosterList.addEventListener('pointerdown', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.btn-remove-bot') || target.closest('.btn-toggle-team')) {
+          handleRosterAction(e);
         }
       });
     }
@@ -4369,24 +4385,24 @@ class WormholeGame {
       }
       const hpPct = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
       const pilotTypeIcon = p.isBot
-        ? `<span class="roster-pilot-icon bot" title="Computer Bot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20 3H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h6l-2 3v1h8v-1l-2-3h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 10H4V5h16v8z"/><circle cx="12" cy="9" r="1.5"/></svg></span>`
-        : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 5px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
+        ? `<span class="roster-pilot-icon bot" title="Computer Bot" style="display: inline-flex; align-items: center; margin-right: 6px; vertical-align: middle; color: var(--neon-cyan); flex-shrink: 0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20 3H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h6l-2 3v1h8v-1l-2-3h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 10H4V5h16v8z"/><circle cx="12" cy="9" r="1.5"/></svg></span>`
+        : `<span class="roster-pilot-icon human" title="Human Pilot" style="display: inline-flex; align-items: center; margin-right: 6px; vertical-align: middle; color: #ffffff; flex-shrink: 0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>`;
 
       const waitingBadge = p.isSpectating
-        ? `<span style="font-size: 8px; color: #ffaa00; font-weight: 900; border: 1px solid rgba(255, 170, 0, 0.5); background: rgba(255, 170, 0, 0.15); padding: 1px 4px; border-radius: 3px; margin-left: 4px;">WAITING</span>`
+        ? `<span style="font-size: 8.5px; color: #ffaa00; font-weight: 900; border: 1px solid rgba(255, 170, 0, 0.5); background: rgba(255, 170, 0, 0.15); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">WAITING</span>`
         : '';
 
       const swapTeamBtn = isTeamMode && (this.isLanMatchHost || !this.network.isConnected)
-        ? `<button class="btn-toggle-team" data-slot="${slot}" title="Swap Faction (Alpha / Omega)" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.25); color: #cbd5e1; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">⇄</button>`
+        ? `<button class="btn-toggle-team" data-slot="${slot}" title="Swap Faction (Alpha / Omega)">⇄</button>`
         : '';
 
       card.innerHTML = `
         <div class="roster-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="roster-player-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 155px; display: flex; align-items: center;">${pilotTypeIcon}${p.name}${waitingBadge}</span>
-          <div style="display: flex; align-items: center; gap: 4px;">
+          <span class="roster-player-name">${pilotTypeIcon}${p.name}${waitingBadge}</span>
+          <div style="display: flex; align-items: center; gap: 5px;">
             ${swapTeamBtn}
             <span class="roster-player-stats">W: ${p.wins}</span>
-            ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${slot}" title="Remove Bot" style="background: rgba(255, 0, 80, 0.25); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; cursor: pointer; line-height: 1;">✕</button>` : ''}
+            ${p.isBot && (this.isLanMatchHost || !this.network.isConnected) ? `<button class="btn-remove-bot" data-slot="${slot}" title="Remove Bot">✕</button>` : ''}
           </div>
         </div>
         <div class="roster-health-track">
