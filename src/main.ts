@@ -2599,10 +2599,18 @@ class WormholeGame {
     // Guard: Prevent launching when no opponents are present in the arena
     const activeOpponents = this.tablePlayers.filter((p) => p !== null && !p.isLocal).length;
     if (activeOpponents === 0) {
-      this.showAlert('CANNOT ENGAGE: NO OPPONENTS IN ARENA! CLICK \'+ BOT\' OR WAIT FOR PLAYERS.');
-      this.addChatLog('Cannot start match without opponents. Add a bot or wait for players to join.', 'system');
-      const scoreEl = document.getElementById('round-modal-score');
-      if (scoreEl) scoreEl.innerText = 'WAITING FOR OPPONENTS // CLICK + BOT TO ADD AI';
+      if (this.isMobile) {
+        this.showAlert('CLICK + BOT IN SYSTEM MENU TO ADD AI');
+        this.addChatLog('Cannot start match without opponents. Open System Menu and tap + Bot to add AI.', 'system');
+        const scoreEl = document.getElementById('round-modal-score');
+        if (scoreEl) scoreEl.innerText = 'NO OPPONENTS // CLICK + BOT IN SYSTEM MENU TO ADD AI';
+      } else {
+        this.showAlert('CLICK ADD BOT TO ADD AI');
+        this.addChatLog('Cannot start match without opponents. Click Add Bot on the right to add AI.', 'system');
+        const scoreEl = document.getElementById('round-modal-score');
+        if (scoreEl) scoreEl.innerText = 'WAITING FOR OPPONENTS // CLICK ADD BOT TO ADD AI';
+        this.highlightAddBotRosterButton();
+      }
       return;
     }
 
@@ -2864,7 +2872,12 @@ class WormholeGame {
     if (this.tablePlayers[0]) {
       this.tablePlayers[0]!.name = this.playerName;
     }
-    if (hudCallsign) hudCallsign.innerText = this.playerName;
+    if (hudCallsign) {
+      hudCallsign.innerText = this.playerName;
+      const myColor = this.getPlayerColor(this.player.slot);
+      hudCallsign.style.color = myColor;
+      hudCallsign.style.textShadow = `0 0 10px ${myColor}`;
+    }
 
     // Inline Callsign Editing in Player Capsule
     const startInlineCallsignEdit = () => {
@@ -3196,6 +3209,20 @@ class WormholeGame {
             this.sound.playZap();
             return;
           }
+        }
+
+        const activeOpponents = this.tablePlayers.filter((p) => p !== null && !p.isLocal).length;
+        if (activeOpponents === 0) {
+          if (this.isMobile) {
+            this.showAlert('CLICK + BOT IN SYSTEM MENU TO ADD AI');
+            this.addChatLog('Cannot start match without opponents. Open System Menu and tap + Bot to add AI.', 'system');
+          } else {
+            this.showAlert('CLICK ADD BOT TO ADD AI');
+            this.addChatLog('Cannot start match without opponents. Click Add Bot on the right to add AI.', 'system');
+            this.highlightAddBotRosterButton();
+          }
+          this.sound.playZap();
+          return;
         }
 
         this.isMatchWaitingForPilots = false;
@@ -4800,6 +4827,7 @@ class WormholeGame {
       const emptyCard = document.createElement('div');
 
       if (isHostOrSolo) {
+        emptyCard.id = 'roster-add-bot-card';
         emptyCard.className = 'roster-card add-bot-slot';
         let isSelectorOpen = false;
 
@@ -4875,6 +4903,34 @@ class WormholeGame {
     banner.innerText = text;
     banner.classList.add('active');
     this.alertTimer = 2.5;
+  }
+
+  public highlightAddBotRosterButton(): void {
+    const addBotSlot = (document.getElementById('roster-add-bot-card') || document.querySelector('.roster-card.add-bot-slot')) as HTMLElement | null;
+    if (!addBotSlot) return;
+
+    // Add high-impact pulsing border & glow
+    addBotSlot.classList.add('highlight-pulse');
+
+    // Remove any existing pointer arrow
+    const existingArrow = addBotSlot.querySelector('.add-bot-arrow-pointer');
+    if (existingArrow) existingArrow.remove();
+
+    // Create pointing arrow indicator pointing directly at the Add Bot button from left
+    const arrow = document.createElement('div');
+    arrow.className = 'add-bot-arrow-pointer';
+    arrow.innerHTML = `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff007f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 8px #ff007f);"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    `;
+    addBotSlot.style.position = 'relative';
+    addBotSlot.appendChild(arrow);
+
+    setTimeout(() => {
+      addBotSlot.classList.remove('highlight-pulse');
+      if (arrow.parentElement === addBotSlot) {
+        arrow.remove();
+      }
+    }, 3500);
   }
 
   private respawnPlayer(): void {
@@ -5790,6 +5846,15 @@ class WormholeGame {
     if (hpVal && this.lastHudValues['hpVal'] !== hpText) {
       this.lastHudValues['hpVal'] = hpText;
       hpVal.textContent = hpText;
+    }
+
+    // Dynamic Player Color matching on Top HUD Callsign
+    const myColor = this.getPlayerColor(this.player.slot);
+    const hudCallsign = this.getHudEl('hud-classic-callsign');
+    if (hudCallsign && this.lastHudValues['callsignColor'] !== myColor) {
+      this.lastHudValues['callsignColor'] = myColor;
+      hudCallsign.style.color = myColor;
+      hudCallsign.style.textShadow = `0 0 10px ${myColor}`;
     }
 
     const shipName = this.player.compiled.config.name.toUpperCase();
