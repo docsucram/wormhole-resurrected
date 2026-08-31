@@ -20,12 +20,12 @@ export interface KeyBindings {
 }
 
 const DEFAULT_BINDINGS: KeyBindings = {
-  up: ['ArrowUp', 'KeyW', 'Numpad8'],
-  left: ['ArrowLeft', 'KeyA', 'Numpad4'],
-  right: ['ArrowRight', 'KeyD', 'Numpad6'],
+  up: ['KeyW', 'ArrowUp'],
+  left: ['KeyA', 'ArrowLeft'],
+  right: ['KeyD', 'ArrowRight'],
   fire: ['Space', 'Numpad0'],
-  secondaryFire: ['KeyF', 'Numpad3', 'KeyE'],
-  tertiaryFire: ['KeyR', 'KeyC', 'KeyV', 'ShiftLeft', 'ShiftRight'],
+  secondaryFire: ['KeyF', 'KeyE'],
+  tertiaryFire: ['KeyR', 'ShiftRight'],
 };
 
 export class InputManager {
@@ -48,6 +48,26 @@ export class InputManager {
         navigator.vibrate(duration);
       } catch {}
     }
+  }
+
+  public static formatKeyName(code?: string): string {
+    if (!code) return '---';
+    if (code === 'Space') return 'SPACE';
+    if (code.startsWith('Key')) return code.slice(3).toUpperCase();
+    if (code.startsWith('Digit')) return code.slice(5);
+    if (code.startsWith('Arrow')) return code.slice(5).toUpperCase();
+    if (code.startsWith('Numpad')) return 'NUM ' + code.slice(6);
+    if (code === 'ShiftLeft') return 'L-SHIFT';
+    if (code === 'ShiftRight') return 'R-SHIFT';
+    if (code === 'ControlLeft') return 'L-CTRL';
+    if (code === 'ControlRight') return 'R-CTRL';
+    if (code === 'AltLeft') return 'L-ALT';
+    if (code === 'AltRight') return 'R-ALT';
+    if (code === 'Enter') return 'ENTER';
+    if (code === 'Tab') return 'TAB';
+    if (code === 'Backspace') return 'BKSP';
+    if (code === 'Delete') return 'DEL';
+    return code.toUpperCase();
   }
 
   public getKeyPrompt(action: InputAction, isMobile: boolean): string {
@@ -109,11 +129,26 @@ export class InputManager {
   }
 
   public setBinding(action: InputAction, keyCode: string): void {
+    this.setBindingSlot(action, 0, keyCode);
+  }
+
+  public setBindingSlot(action: InputAction, slot: number, keyCode: string | null): void {
     if (!this.bindings[action]) this.bindings[action] = [];
-    if (!this.bindings[action].includes(keyCode)) {
-      this.bindings[action] = [keyCode]; // Replace primary binding
-      this.saveBindings();
+    while (this.bindings[action].length < 2) {
+      this.bindings[action].push('');
     }
+
+    if (keyCode === null || keyCode === 'Escape' || keyCode === 'Delete' || keyCode === 'Backspace') {
+      this.bindings[action][slot] = '';
+    } else {
+      // Clear key if it was bound in any other slot or action
+      for (const act of Object.keys(this.bindings) as InputAction[]) {
+        if (!this.bindings[act]) continue;
+        this.bindings[act] = this.bindings[act].map((k, i) => (act === action && i === slot ? k : (k === keyCode ? '' : k)));
+      }
+      this.bindings[action][slot] = keyCode;
+    }
+    this.saveBindings();
   }
 
   private setupListeners(): void {

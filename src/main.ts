@@ -144,6 +144,7 @@ class WormholeGame {
   private rosterThrottleTimer = 0;
   private playerLastSeen: Map<number, number> = new Map();
   private heartbeatReaperTimer = 0;
+  private victoryModalOpenTime = 0;
 
   // Real-time FPS & Performance Diagnostics Monitoring
   private frameCount = 0;
@@ -2309,6 +2310,7 @@ class WormholeGame {
     isTeamWin: boolean
   ): void {
     this.gameState.phase = 'MATCH_OVER';
+    this.victoryModalOpenTime = Date.now();
     const matchModal = document.getElementById('match-modal')!;
     matchModal.classList.add('active');
     matchModal.style.display = 'block';
@@ -2483,7 +2485,7 @@ class WormholeGame {
       scoreEl.innerText = this.formatMatchScoreDisplay();
     }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : (this.isMobile ? 'NEXT ROUND' : 'NEXT ROUND [SPACE]');
-
+    this.victoryModalOpenTime = Date.now();
     roundModal.classList.add('active');
     roundModal.style.display = 'block';
     this.buildShipGrid();
@@ -2515,6 +2517,7 @@ class WormholeGame {
     }
     btnNext.innerText = this.isLanMatchClient ? 'READY FOR NEXT ROUND' : (this.isMobile ? 'NEXT ROUND' : 'NEXT ROUND [SPACE]');
 
+    this.victoryModalOpenTime = Date.now();
     roundModal.classList.add('active');
     roundModal.style.display = 'block';
     this.buildShipGrid();
@@ -3839,57 +3842,84 @@ class WormholeGame {
     grid.innerHTML = '';
 
     const actions: { id: InputAction; label: string }[] = [
-      { id: 'up', label: 'THRUSTER / FORWARD' },
+      { id: 'up', label: 'THRUST / FORWARD' },
       { id: 'left', label: 'STEER LEFT' },
       { id: 'right', label: 'STEER RIGHT' },
       { id: 'fire', label: 'PRIMARY LASERS' },
       { id: 'secondaryFire', label: 'LAUNCH POWERUP [F]' },
-      { id: 'tertiaryFire', label: 'SPECIAL ABILITY' },
+      { id: 'tertiaryFire', label: 'SPECIAL ABILITY [R/SHIFT]' },
     ];
 
     actions.forEach((act) => {
       const row = document.createElement('div');
       row.style.background = 'rgba(0, 0, 0, 0.45)';
-      row.style.border = '1px solid rgba(0, 229, 255, 0.2)';
+      row.style.border = '1px solid rgba(0, 229, 255, 0.15)';
       row.style.borderRadius = '6px';
-      row.style.padding = '8px 10px';
-      row.style.display = 'flex';
-      row.style.flexDirection = 'column';
-      row.style.gap = '4px';
+      row.style.padding = '6px 8px';
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '1.4fr 1fr 1fr';
+      row.style.gap = '6px';
+      row.style.alignItems = 'center';
 
       const label = document.createElement('div');
-      label.style.fontSize = '10px';
+      label.style.fontFamily = "'Orbitron', sans-serif";
+      label.style.fontSize = '9.5px';
       label.style.fontWeight = '800';
-      label.style.color = 'var(--neon-cyan)';
+      label.style.color = '#e2e8f0';
       label.innerText = act.label;
 
-      const btn = document.createElement('button');
-      btn.className = 'action-btn';
-      btn.style.padding = '5px 8px';
-      btn.style.fontSize = '10px';
-      btn.style.width = '100%';
       const keys = this.input.bindings[act.id] || [];
-      btn.innerText = keys.length > 0 ? keys[0].replace('Key', '').replace('Arrow', '') : 'NONE';
 
-      btn.onclick = () => {
-        btn.innerText = 'PRESS KEY...';
-        btn.style.borderColor = '#ff007f';
-        btn.style.color = '#ff007f';
+      // Helper to create slot button
+      const createSlotBtn = (slot: number) => {
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.style.padding = '5px 4px';
+        btn.style.fontSize = '10px';
+        btn.style.width = '100%';
+        btn.style.textAlign = 'center';
+        btn.style.fontFamily = "'Orbitron', sans-serif";
+        btn.style.fontWeight = '800';
+        btn.style.letterSpacing = '0.5px';
 
-        const onKeyDown = (e: KeyboardEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.input.setBinding(act.id, e.code);
-          window.removeEventListener('keydown', onKeyDown, true);
-          this.renderKeybindGrid();
-          this.sound.playPowerup();
+        const currentKey = keys[slot];
+        if (currentKey) {
+          btn.innerText = InputManager.formatKeyName(currentKey);
+          btn.style.borderColor = slot === 0 ? 'var(--neon-cyan)' : 'rgba(0, 229, 255, 0.5)';
+          btn.style.color = slot === 0 ? 'var(--neon-cyan)' : '#94a3b8';
+        } else {
+          btn.innerText = '---';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          btn.style.color = '#64748b';
+        }
+
+        btn.onclick = () => {
+          btn.innerText = 'PRESS KEY...';
+          btn.style.borderColor = '#ff007f';
+          btn.style.color = '#ff007f';
+
+          const onKeyDown = (e: KeyboardEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const codeToSet = (e.code === 'Escape' || e.code === 'Delete' || e.code === 'Backspace') ? null : e.code;
+            this.input.setBindingSlot(act.id, slot, codeToSet);
+            window.removeEventListener('keydown', onKeyDown, true);
+            this.renderKeybindGrid();
+            this.sound.playPowerup();
+          };
+
+          window.addEventListener('keydown', onKeyDown, { capture: true, once: true });
         };
 
-        window.addEventListener('keydown', onKeyDown, { capture: true, once: true });
+        return btn;
       };
 
+      const btnPrimary = createSlotBtn(0);
+      const btnSecondary = createSlotBtn(1);
+
       row.appendChild(label);
-      row.appendChild(btn);
+      row.appendChild(btnPrimary);
+      row.appendChild(btnSecondary);
       grid.appendChild(row);
     });
   }
@@ -4905,14 +4935,18 @@ class WormholeGame {
         const modal = document.getElementById('pause-modal')!;
         modal.classList.toggle('active');
       } else if (e.key === ' ' && this.inArena) {
+        if (e.repeat) return; // Prevent held-down combat firing keys from inadvertently skipping modal
+
         const matchModalActive = document.getElementById('match-modal')?.classList.contains('active');
         if (matchModalActive || this.gameState.phase === 'MATCH_OVER') {
+          if (Date.now() - this.victoryModalOpenTime < 750) return;
           document.getElementById('btn-play-again')?.click();
           return;
         }
 
         const roundModalActive = document.getElementById('round-modal')?.classList.contains('active');
         if (roundModalActive || !this.player.isAlive || this.gameState.phase === 'ROUND_OVER') {
+          if (Date.now() - this.victoryModalOpenTime < 750) return;
           this.startNextRound();
         } else if (this.gameState.phase === 'COUNTDOWN') {
           this.gameState.phase = 'PLAYING';

@@ -50,7 +50,7 @@ export class Nuke implements Hazard {
     particles: ParticleSystem,
     sound: SoundEngine,
     _missiles?: HeatSeekerMissile[],
-    wormholes?: Wormhole[]
+    _wormholes?: Wormhole[]
   ): boolean {
     if (!this.isAlive) return false;
 
@@ -69,20 +69,6 @@ export class Nuke implements Hazard {
       if (Math.abs(this.y) > this.bound) {
         this.y = Math.sign(this.y) * this.bound;
         this.vy *= -0.7;
-      }
-
-      // Check if punted into an opponent's wormhole!
-      if (this.hasBeenPunted && wormholes) {
-        for (const wh of wormholes) {
-          const dist = Math.hypot(wh.x - this.x, wh.y - this.y);
-          if (dist < 70) {
-            // Warped into wormhole!
-            particles.createExplosion(this.x, this.y, '#00ffcc', 20);
-            sound.playSpecial(1);
-            this.isAlive = false;
-            return false;
-          }
-        }
       }
 
       if (this.countdown <= 0) {

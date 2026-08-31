@@ -245,6 +245,35 @@ export class HazardManager {
           }
         }
       }
+
+      // Re-route punted active counting-down Nuke into opponent wormhole!
+      if (wormholes && wormholes.length > 0 && h instanceof Nuke && h.isAlive && !h.isDetonating && h.hasBeenPunted) {
+        for (const wh of wormholes) {
+          if (!wh.isAlive) continue;
+          const dx = (h.x - wh.x) / (wh.width / 2);
+          const dy = (h.y - wh.y) / (wh.height / 2);
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq < 2.5) {
+            const pull = dt * 10.0;
+            h.vx += (wh.x - h.x) * pull;
+            h.vy += (wh.y - h.y) * pull;
+          }
+
+          if (distSq <= 1.0) {
+            h.isAlive = false;
+            particles.createHazardIngestion(h.x, h.y, wh.x, wh.y, 14, h.color, () => {
+              wh.absorbPowerupShot(14, particles, sound);
+              sound.playWormholeCharge();
+              if (this.onWarpHazard) {
+                this.onWarpHazard(14, wh.slot);
+              }
+            });
+            this.hazards.splice(i, 1);
+            break;
+          }
+        }
+      }
     }
 
     // 3.5 Mutual soft-body separation between overlapping Inflators (calm sliding separation)

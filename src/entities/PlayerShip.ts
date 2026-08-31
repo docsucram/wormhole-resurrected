@@ -489,6 +489,7 @@ export class PlayerShip {
         );
         m.isPlayerWeapon = true;
         m.ownerSlot = this.slot;
+        m.damage = 50; // Authentic legacy HeatSeekerMissile.setGood() (50 HP heavy damage)
         missiles.push(m);
         sound.playSpecial(3);
         if (popups) popups.push(new TextPopup(this.x, this.y, 'PIRANHA MISSILE LAUNCHED', '#ff8800'));

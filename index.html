@@ -4057,7 +4057,7 @@
               <p><strong style="color: #ffffff;">[SPACE]:</strong> Pulse Cannons. Upgradable from single center fire to dual-cannons and wide-angle triple spread.</p>
               <p><strong style="color: #ffffff;">[F]:</strong> Secondary Powerup Launch. Fires the topmost stored hazard projectile forward into enemy wormholes.</p>
               <p><strong style="color: #ffffff;">[R] / [SHIFT]:</strong> Class Special Ability. Activates unique ship features (Turtle Cannon, ShapeShift, HeatSeeker array, Attractor/Repulser field).</p>
-              <p><strong style="color: #ffffff;">[ESC]:</strong> Tactical Pause. Opens the in-flight pause menu.</p>
+              <p><strong style="color: #ffffff;">[ESC]:</strong> System Menu. Opens the in-flight system & match menu.</p>
             </div>
 
             <div class="manual-card">
@@ -4210,11 +4210,11 @@
       <button class="action-btn" id="btn-close-spawner" style="margin-top: 4px; width: 100%; padding: 6px 0; font-size: 10px; font-weight: 800; border-color: #64748b; color: #cbd5e1;">CLOSE TEST PANEL</button>
     </div>
 
-    <!-- Pause Menu Modal -->
+    <!-- System Menu Modal -->
     <div id="pause-modal">
-      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 14px; letter-spacing: 1px;">TACTICAL PAUSE</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 14px; letter-spacing: 1px;">SYSTEM MENU</div>
       <div style="display: flex; flex-direction: column; gap: 8px; width: 250px; margin: 0 auto;">
-        <button class="action-btn" id="btn-pause-resume" style="border-color: #00ff88; color: #00ff88; font-weight: 900;">RESUME FLIGHT</button>
+        <button class="action-btn" id="btn-pause-resume" style="border-color: #00ff88; color: #00ff88; font-weight: 900;">RESUME MATCH</button>
 
         <!-- Add Bot Section (Flush side-by-side without outer bounding box, standard button height, cyan accent) -->
         <div style="display: flex; gap: 8px; width: 100%;">
@@ -4330,8 +4330,16 @@
 
           <!-- 2. Keyboard Keybindings -->
           <div class="opt-tab-pane" id="opt-tab-keys" style="display: none;">
-            <div style="font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 10px;">CLICK ANY ACTION TO REBIND KEY:</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="keybind-grid">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: #94a3b8;">ACTION & KEY ASSIGNMENTS:</div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 9px; color: #64748b;">(2 BINDINGS PER ACTION)</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px; padding: 4px 8px; background: rgba(0, 229, 255, 0.05); border-radius: 4px; margin-bottom: 6px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.5px;">
+              <div>ACTION</div>
+              <div style="text-align: center;">PRIMARY</div>
+              <div style="text-align: center;">SECONDARY</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;" id="keybind-grid">
               <!-- Populated dynamically by main.ts -->
             </div>
             <div style="margin-top: 14px; display: flex; gap: 8px;">
@@ -4696,7 +4704,7 @@
         <button class="mob-btn-pause" id="btn-mob-fullscreen" title="Toggle Fullscreen" style="display: flex; align-items: center; justify-content: center;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         </button>
-        <button class="mob-btn-pause" id="btn-mobile-pause" title="Tactical Pause" style="display: flex; align-items: center; justify-content: center;">
+        <button class="mob-btn-pause" id="btn-mobile-pause" title="System Menu" style="display: flex; align-items: center; justify-content: center;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
