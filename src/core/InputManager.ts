@@ -28,6 +28,18 @@ const DEFAULT_BINDINGS: KeyBindings = {
   tertiaryFire: ['KeyR', 'ShiftRight'],
 };
 
+export interface GamepadNavEvent {
+  navUp: boolean;
+  navDown: boolean;
+  navLeft: boolean;
+  navRight: boolean;
+  confirm: boolean; // Button 0 [A / Cross] or Button 5 [RB]
+  cancel: boolean;  // Button 1 [B / Circle]
+  menu: boolean;    // Button 9 [Start / Options]
+  tabLeft: boolean; // Button 4 [LB]
+  tabRight: boolean;// Button 5 [RB]
+}
+
 export class InputManager {
   private keys: Record<string, boolean> = {};
   public bindings: KeyBindings = { ...DEFAULT_BINDINGS };
@@ -35,6 +47,10 @@ export class InputManager {
   public deadzone = 0.25;
   public enableAnalogThrust = true;
   public enableHaptics = true;
+
+  private prevPadButtons: boolean[] = [];
+  private navRepeatTimer = 0;
+  private lastNavDirection: 'up' | 'down' | 'left' | 'right' | null = null;
 
   constructor() {
     this.loadSettings();
@@ -215,6 +231,79 @@ export class InputManager {
     return 'None';
   }
 
+  public pollGamepadNav(dt: number): GamepadNavEvent | null {
+    const pad = this.getGamepad();
+    if (!pad) {
+      this.prevPadButtons = [];
+      this.lastNavDirection = null;
+      return null;
+    }
+
+    const currentButtons = pad.buttons.map((b) => b.pressed || b.value > this.deadzone);
+
+    const isJustPressed = (btnIndex: number): boolean => {
+      const isDown = !!currentButtons[btnIndex];
+      const wasDown = !!this.prevPadButtons[btnIndex];
+      return isDown && !wasDown;
+    };
+
+    // Raw directional inputs from D-Pad and Left Stick
+    const axisY = pad.axes[1] || 0;
+    const axisX = pad.axes[0] || 0;
+
+    const rawUp = (pad.buttons[12]?.pressed || axisY < -0.45);
+    const rawDown = (pad.buttons[13]?.pressed || axisY > 0.45);
+    const rawLeft = (pad.buttons[14]?.pressed || axisX < -0.45);
+    const rawRight = (pad.buttons[15]?.pressed || axisX > 0.45);
+
+    let dir: 'up' | 'down' | 'left' | 'right' | null = null;
+    if (rawUp) dir = 'up';
+    else if (rawDown) dir = 'down';
+    else if (rawLeft) dir = 'left';
+    else if (rawRight) dir = 'right';
+
+    let navUp = false;
+    let navDown = false;
+    let navLeft = false;
+    let navRight = false;
+
+    if (dir !== null) {
+      if (this.lastNavDirection !== dir) {
+        this.lastNavDirection = dir;
+        this.navRepeatTimer = 0.35; // initial hold delay
+        if (dir === 'up') navUp = true;
+        if (dir === 'down') navDown = true;
+        if (dir === 'left') navLeft = true;
+        if (dir === 'right') navRight = true;
+      } else {
+        this.navRepeatTimer -= dt;
+        if (this.navRepeatTimer <= 0) {
+          this.navRepeatTimer = 0.14; // repeat interval
+          if (dir === 'up') navUp = true;
+          if (dir === 'down') navDown = true;
+          if (dir === 'left') navLeft = true;
+          if (dir === 'right') navRight = true;
+        }
+      }
+    } else {
+      this.lastNavDirection = null;
+      this.navRepeatTimer = 0;
+    }
+
+    const confirm = isJustPressed(0); // Button 0 [A / Cross]
+    const cancel = isJustPressed(1);  // Button 1 [B / Circle]
+    const menu = isJustPressed(9);    // Button 9 [Start / Options]
+    const tabLeft = isJustPressed(4); // Button 4 [LB]
+    const tabRight = isJustPressed(5);// Button 5 [RB]
+
+    this.prevPadButtons = currentButtons;
+
+    if (navUp || navDown || navLeft || navRight || confirm || cancel || menu || tabLeft || tabRight) {
+      return { navUp, navDown, navLeft, navRight, confirm, cancel, menu, tabLeft, tabRight };
+    }
+    return null;
+  }
+
   public getState(): InputState {
     const pad = this.getGamepad();
 
@@ -252,29 +341,29 @@ export class InputManager {
       if (pad.buttons[14]?.pressed) left = true;
       if (pad.buttons[15]?.pressed) right = true;
 
-      // Right Trigger [RT / R2] or [A / Cross] for Thrust
+      // Right Trigger [RT / R2] or Button [X / Square] (Button 2) for Thrust
       const rtValue = pad.buttons[7]?.value || 0;
-      const aPressed = pad.buttons[0]?.pressed || false;
-      if (rtValue > this.deadzone || aPressed) {
+      const xPressed = pad.buttons[2]?.pressed || false;
+      if (rtValue > this.deadzone || xPressed) {
         up = true;
         if (this.enableAnalogThrust && rtValue > this.deadzone) {
           throttle = rtValue;
         }
       }
 
-      // Button [X / Square] or [RB] for Primary Fire
-      if (pad.buttons[2]?.pressed || pad.buttons[5]?.pressed) {
+      // Button [A / Cross] (Button 0) or [RB / R1] (Button 5) for Primary Pulse Laser Fire
+      if (pad.buttons[0]?.pressed || pad.buttons[5]?.pressed) {
         fire = true;
       }
 
-      // Button [B / Circle] or [LB] for Secondary Powerup / Hazard Launch
-      if (pad.buttons[1]?.pressed || pad.buttons[4]?.pressed) {
+      // Left Trigger [LT / L2] (Button 6) or Button [B / Circle] (Button 1) for Launch Stored Powerup
+      const ltValue = pad.buttons[6]?.value || 0;
+      if (ltValue > this.deadzone || pad.buttons[1]?.pressed) {
         secondaryFire = true;
       }
 
-      // Button [Y / Triangle] or [LT] for Tertiary Special Ability
-      const ltValue = pad.buttons[6]?.value || 0;
-      if (pad.buttons[3]?.pressed || ltValue > this.deadzone) {
+      // Left Bumper [LB / L1] (Button 4) or Button [Y / Triangle] (Button 3) for Ship Special Ability
+      if (pad.buttons[4]?.pressed || pad.buttons[3]?.pressed) {
         tertiaryFire = true;
       }
     }

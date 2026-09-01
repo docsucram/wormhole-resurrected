@@ -2646,6 +2646,33 @@
         color: #030816;
       }
 
+      .gamepad-focused,
+      button.gamepad-focused,
+      .action-btn.gamepad-focused {
+        outline: 2px solid var(--neon-cyan) !important;
+        box-shadow: 0 0 16px var(--neon-cyan), inset 0 0 10px rgba(0, 229, 255, 0.4) !important;
+        border-color: #ffffff !important;
+        background: rgba(0, 229, 255, 0.22) !important;
+        color: #ffffff !important;
+      }
+
+      .gamepad-diagram-wrap {
+        width: 100%;
+        max-width: 740px;
+        margin: 10px auto 14px auto;
+        background: rgba(4, 10, 24, 0.85);
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        border-radius: 8px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      .gamepad-diagram-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.2));
+      }
+
       #alert-banner {
         position: absolute;
         top: 70px;
@@ -4101,12 +4128,119 @@
 
             <div class="manual-card">
               <div class="manual-card-title">XBOX & CONTROLLER SUPPORT</div>
-              <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship rotation.</p>
-              <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters.</p>
-              <p><strong style="color: #00e5ff;">BUTTON [X] / [RB]:</strong> Primary Pulse Cannons.</p>
-              <p><strong style="color: #ffaa00;">BUTTON [B] / [LB]:</strong> Launch Secondary Stored Hazard [F].</p>
-              <p><strong style="color: #ff33aa;">BUTTON [Y] / [LT]:</strong> Ship Special Ability.</p>
-              <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game.</p>
+              <div class="gamepad-diagram-wrap">
+                <svg class="gamepad-diagram-svg" viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="gpBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#0d1b2a"/>
+                      <stop offset="100%" stop-color="#050c18"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Controller Body -->
+                  <path d="M 285 130 C 330 115 430 115 475 130 C 515 142 560 170 565 240 C 570 295 530 315 490 280 C 455 250 425 240 380 240 C 335 240 305 250 270 280 C 230 315 190 295 195 240 C 200 170 245 142 285 130 Z" fill="url(#gpBodyGrad)" stroke="#00e5ff" stroke-width="2" stroke-opacity="0.75" />
+                  <path d="M 225 220 C 215 260 220 285 245 275 C 270 260 280 235 275 205" fill="none" stroke="rgba(0, 229, 255, 0.25)" stroke-width="1.5" stroke-dasharray="3 3" />
+                  <path d="M 535 220 C 545 260 540 285 515 275 C 490 260 480 235 485 205" fill="none" stroke="rgba(0, 229, 255, 0.25)" stroke-width="1.5" stroke-dasharray="3 3" />
+
+                  <!-- Triggers & Bumpers -->
+                  <rect x="250" y="86" width="42" height="22" rx="5" fill="#15263f" stroke="#ffaa00" stroke-width="1.8" />
+                  <text x="271" y="101" font-family="'Orbitron', sans-serif" font-size="9.5" font-weight="900" fill="#ffaa00" text-anchor="middle">LT</text>
+                  <rect x="250" y="112" width="46" height="15" rx="3" fill="#112238" stroke="#ff33aa" stroke-width="1.5" />
+                  <text x="273" y="123" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="900" fill="#ff33aa" text-anchor="middle">LB</text>
+
+                  <rect x="468" y="86" width="42" height="22" rx="5" fill="#15263f" stroke="#00e5ff" stroke-width="1.8" />
+                  <text x="489" y="101" font-family="'Orbitron', sans-serif" font-size="9.5" font-weight="900" fill="#00e5ff" text-anchor="middle">RT</text>
+                  <rect x="464" y="112" width="46" height="15" rx="3" fill="#112238" stroke="#00ff88" stroke-width="1.5" />
+                  <text x="487" y="123" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="900" fill="#00ff88" text-anchor="middle">RB</text>
+
+                  <!-- Sticks & Dpad -->
+                  <circle cx="295" cy="180" r="24" fill="#091424" stroke="rgba(0, 229, 255, 0.5)" stroke-width="1.5" />
+                  <circle cx="295" cy="180" r="15" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                  <g transform="translate(325, 225)">
+                    <path d="M -7 -20 L 7 -20 L 7 -7 L 20 -7 L 20 7 L 7 7 L 7 20 L -7 20 L -7 7 L -20 7 L -20 -7 L -7 -7 Z" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                  </g>
+                  <circle cx="410" cy="225" r="22" fill="#091424" stroke="rgba(0, 229, 255, 0.5)" stroke-width="1.5" />
+                  <circle cx="410" cy="225" r="14" fill="#162942" stroke="rgba(0, 229, 255, 0.7)" stroke-width="1.5" />
+
+                  <!-- Buttons -->
+                  <circle cx="475" cy="162" r="10" fill="#162942" stroke="#ff33aa" stroke-width="1.5" />
+                  <text x="475" y="166" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#ff33aa" text-anchor="middle">Y</text>
+                  <circle cx="452" cy="185" r="10" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                  <text x="452" y="189" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#00e5ff" text-anchor="middle">X</text>
+                  <circle cx="498" cy="185" r="10" fill="#162942" stroke="#ffaa00" stroke-width="1.5" />
+                  <text x="498" y="189" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#ffaa00" text-anchor="middle">B</text>
+                  <circle cx="475" cy="208" r="10" fill="#162942" stroke="#00ff88" stroke-width="1.5" />
+                  <text x="475" y="212" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#00ff88" text-anchor="middle">A</text>
+
+                  <rect x="366" y="172" width="28" height="14" rx="4" fill="#102036" stroke="#cbd5e1" stroke-width="1.2" />
+                  <text x="380" y="182" font-family="'Orbitron', sans-serif" font-size="7" font-weight="900" fill="#cbd5e1" text-anchor="middle">START</text>
+
+                  <!-- Labels & Lines -->
+                  <polyline points="250,96 160,96 140,55" fill="none" stroke="#ffaa00" stroke-width="1.5" />
+                  <circle cx="250" cy="96" r="3" fill="#ffaa00" />
+                  <g transform="translate(15, 26)">
+                    <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#ffaa00" stroke-width="1.2" />
+                    <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#ffaa00">LAUNCH POWERUP</text>
+                    <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[LT / L2] <tspan fill="#64748b" font-size="7.5">OR [B]</tspan></text>
+                  </g>
+
+                  <polyline points="250,120 170,120 150,135" fill="none" stroke="#ff33aa" stroke-width="1.5" />
+                  <circle cx="250" cy="120" r="3" fill="#ff33aa" />
+                  <g transform="translate(15, 120)">
+                    <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#ff33aa" stroke-width="1.2" />
+                    <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#ff33aa">SPECIAL ABILITY</text>
+                    <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[LB] / [L1] <tspan fill="#64748b" font-size="7.5">OR [Y]</tspan></text>
+                  </g>
+
+                  <polyline points="275,185 200,185 180,230" fill="none" stroke="#00e5ff" stroke-width="1.5" />
+                  <circle cx="275" cy="185" r="3" fill="#00e5ff" />
+                  <g transform="translate(15, 215)">
+                    <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00e5ff" stroke-width="1.2" />
+                    <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00e5ff">STEER ROTATION</text>
+                    <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">STICK / D-PAD</text>
+                  </g>
+
+                  <polyline points="380,172 380,135 380,55" fill="none" stroke="#cbd5e1" stroke-width="1.5" />
+                  <circle cx="380" cy="172" r="3" fill="#cbd5e1" />
+                  <g transform="translate(295, 14)">
+                    <rect x="0" y="0" width="170" height="32" rx="4" fill="rgba(6,16,32,0.92)" stroke="#cbd5e1" stroke-width="1.2" />
+                    <text x="85" y="13" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#cbd5e1" text-anchor="middle">SYSTEM MENU // PAUSE</text>
+                    <text x="85" y="25" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#00e5ff" text-anchor="middle">START / OPTIONS [≡]</text>
+                  </g>
+
+                  <polyline points="510,96 600,96 620,55" fill="none" stroke="#00e5ff" stroke-width="1.5" />
+                  <circle cx="510" cy="96" r="3" fill="#00e5ff" />
+                  <g transform="translate(580, 26)">
+                    <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00e5ff" stroke-width="1.2" />
+                    <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00e5ff">MAIN THRUSTER</text>
+                    <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[RT / R2] <tspan fill="#64748b" font-size="7.5">OR [X]</tspan></text>
+                  </g>
+
+                  <polyline points="510,120 590,120 610,135" fill="none" stroke="#00ff88" stroke-width="1.5" />
+                  <circle cx="510" cy="120" r="3" fill="#00ff88" />
+                  <g transform="translate(580, 120)">
+                    <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00ff88" stroke-width="1.2" />
+                    <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00ff88">PULSE LASERS (FIRE)</text>
+                    <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[RB / R1] <tspan fill="#64748b" font-size="7.5">OR [A]</tspan></text>
+                  </g>
+
+                  <polyline points="508,185 580,185 600,225" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+                  <circle cx="508" cy="185" r="3" fill="#94a3b8" />
+                  <g transform="translate(580, 215)">
+                    <rect x="0" y="0" width="165" height="60" rx="4" fill="rgba(6,16,32,0.92)" stroke="#94a3b8" stroke-width="1.2" />
+                    <text x="8" y="13" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#00ff88">[A / ✕] <tspan fill="#cbd5e1">SHOOT / SELECT</tspan></text>
+                    <text x="8" y="26" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#00e5ff">[X / □] <tspan fill="#cbd5e1">THRUST FORWARD</tspan></text>
+                    <text x="8" y="39" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#ffaa00">[B / ○] <tspan fill="#cbd5e1">LAUNCH / CANCEL</tspan></text>
+                    <text x="8" y="52" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#ff33aa">[Y / △] <tspan fill="#cbd5e1">SPECIAL ABILITY</tspan></text>
+                  </g>
+                </svg>
+              </div>
+
+              <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship orientation.</p>
+              <p><strong style="color: #00e5ff;">RIGHT TRIGGER [RT] / BUTTON [X]:</strong> Main Thrusters (Analog acceleration).</p>
+              <p><strong style="color: #00ff88;">BUTTON [A] / RIGHT BUMPER [RB]:</strong> Primary Pulse Cannons (Shoot / Menu Select).</p>
+              <p><strong style="color: #ffaa00;">LEFT TRIGGER [LT] / BUTTON [B]:</strong> Launch Stored Powerup (Back / Cancel).</p>
+              <p><strong style="color: #ff33aa;">LEFT BUMPER [LB] / BUTTON [Y]:</strong> Ship Special Ability.</p>
+              <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> System Menu // Pause.</p>
             </div>
           </div>
 
@@ -4405,14 +4539,121 @@
               </div>
             </div>
 
-            <div class="manual-card" style="margin-top: 10px;">
-              <div class="manual-card-title">🎮 XBOX / PC CONTROLLER LAYOUT</div>
-              <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer Ship Orientation</p>
-              <p><strong style="color: #00ff88;">RIGHT TRIGGER [RT] / [A]:</strong> Main Thrusters</p>
-              <p><strong style="color: #00e5ff;">BUTTON [X] / [RB]:</strong> Primary Pulse Cannons</p>
-              <p><strong style="color: #ffaa00;">BUTTON [B] / [LB]:</strong> Launch Stored Powerup / Hazard [F]</p>
-              <p><strong style="color: #ff33aa;">BUTTON [Y] / [LT]:</strong> Ship Special Ability [R]</p>
-              <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> Pause Game</p>
+            <div class="gamepad-diagram-wrap">
+              <svg class="gamepad-diagram-svg" viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gpBodyGradOpt" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0d1b2a"/>
+                    <stop offset="100%" stop-color="#050c18"/>
+                  </linearGradient>
+                </defs>
+                <!-- Controller Body -->
+                <path d="M 285 130 C 330 115 430 115 475 130 C 515 142 560 170 565 240 C 570 295 530 315 490 280 C 455 250 425 240 380 240 C 335 240 305 250 270 280 C 230 315 190 295 195 240 C 200 170 245 142 285 130 Z" fill="url(#gpBodyGradOpt)" stroke="#00e5ff" stroke-width="2" stroke-opacity="0.75" />
+                <path d="M 225 220 C 215 260 220 285 245 275 C 270 260 280 235 275 205" fill="none" stroke="rgba(0, 229, 255, 0.25)" stroke-width="1.5" stroke-dasharray="3 3" />
+                <path d="M 535 220 C 545 260 540 285 515 275 C 490 260 480 235 485 205" fill="none" stroke="rgba(0, 229, 255, 0.25)" stroke-width="1.5" stroke-dasharray="3 3" />
+
+                <!-- Triggers & Bumpers -->
+                <rect x="250" y="86" width="42" height="22" rx="5" fill="#15263f" stroke="#ffaa00" stroke-width="1.8" />
+                <text x="271" y="101" font-family="'Orbitron', sans-serif" font-size="9.5" font-weight="900" fill="#ffaa00" text-anchor="middle">LT</text>
+                <rect x="250" y="112" width="46" height="15" rx="3" fill="#112238" stroke="#ff33aa" stroke-width="1.5" />
+                <text x="273" y="123" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="900" fill="#ff33aa" text-anchor="middle">LB</text>
+
+                <rect x="468" y="86" width="42" height="22" rx="5" fill="#15263f" stroke="#00e5ff" stroke-width="1.8" />
+                <text x="489" y="101" font-family="'Orbitron', sans-serif" font-size="9.5" font-weight="900" fill="#00e5ff" text-anchor="middle">RT</text>
+                <rect x="464" y="112" width="46" height="15" rx="3" fill="#112238" stroke="#00ff88" stroke-width="1.5" />
+                <text x="487" y="123" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="900" fill="#00ff88" text-anchor="middle">RB</text>
+
+                <!-- Sticks & Dpad -->
+                <circle cx="295" cy="180" r="24" fill="#091424" stroke="rgba(0, 229, 255, 0.5)" stroke-width="1.5" />
+                <circle cx="295" cy="180" r="15" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                <g transform="translate(325, 225)">
+                  <path d="M -7 -20 L 7 -20 L 7 -7 L 20 -7 L 20 7 L 7 7 L 7 20 L -7 20 L -7 7 L -20 7 L -20 -7 L -7 -7 Z" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                </g>
+                <circle cx="410" cy="225" r="22" fill="#091424" stroke="rgba(0, 229, 255, 0.5)" stroke-width="1.5" />
+                <circle cx="410" cy="225" r="14" fill="#162942" stroke="rgba(0, 229, 255, 0.7)" stroke-width="1.5" />
+
+                <!-- Buttons -->
+                <circle cx="475" cy="162" r="10" fill="#162942" stroke="#ff33aa" stroke-width="1.5" />
+                <text x="475" y="166" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#ff33aa" text-anchor="middle">Y</text>
+                <circle cx="452" cy="185" r="10" fill="#162942" stroke="#00e5ff" stroke-width="1.5" />
+                <text x="452" y="189" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#00e5ff" text-anchor="middle">X</text>
+                <circle cx="498" cy="185" r="10" fill="#162942" stroke="#ffaa00" stroke-width="1.5" />
+                <text x="498" y="189" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#ffaa00" text-anchor="middle">B</text>
+                <circle cx="475" cy="208" r="10" fill="#162942" stroke="#00ff88" stroke-width="1.5" />
+                <text x="475" y="212" font-family="'Orbitron', sans-serif" font-size="9" font-weight="900" fill="#00ff88" text-anchor="middle">A</text>
+
+                <rect x="366" y="172" width="28" height="14" rx="4" fill="#102036" stroke="#cbd5e1" stroke-width="1.2" />
+                <text x="380" y="182" font-family="'Orbitron', sans-serif" font-size="7" font-weight="900" fill="#cbd5e1" text-anchor="middle">START</text>
+
+                <!-- Labels & Lines -->
+                <polyline points="250,96 160,96 140,55" fill="none" stroke="#ffaa00" stroke-width="1.5" />
+                <circle cx="250" cy="96" r="3" fill="#ffaa00" />
+                <g transform="translate(15, 26)">
+                  <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#ffaa00" stroke-width="1.2" />
+                  <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#ffaa00">LAUNCH POWERUP</text>
+                  <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[LT / L2] <tspan fill="#64748b" font-size="7.5">OR [B]</tspan></text>
+                </g>
+
+                <polyline points="250,120 170,120 150,135" fill="none" stroke="#ff33aa" stroke-width="1.5" />
+                <circle cx="250" cy="120" r="3" fill="#ff33aa" />
+                <g transform="translate(15, 120)">
+                  <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#ff33aa" stroke-width="1.2" />
+                  <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#ff33aa">SPECIAL ABILITY</text>
+                  <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[LB] / [L1] <tspan fill="#64748b" font-size="7.5">OR [Y]</tspan></text>
+                </g>
+
+                <polyline points="275,185 200,185 180,230" fill="none" stroke="#00e5ff" stroke-width="1.5" />
+                <circle cx="275" cy="185" r="3" fill="#00e5ff" />
+                <g transform="translate(15, 215)">
+                  <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00e5ff" stroke-width="1.2" />
+                  <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00e5ff">STEER ROTATION</text>
+                  <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">STICK / D-PAD</text>
+                </g>
+
+                <polyline points="380,172 380,135 380,55" fill="none" stroke="#cbd5e1" stroke-width="1.5" />
+                <circle cx="380" cy="172" r="3" fill="#cbd5e1" />
+                <g transform="translate(295, 14)">
+                  <rect x="0" y="0" width="170" height="32" rx="4" fill="rgba(6,16,32,0.92)" stroke="#cbd5e1" stroke-width="1.2" />
+                  <text x="85" y="13" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#cbd5e1" text-anchor="middle">SYSTEM MENU // PAUSE</text>
+                  <text x="85" y="25" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#00e5ff" text-anchor="middle">START / OPTIONS [≡]</text>
+                </g>
+
+                <polyline points="510,96 600,96 620,55" fill="none" stroke="#00e5ff" stroke-width="1.5" />
+                <circle cx="510" cy="96" r="3" fill="#00e5ff" />
+                <g transform="translate(580, 26)">
+                  <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00e5ff" stroke-width="1.2" />
+                  <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00e5ff">MAIN THRUSTER</text>
+                  <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[RT / R2] <tspan fill="#64748b" font-size="7.5">OR [X]</tspan></text>
+                </g>
+
+                <polyline points="510,120 590,120 610,135" fill="none" stroke="#00ff88" stroke-width="1.5" />
+                <circle cx="510" cy="120" r="3" fill="#00ff88" />
+                <g transform="translate(580, 120)">
+                  <rect x="0" y="0" width="165" height="34" rx="4" fill="rgba(6,16,32,0.92)" stroke="#00ff88" stroke-width="1.2" />
+                  <text x="8" y="14" font-family="'Orbitron', sans-serif" font-size="8" font-weight="900" fill="#00ff88">PULSE LASERS (FIRE)</text>
+                  <text x="8" y="27" font-family="'Orbitron', sans-serif" font-size="8.5" font-weight="800" fill="#ffffff">[RB / R1] <tspan fill="#64748b" font-size="7.5">OR [A]</tspan></text>
+                </g>
+
+                <polyline points="508,185 580,185 600,225" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+                <circle cx="508" cy="185" r="3" fill="#94a3b8" />
+                <g transform="translate(580, 215)">
+                  <rect x="0" y="0" width="165" height="60" rx="4" fill="rgba(6,16,32,0.92)" stroke="#94a3b8" stroke-width="1.2" />
+                  <text x="8" y="13" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#00ff88">[A / ✕] <tspan fill="#cbd5e1">SHOOT / SELECT</tspan></text>
+                  <text x="8" y="26" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#00e5ff">[X / □] <tspan fill="#cbd5e1">THRUST FORWARD</tspan></text>
+                  <text x="8" y="39" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#ffaa00">[B / ○] <tspan fill="#cbd5e1">LAUNCH / CANCEL</tspan></text>
+                  <text x="8" y="52" font-family="'Orbitron', sans-serif" font-size="7.5" font-weight="900" fill="#ff33aa">[Y / △] <tspan fill="#cbd5e1">SPECIAL ABILITY</tspan></text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="manual-card" style="margin-top: 6px;">
+              <div class="manual-card-title">🎮 CONTROLLER ASSIGNMENTS</div>
+              <p><strong style="color: #00ff88;">LEFT STICK / D-PAD:</strong> Steer ship orientation.</p>
+              <p><strong style="color: #00e5ff;">RIGHT TRIGGER [RT] / BUTTON [X]:</strong> Main Thrusters (Analog acceleration).</p>
+              <p><strong style="color: #00ff88;">BUTTON [A] / RIGHT BUMPER [RB]:</strong> Primary Pulse Cannons (Fire / Menu Select).</p>
+              <p><strong style="color: #ffaa00;">LEFT TRIGGER [LT] / BUTTON [B]:</strong> Launch Stored Powerup (Back / Cancel).</p>
+              <p><strong style="color: #ff33aa;">LEFT BUMPER [LB] / BUTTON [Y]:</strong> Ship Special Ability.</p>
+              <p><strong style="color: #ffffff;">START / MENU BUTTON:</strong> System Menu // Pause.</p>
             </div>
           </div>
 
@@ -4637,7 +4878,7 @@
               <div class="mini-pup-slot" id="slot-3"></div>
               <div class="mini-pup-slot" id="slot-4"></div>
             </div>
-            <span class="hud-launch-hint">[F] LAUNCH</span>
+            <span class="hud-launch-hint" id="hud-launch-hint-text">[F] LAUNCH</span>
           </div>
         </div>
 

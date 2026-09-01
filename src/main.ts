@@ -5857,6 +5857,17 @@ class WormholeGame {
       hudCallsign.style.textShadow = `0 0 10px ${myColor}`;
     }
 
+    // Dynamic Controller/Keyboard Launch Hint ([F] LAUNCH or [LT] LAUNCH)
+    const launchHintEl = this.getHudEl('hud-launch-hint-text');
+    if (launchHintEl) {
+      const isPad = this.input.isGamepadConnected();
+      const hintText = isPad ? '[LT] LAUNCH' : (this.isMobile ? 'LAUNCH' : `${this.input.getKeyPrompt('secondaryFire', this.isMobile)} LAUNCH`);
+      if (this.lastHudValues['launchHint'] !== hintText) {
+        this.lastHudValues['launchHint'] = hintText;
+        launchHintEl.textContent = hintText;
+      }
+    }
+
     const shipName = this.player.compiled.config.name.toUpperCase();
     const shipTag = this.getHudEl('hud-ship-name-tag');
     if (shipTag && this.lastHudValues['shipTag'] !== shipName) {
@@ -6441,6 +6452,7 @@ class WormholeGame {
 
     const t0 = performance.now();
     try {
+      this.handleGamepadMenuNavigation(dt);
       this.update(dt);
       this.render(dt);
     } catch (err) {
@@ -6448,6 +6460,181 @@ class WormholeGame {
     }
     const t1 = performance.now();
     this.totalFrameExecTime += (t1 - t0);
+  }
+
+  private gamepadFocusedElement: HTMLElement | null = null;
+
+  private handleGamepadMenuNavigation(dt: number): void {
+    const nav = this.input.pollGamepadNav(dt);
+    if (!nav) return;
+
+    // 1. Check if Match Modal is active
+    const matchModal = document.getElementById('match-modal');
+    const isMatchModalActive = matchModal?.classList.contains('active');
+
+    if (isMatchModalActive || this.gameState.phase === 'MATCH_OVER') {
+      if (nav.confirm || nav.menu) {
+        if (Date.now() - this.victoryModalOpenTime >= 750) {
+          document.getElementById('btn-play-again')?.click();
+          this.sound.playClick();
+        }
+      }
+      return;
+    }
+
+    // 2. Check if Round Modal is active
+    const roundModal = document.getElementById('round-modal');
+    const isRoundModalActive = roundModal?.classList.contains('active');
+
+    if (isRoundModalActive || !this.player.isAlive || this.gameState.phase === 'ROUND_OVER') {
+      if (nav.confirm || nav.menu) {
+        if (Date.now() - this.victoryModalOpenTime >= 750) {
+          this.startNextRound();
+          this.sound.playClick();
+        }
+      } else if (nav.navLeft || nav.navRight) {
+        // Cycle fighter ship selection during staging/round victory
+        const nextShip = nav.navRight
+          ? (this.selectedShipIndex + 1) % 8
+          : (this.selectedShipIndex - 1 + 8) % 8;
+        if (ShipCatalog.isShipUnlocked(nextShip, this.totalMatchWins)) {
+          this.selectShip(nextShip);
+          this.manualHangarView.setShip(nextShip);
+          this.modalHangarView.setShip(nextShip);
+          this.syncShipSelectionUI(nextShip);
+          this.sound.playClick();
+        }
+      }
+      return;
+    }
+
+    // 3. System Menu / Pause Toggle with Start Button
+    if (nav.menu) {
+      const pauseModal = document.getElementById('pause-modal');
+      const optModal = document.getElementById('options-modal');
+      const manualModal = document.getElementById('manual-modal');
+      if (optModal?.classList.contains('active')) {
+        optModal.classList.remove('active');
+        this.clearGamepadFocus();
+        this.sound.playClick();
+        return;
+      }
+      if (manualModal?.classList.contains('active')) {
+        manualModal.classList.remove('active');
+        this.manualHangarView.stopPreview();
+        this.clearGamepadFocus();
+        this.sound.playClick();
+        return;
+      }
+      if (this.inArena && pauseModal) {
+        pauseModal.classList.toggle('active');
+        this.clearGamepadFocus();
+        this.sound.playClick();
+      }
+      return;
+    }
+
+    // 4. Modal / Dialog Navigation
+    const activeModal = (document.querySelector('#pause-modal.active, #options-modal.active, #manual-modal.active, #create-match-modal.active, #join-lan-modal.active, #spawner-modal.active, #disconnect-modal.active') as HTMLElement | null);
+
+    if (activeModal) {
+      if (nav.cancel) {
+        // Close modal
+        const closeBtn = activeModal.querySelector('#btn-close-options-x, #btn-close-manual-top, #btn-close-manual, #btn-pause-resume, #btn-close-spawner, #btn-create-cancel, #btn-join-cancel, #btn-return-solo') as HTMLElement | null;
+        if (closeBtn) {
+          closeBtn.click();
+        } else {
+          activeModal.classList.remove('active');
+        }
+        this.clearGamepadFocus();
+        this.sound.playClick();
+        return;
+      }
+
+      // Handle Tab Switching in Options / Manual with Shoulder Bumpers or D-Pad
+      if (nav.tabLeft || nav.tabRight) {
+        const tabs = Array.from(activeModal.querySelectorAll<HTMLElement>('.manual-tab-btn')).filter((el) => el.offsetParent !== null);
+        if (tabs.length > 0) {
+          const activeTabIdx = tabs.findIndex((t) => t.classList.contains('active'));
+          const nextTabIdx = nav.tabRight
+            ? (activeTabIdx + 1) % tabs.length
+            : (activeTabIdx - 1 + tabs.length) % tabs.length;
+          tabs[nextTabIdx]?.click();
+          this.sound.playClick();
+          return;
+        }
+      }
+
+      // Find all visible interactive elements in modal
+      const focusable = Array.from(
+        activeModal.querySelectorAll<HTMLElement>('button:not([disabled]), input[type="range"], input[type="checkbox"], select, .action-btn')
+      ).filter((el) => el.offsetParent !== null && !el.classList.contains('close-x-btn'));
+
+      if (focusable.length === 0) return;
+
+      let currentIndex = this.gamepadFocusedElement ? focusable.indexOf(this.gamepadFocusedElement) : -1;
+
+      if (nav.navDown) {
+        currentIndex = (currentIndex + 1) % focusable.length;
+        this.setGamepadFocus(focusable[currentIndex]);
+      } else if (nav.navUp) {
+        currentIndex = (currentIndex - 1 + focusable.length) % focusable.length;
+        this.setGamepadFocus(focusable[currentIndex]);
+      } else if (nav.navLeft || nav.navRight) {
+        const cur = this.gamepadFocusedElement;
+        if (cur && cur.tagName === 'INPUT' && (cur as HTMLInputElement).type === 'range') {
+          const slider = cur as HTMLInputElement;
+          const step = parseFloat(slider.step) || 0.05;
+          const min = parseFloat(slider.min) || 0;
+          const max = parseFloat(slider.max) || 1;
+          let val = parseFloat(slider.value) || 0;
+          val = nav.navRight ? Math.min(max, val + step) : Math.max(min, val - step);
+          slider.value = val.toString();
+          slider.dispatchEvent(new Event('input', { bubbles: true }));
+          slider.dispatchEvent(new Event('change', { bubbles: true }));
+          this.sound.playClick();
+        } else {
+          // Switch tabs if present
+          const tabs = Array.from(activeModal.querySelectorAll<HTMLElement>('.manual-tab-btn')).filter((el) => el.offsetParent !== null);
+          if (tabs.length > 0) {
+            const activeTabIdx = tabs.findIndex((t) => t.classList.contains('active'));
+            const nextTabIdx = nav.navRight
+              ? (activeTabIdx + 1) % tabs.length
+              : (activeTabIdx - 1 + tabs.length) % tabs.length;
+            tabs[nextTabIdx]?.click();
+            this.sound.playClick();
+          }
+        }
+      } else if (nav.confirm) {
+        if (this.gamepadFocusedElement) {
+          this.gamepadFocusedElement.click();
+          this.sound.playClick();
+        } else if (focusable.length > 0) {
+          focusable[0].click();
+          this.sound.playClick();
+        }
+      }
+    } else {
+      this.clearGamepadFocus();
+    }
+  }
+
+  private setGamepadFocus(el: HTMLElement): void {
+    this.clearGamepadFocus();
+    this.gamepadFocusedElement = el;
+    el.classList.add('gamepad-focused');
+    try {
+      el.focus({ preventScroll: false });
+    } catch {}
+    this.sound.playClick();
+  }
+
+  private clearGamepadFocus(): void {
+    if (this.gamepadFocusedElement) {
+      this.gamepadFocusedElement.classList.remove('gamepad-focused');
+      this.gamepadFocusedElement = null;
+    }
+    document.querySelectorAll('.gamepad-focused').forEach((el) => el.classList.remove('gamepad-focused'));
   }
 }
 
