@@ -47,6 +47,7 @@ export class InputManager {
   public deadzone = 0.25;
   public enableAnalogThrust = true;
   public enableHaptics = true;
+  public lastInputDevice: 'keyboard' | 'gamepad' | 'touch' = 'keyboard';
 
   private prevPadButtons: boolean[] = [];
   private navRepeatTimer = 0;
@@ -174,6 +175,7 @@ export class InputManager {
         return;
       }
       this.keys[e.code] = true;
+      this.lastInputDevice = 'keyboard';
       // Prevent default scrolling for game controls
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
         e.preventDefault();
@@ -299,6 +301,7 @@ export class InputManager {
     this.prevPadButtons = currentButtons;
 
     if (navUp || navDown || navLeft || navRight || confirm || cancel || menu || tabLeft || tabRight) {
+      this.lastInputDevice = 'gamepad';
       return { navUp, navDown, navLeft, navRight, confirm, cancel, menu, tabLeft, tabRight };
     }
     return null;
@@ -351,20 +354,24 @@ export class InputManager {
         }
       }
 
-      // Button [A / Cross] (Button 0) or [RB / R1] (Button 5) for Primary Pulse Laser Fire
-      if (pad.buttons[0]?.pressed || pad.buttons[5]?.pressed) {
+      // Left Trigger [LT / L2] (Button 6) or Button [A / Cross] (Button 0) for Primary Pulse Laser Fire
+      const ltValue = pad.buttons[6]?.value || 0;
+      if (ltValue > this.deadzone || pad.buttons[0]?.pressed) {
         fire = true;
       }
 
-      // Left Trigger [LT / L2] (Button 6) or Button [B / Circle] (Button 1) for Launch Stored Powerup
-      const ltValue = pad.buttons[6]?.value || 0;
-      if (ltValue > this.deadzone || pad.buttons[1]?.pressed) {
+      // Left Bumper [LB / L1] (Button 4) or Button [B / Circle] (Button 1) for Launch Stored Powerup
+      if (pad.buttons[4]?.pressed || pad.buttons[1]?.pressed) {
         secondaryFire = true;
       }
 
-      // Left Bumper [LB / L1] (Button 4) or Button [Y / Triangle] (Button 3) for Ship Special Ability
-      if (pad.buttons[4]?.pressed || pad.buttons[3]?.pressed) {
+      // Right Bumper [RB / R1] (Button 5) or Button [Y / Triangle] (Button 3) for Ship Special Ability
+      if (pad.buttons[5]?.pressed || pad.buttons[3]?.pressed) {
         tertiaryFire = true;
+      }
+
+      if (up || fire || secondaryFire || tertiaryFire || left || right) {
+        this.lastInputDevice = 'gamepad';
       }
     }
 

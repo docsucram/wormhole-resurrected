@@ -4350,12 +4350,43 @@ class WormholeGame {
     const newColor = (colorIndex + PLAYER_COLORS.length) % PLAYER_COLORS.length;
     const targetProfile = PLAYER_COLORS[newColor];
 
-    // Prevent selecting a color already claimed by another participant in the roster
-    const isClaimedByOther = this.tablePlayers.some(
-      (p) => p !== null && p.slot !== this.player.slot && p.color.toLowerCase() === targetProfile.primary.toLowerCase()
+    // Prevent selecting a color already claimed by another HUMAN participant in the roster
+    const isClaimedByHuman = this.tablePlayers.some(
+      (p) => p !== null && !p.isBot && p.slot !== this.player.slot && p.color.toLowerCase() === targetProfile.primary.toLowerCase()
     );
-    if (isClaimedByOther) {
+    if (isClaimedByHuman) {
       return;
+    }
+
+    // If claimed by a bot, find another unique unused color for that bot and reassign it
+    const botWithColor = this.tablePlayers.find(
+      (p) => p !== null && p.isBot && p.slot !== this.player.slot && p.color.toLowerCase() === targetProfile.primary.toLowerCase()
+    );
+    if (botWithColor) {
+      const taken = new Set<number>();
+      taken.add(newColor);
+      for (let i = 0; i < 8; i++) {
+        const p = this.tablePlayers[i];
+        if (p && p.slot !== botWithColor.slot && p.slot !== this.player.slot) {
+          const cIdx = PLAYER_COLORS.findIndex((c) => c.primary.toLowerCase() === p.color.toLowerCase());
+          if (cIdx !== -1) taken.add(cIdx);
+        }
+      }
+      let replacementColorIdx = 0;
+      for (let c = 0; c < PLAYER_COLORS.length; c++) {
+        if (!taken.has(c)) {
+          replacementColorIdx = c;
+          break;
+        }
+      }
+      const newBotProfile = PLAYER_COLORS[replacementColorIdx];
+      botWithColor.color = newBotProfile.primary;
+
+      // Update bot realm ship color if in arena
+      const botRealm = this.simulatedRealm.botRealms.get(botWithColor.slot);
+      if (botRealm) {
+        botRealm.botShip.colorIndex = replacementColorIdx;
+      }
     }
 
     this.selectedColorIndex = newColor;
@@ -4407,14 +4438,14 @@ class WormholeGame {
     if (modalMatchColorBar) modalMatchColorBar.innerHTML = '';
 
     PLAYER_COLORS.forEach((profile, index) => {
-      const isClaimedByOther = this.tablePlayers.some(
-        (p) => p !== null && p.slot !== this.player.slot && p.color.toLowerCase() === profile.primary.toLowerCase()
+      const isClaimedByHuman = this.tablePlayers.some(
+        (p) => p !== null && !p.isBot && p.slot !== this.player.slot && p.color.toLowerCase() === profile.primary.toLowerCase()
       );
 
       const createSwatch = (container: HTMLElement | null) => {
         if (!container) return;
         const btn = document.createElement('button');
-        if (isClaimedByOther) {
+        if (isClaimedByHuman) {
           btn.className = 'color-swatch-btn disabled';
           btn.title = `${profile.name} (Claimed by another pilot)`;
         } else {
@@ -5857,11 +5888,11 @@ class WormholeGame {
       hudCallsign.style.textShadow = `0 0 10px ${myColor}`;
     }
 
-    // Dynamic Controller/Keyboard Launch Hint ([F] LAUNCH or [LT] LAUNCH)
+    // Dynamic Controller/Keyboard Launch Hint ([F] LAUNCH or [LB] LAUNCH)
     const launchHintEl = this.getHudEl('hud-launch-hint-text');
     if (launchHintEl) {
-      const isPad = this.input.isGamepadConnected();
-      const hintText = isPad ? '[LT] LAUNCH' : (this.isMobile ? 'LAUNCH' : `${this.input.getKeyPrompt('secondaryFire', this.isMobile)} LAUNCH`);
+      const isPad = this.input.lastInputDevice === 'gamepad';
+      const hintText = isPad ? '[LB] LAUNCH' : (this.isMobile ? 'LAUNCH' : `${this.input.getKeyPrompt('secondaryFire', this.isMobile)} LAUNCH`);
       if (this.lastHudValues['launchHint'] !== hintText) {
         this.lastHudValues['launchHint'] = hintText;
         launchHintEl.textContent = hintText;
@@ -6453,6 +6484,7 @@ class WormholeGame {
     const t0 = performance.now();
     try {
       this.handleGamepadMenuNavigation(dt);
+      this.updateDynamicInputPrompts();
       this.update(dt);
       this.render(dt);
     } catch (err) {
@@ -6635,6 +6667,46 @@ class WormholeGame {
       this.gamepadFocusedElement = null;
     }
     document.querySelectorAll('.gamepad-focused').forEach((el) => el.classList.remove('gamepad-focused'));
+  }
+
+  public updateDynamicInputPrompts(): void {
+    const isPad = this.input.lastInputDevice === 'gamepad';
+    const isMob = this.isMobile || this.input.lastInputDevice === 'touch';
+
+    // 1. Next Round / Staging Button
+    const btnNext = document.getElementById('btn-next-round');
+    if (btnNext) {
+      if (this.isLanMatchClient) {
+        if (!btnNext.innerText.includes('WAITING FOR HOST')) {
+          const isStaging = this.gameState.phase === 'STANDBY' || this.gameState.currentRound === 1;
+          if (isStaging) {
+            btnNext.innerText = 'READY TO DEPLOY';
+          } else {
+            btnNext.innerText = isMob ? 'READY FOR NEXT ROUND' : (isPad ? 'READY FOR NEXT ROUND [FIRE]' : 'READY FOR NEXT ROUND [SPACE]');
+          }
+        }
+      } else {
+        const isStaging = this.gameState.phase === 'STANDBY' || this.gameState.currentRound === 1;
+        const actionPrefix = isStaging ? 'ENGAGE MATCH' : 'NEXT ROUND';
+        btnNext.innerText = isMob ? actionPrefix : (isPad ? `${actionPrefix} [FIRE]` : `${actionPrefix} [SPACE]`);
+      }
+    }
+
+    // 2. Play Again Button (Match End Modal)
+    const btnPlayAgain = document.getElementById('btn-play-again');
+    if (btnPlayAgain) {
+      btnPlayAgain.innerText = isMob ? 'PLAY AGAIN' : (isPad ? 'PLAY AGAIN [FIRE]' : 'PLAY AGAIN [SPACE]');
+    }
+
+    // 3. Top HUD Launch Hint
+    const launchHintEl = this.getHudEl('hud-launch-hint-text');
+    if (launchHintEl) {
+      const hintText = isPad ? '[LB] LAUNCH' : (isMob ? 'LAUNCH' : `${this.input.getKeyPrompt('secondaryFire', false)} LAUNCH`);
+      if (this.lastHudValues['launchHint'] !== hintText) {
+        this.lastHudValues['launchHint'] = hintText;
+        launchHintEl.textContent = hintText;
+      }
+    }
   }
 }
 
