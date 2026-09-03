@@ -496,19 +496,46 @@ class WormholeGame {
           this.renderLobbyMatches();
         }
       }
+    } else if (data.type === 'PLAYER_LEAVE') {
+      if (this.currentMatchConfig && (this.currentMatchConfig.id === data.matchId || !data.matchId)) {
+        this.handlePeerDeparture(data.slot ?? data.fromSlot, data.clientId, data.playerName);
+      }
     } else if (data.type === 'MATCH_JOIN_REQUEST') {
       // Host receives join request from another LAN / Web pilot
       if (this.isLanMatchHost && this.currentMatchConfig && (this.currentMatchConfig.id === data.matchId || !data.matchId)) {
-        // 1. Check if this client is already assigned a slot in the current match
+        // 1. Check if this client is already assigned a slot in the current match (ignore AI bots)
         let slot = -1;
         for (let i = 1; i < 8; i++) {
-          if (this.tablePlayers[i] && (this.tablePlayers[i]!.clientId === data.clientId || this.tablePlayers[i]!.name === data.playerName)) {
+          if (this.tablePlayers[i] && !this.tablePlayers[i]!.isBot && (this.tablePlayers[i]!.clientId === data.clientId || this.tablePlayers[i]!.name === data.playerName)) {
             slot = i;
             break;
           }
         }
 
-        // 2. If not already present, find the first empty slot
+        const maxSlots = this.currentMatchConfig.maxPlayers || 8;
+
+        // 2. If not already present, find the first empty slot within match limits (1..maxSlots-1)
+        if (slot === -1) {
+          for (let i = 1; i < maxSlots; i++) {
+            if (!this.tablePlayers[i]) {
+              slot = i;
+              break;
+            }
+          }
+        }
+
+        // 3. Or replace an existing AI bot slot within match limits (human players take priority over bots)
+        if (slot === -1) {
+          for (let i = 1; i < maxSlots; i++) {
+            if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
+              slot = i;
+              this.simulatedRealm.removeBotRealm(i);
+              break;
+            }
+          }
+        }
+
+        // 4. Fallback: if arena has room beyond current maxSlots up to 8, find first empty slot
         if (slot === -1) {
           for (let i = 1; i < 8; i++) {
             if (!this.tablePlayers[i]) {
@@ -518,7 +545,7 @@ class WormholeGame {
           }
         }
 
-        // 3. Or replace an existing AI bot slot
+        // 5. Ultimate fallback: replace any AI bot in the arena
         if (slot === -1) {
           for (let i = 1; i < 8; i++) {
             if (this.tablePlayers[i] && this.tablePlayers[i]!.isBot) {
@@ -532,8 +559,8 @@ class WormholeGame {
         if (slot !== -1) {
           let assignedTeam: 'A' | 'B' | undefined = undefined;
           if (this.currentMatchConfig.matchType === 'TEAM') {
-            const teamACount = this.tablePlayers.filter((p) => p && p.team === 'A').length;
-            const teamBCount = this.tablePlayers.filter((p) => p && p.team === 'B').length;
+            const teamACount = this.tablePlayers.filter((p, idx) => p && idx !== slot && p.team === 'A').length;
+            const teamBCount = this.tablePlayers.filter((p, idx) => p && idx !== slot && p.team === 'B').length;
             assignedTeam = teamACount <= teamBCount ? 'A' : 'B';
           }
 
@@ -586,8 +613,12 @@ class WormholeGame {
             team: assignedTeam,
           };
 
+          // Initialize playerLastSeen immediately so reaper doesn't evict them!
+          this.playerLastSeen.set(slot, Date.now());
+
           this.isMatchWaitingForPilots = false;
           this.simulatedRealm.isRemotePlayer = true;
+          this.lastTableRosterSignature = '';
           this.rebuildTableWormholes();
           this.updateTableRosterUI();
           this.buildColorSwatches();
@@ -609,6 +640,7 @@ class WormholeGame {
             matchInList.currentPlayers = activeCount;
           }
           this.broadcastMatches();
+          this.broadcastRosterSync();
 
           const sendAcceptance = () => {
             if (this.currentMatchConfig) {
@@ -744,36 +776,7 @@ class WormholeGame {
         }
 
         if (pkt.type === 'PLAYER_LEAVE') {
-          const leavingSlot = pkt.slot ?? data.fromSlot;
-          const leavingPlayer = this.tablePlayers[leavingSlot];
-          if (leavingPlayer) {
-            const name = leavingPlayer.name;
-            this.tablePlayers[leavingSlot] = null;
-            this.playerLastSeen.delete(leavingSlot);
-            const victimWh = this.wormholes.find((w) => w.slot === leavingSlot);
-            if (victimWh) {
-              victimWh.killSelf(this.particles, this.sound);
-            }
-            this.rebuildTableWormholes();
-            this.updateTableRosterUI();
-            this.showAlert(`PILOT DEPARTED // ${name.toUpperCase()} LEFT`);
-            this.addChatLog(`${name} left the match.`, 'system');
-
-            if (this.isLanMatchHost && this.currentMatchConfig) {
-              const activeCount = this.tablePlayers.filter((p) => p !== null).length;
-              this.currentMatchConfig.currentPlayers = activeCount;
-              const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
-              if (matchInList) {
-                matchInList.currentPlayers = activeCount;
-              }
-              this.broadcastMatches();
-              this.broadcastRosterSync();
-
-              if (this.gameState.phase === 'PLAYING') {
-                this.checkMatchRoundStatus();
-              }
-            }
-          }
+          this.handlePeerDeparture(pkt.slot ?? data.fromSlot, pkt.clientId, pkt.playerName);
         } else if (pkt.type === 'EVICT_TIMEOUT') {
           if (this.isLanMatchClient) {
             this.showAlert('DISCONNECTED // INACTIVITY TIMEOUT');
@@ -863,6 +866,21 @@ class WormholeGame {
             this.rebuildTableWormholes();
             this.updateTableRosterUI();
             this.buildColorSwatches();
+            if (this.isLanMatchHost) {
+              this.broadcastRosterSync();
+            }
+          }
+        } else if (pkt.type === 'SHIP_SELECT') {
+          const fromSlot = pkt.slot ?? data.fromSlot;
+          if (fromSlot !== this.player.slot && this.tablePlayers[fromSlot]) {
+            this.tablePlayers[fromSlot]!.shipId = pkt.shipId;
+            const shipCfg = ShipCatalog.get(pkt.shipId);
+            if (shipCfg) {
+              this.tablePlayers[fromSlot]!.health = shipCfg.config.hitPoints;
+              this.tablePlayers[fromSlot]!.maxHealth = shipCfg.config.hitPoints;
+            }
+            this.lastTableRosterSignature = '';
+            this.updateTableRosterUI();
             if (this.isLanMatchHost) {
               this.broadcastRosterSync();
             }
@@ -1108,6 +1126,58 @@ class WormholeGame {
           this.addChatLog('Host left the match. Returned to lobby lounge.', 'system');
         }
         this.sound.playDefeatFanfare();
+      }
+    }
+  }
+
+  private handlePeerDeparture(slot?: number, clientId?: string, playerName?: string): void {
+    let targetSlot = -1;
+    if (slot !== undefined && slot >= 1 && slot < 8 && this.tablePlayers[slot]) {
+      targetSlot = slot;
+    } else if (clientId) {
+      for (let i = 1; i < 8; i++) {
+        if (this.tablePlayers[i] && this.tablePlayers[i]!.clientId === clientId) {
+          targetSlot = i;
+          break;
+        }
+      }
+    } else if (playerName) {
+      for (let i = 1; i < 8; i++) {
+        if (this.tablePlayers[i] && this.tablePlayers[i]!.name === playerName) {
+          targetSlot = i;
+          break;
+        }
+      }
+    }
+
+    if (targetSlot !== -1 && this.tablePlayers[targetSlot]) {
+      const leavingPlayer = this.tablePlayers[targetSlot]!;
+      const name = leavingPlayer.name;
+      this.tablePlayers[targetSlot] = null;
+      this.playerLastSeen.delete(targetSlot);
+      const victimWh = this.wormholes.find((w) => w.slot === targetSlot);
+      if (victimWh) {
+        victimWh.killSelf(this.particles, this.sound);
+      }
+      this.lastTableRosterSignature = '';
+      this.rebuildTableWormholes();
+      this.updateTableRosterUI();
+      this.showAlert(`PILOT DEPARTED // ${name.toUpperCase()} LEFT`);
+      this.addChatLog(`${name} left the match.`, 'system');
+
+      if (this.isLanMatchHost && this.currentMatchConfig) {
+        const activeCount = this.tablePlayers.filter((p) => p !== null).length;
+        this.currentMatchConfig.currentPlayers = activeCount;
+        const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
+        if (matchInList) {
+          matchInList.currentPlayers = activeCount;
+        }
+        this.broadcastMatches();
+        this.broadcastRosterSync();
+
+        if (this.gameState.phase === 'PLAYING') {
+          this.checkMatchRoundStatus();
+        }
       }
     }
   }
@@ -1651,6 +1721,16 @@ class WormholeGame {
     this.updateTableRosterUI();
     this.broadcastRosterSync();
 
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      const activeCount = this.tablePlayers.filter((p) => p !== null).length;
+      this.currentMatchConfig.currentPlayers = activeCount;
+      const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
+      if (matchInList) {
+        matchInList.currentPlayers = activeCount;
+      }
+      this.broadcastMatches();
+    }
+
     // If waiting in staging, update ready message
     const scoreEl = document.getElementById('round-modal-score');
     if (scoreEl && this.gameState.phase === 'STANDBY') {
@@ -1697,6 +1777,16 @@ class WormholeGame {
     this.rebuildTableWormholes();
     this.updateTableRosterUI();
     this.broadcastRosterSync();
+
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      const activeCount = this.tablePlayers.filter((p) => p !== null).length;
+      this.currentMatchConfig.currentPlayers = activeCount;
+      const matchInList = this.lobbyMatches.find((m) => m.id === this.currentMatchConfig!.id);
+      if (matchInList) {
+        matchInList.currentPlayers = activeCount;
+      }
+      this.broadcastMatches();
+    }
   }
 
   private cycleOpponent(direction: 1 | -1): void {
@@ -1898,6 +1988,28 @@ class WormholeGame {
         });
         this.lobbyMatches = this.lobbyMatches.filter((m) => m.id !== this.currentMatchConfig!.id);
         this.broadcastMatches();
+      } else if (this.isLanMatchClient && this.currentMatchConfig) {
+        const leavePkt = {
+          type: 'MATCH_PACKET',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          packet: {
+            type: 'PLAYER_LEAVE',
+            slot: this.player.slot,
+            playerName: this.playerName,
+            clientId: this.localClientId,
+          },
+        };
+        const directLeavePkt = {
+          type: 'PLAYER_LEAVE',
+          matchId: this.currentMatchConfig.id,
+          fromSlot: this.player.slot,
+          slot: this.player.slot,
+          playerName: this.playerName,
+          clientId: this.localClientId,
+        };
+        this.sendLanPacket(leavePkt);
+        this.sendLanPacket(directLeavePkt);
       }
 
       this.isLanMatchHost = false;
@@ -2651,7 +2763,7 @@ class WormholeGame {
 
   public leaveMatchToLobby(reason?: string): void {
     if (this.currentMatchConfig && this.isLanMatchClient) {
-      this.sendLanPacket({
+      const leavePkt = {
         type: 'MATCH_PACKET',
         matchId: this.currentMatchConfig.id,
         fromSlot: this.player.slot,
@@ -2661,7 +2773,21 @@ class WormholeGame {
           playerName: this.playerName,
           clientId: this.localClientId,
         },
-      });
+      };
+      const directLeavePkt = {
+        type: 'PLAYER_LEAVE',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        slot: this.player.slot,
+        playerName: this.playerName,
+        clientId: this.localClientId,
+      };
+      this.sendLanPacket(leavePkt);
+      this.sendLanPacket(directLeavePkt);
+      setTimeout(() => {
+        this.sendLanPacket(leavePkt);
+        this.sendLanPacket(directLeavePkt);
+      }, 50);
     }
     this.network.disconnect();
     // Remove hosted match if we were host
@@ -3495,13 +3621,13 @@ class WormholeGame {
         pauseStart.style.borderColor = '#ffaa00';
         pauseStart.style.color = '#ffaa00';
       }
-      this.setDeckActive(true);
+      this.leaveMatchToLobby('PLAYER_QUIT');
     };
 
     // Modal Deck Buttons
     document.getElementById('btn-modal-deck')!.onclick = () => {
       document.getElementById('match-modal')?.classList.remove('active');
-      this.setDeckActive(true);
+      this.leaveMatchToLobby('PLAYER_QUIT');
     };
 
     // Send immediate heartbeat upon re-focusing window/tab
@@ -3525,13 +3651,12 @@ class WormholeGame {
     if (btnRoundMenu) {
       btnRoundMenu.onclick = () => {
         document.getElementById('round-modal')?.classList.remove('active');
-        this.setDeckActive(true);
+        this.leaveMatchToLobby('PLAYER_QUIT');
       };
     }
     document.getElementById('btn-return-solo')!.onclick = () => {
       document.getElementById('disconnect-modal')?.classList.remove('active');
-      this.network.disconnect();
-      this.setDeckActive(true);
+      this.leaveMatchToLobby('PLAYER_QUIT');
     };
 
     // Match Victory Buttons
@@ -4988,13 +5113,29 @@ class WormholeGame {
     this.selectedShipIndex = index;
     this.player.setShip(index);
     this.player.onDeath = () => this.handlePlayerElimination();
-    if (this.tablePlayers[0]) {
-      this.tablePlayers[0]!.shipId = index;
-      this.tablePlayers[0]!.health = this.player.health;
-      this.tablePlayers[0]!.maxHealth = this.player.maxHealth;
-      this.tablePlayers[0]!.isAlive = true;
+    const localSlot = this.player.slot;
+    if (this.tablePlayers[localSlot]) {
+      this.tablePlayers[localSlot]!.shipId = index;
+      this.tablePlayers[localSlot]!.health = this.player.health;
+      this.tablePlayers[localSlot]!.maxHealth = this.player.maxHealth;
+      this.tablePlayers[localSlot]!.isAlive = true;
     }
     this.particles.createExplosion(this.player.x, this.player.y, (PLAYER_COLORS[this.selectedColorIndex] || PLAYER_COLORS[0]).primary, 10);
+
+    if (this.isLanMatchHost && this.currentMatchConfig) {
+      this.broadcastRosterSync();
+    } else if (this.isLanMatchClient && this.currentMatchConfig) {
+      this.sendLanPacket({
+        type: 'MATCH_PACKET',
+        matchId: this.currentMatchConfig.id,
+        fromSlot: this.player.slot,
+        packet: {
+          type: 'SHIP_SELECT',
+          slot: this.player.slot,
+          shipId: index,
+        },
+      });
+    }
   }
 
   private setupEventListeners(): void {
@@ -5430,11 +5571,14 @@ class WormholeGame {
         const now = Date.now();
         let changed = false;
 
+        const isCombat = this.gameState.phase === 'PLAYING' || this.gameState.phase === 'COUNTDOWN';
+        const timeoutMs = isCombat ? 7000 : 30000;
+
         for (let i = 1; i < 8; i++) {
           const p = this.tablePlayers[i];
           if (p && !p.isLocal && !p.isBot) {
-            const lastSeen = this.playerLastSeen.get(i) || this.roundStartTime || now;
-            if (now - lastSeen > 7000) {
+            const lastSeen = this.playerLastSeen.get(i) || now;
+            if (now - lastSeen > timeoutMs) {
               // Stale peer timed out
               const name = p.name;
               this.sendLanPacket({
