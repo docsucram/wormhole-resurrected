@@ -5150,9 +5150,25 @@ class WormholeGame {
       }
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
+      this.updateFullscreenStatus();
+    });
+
+    const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+    fsEvents.forEach((evt) => {
+      document.addEventListener(evt, () => {
+        this.updateFullscreenStatus();
+      });
+    });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        this.isMobile = this.checkIsMobile();
+        this.updateFullscreenStatus();
+      }, 100);
     });
 
     this.setupMobileControls();
+    this.updateFullscreenStatus();
 
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement;
@@ -5339,6 +5355,46 @@ class WormholeGame {
     }
   }
 
+  public isScreenMaximised(): boolean {
+    const doc = document as any;
+    const isStandardFs = Boolean(
+      doc.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.mozFullScreenElement ||
+      doc.msFullscreenElement
+    );
+    const isStandalone = Boolean(
+      (window.navigator as any).standalone === true ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    );
+    const isMobileFullHeight = (this.isMobile || this.checkIsMobile()) && (window.innerHeight >= screen.height - 25);
+    return isStandardFs || isStandalone || isMobileFullHeight;
+  }
+
+  public updateFullscreenStatus(): void {
+    this.isMobile = this.checkIsMobile();
+    const isFs = this.isScreenMaximised();
+    const shouldFlash = this.isMobile && !isFs;
+
+    const btnMobFs = document.getElementById('btn-mob-fullscreen');
+    if (btnMobFs) {
+      btnMobFs.classList.toggle('btn-maximize-flash', shouldFlash);
+      btnMobFs.title = isFs ? 'Restore Window' : 'Maximize Screen';
+    }
+
+    const btnFsLobby = document.getElementById('btn-fullscreen-toggle');
+    if (btnFsLobby) {
+      btnFsLobby.classList.toggle('btn-maximize-flash', shouldFlash);
+      btnFsLobby.title = isFs ? 'Restore Window' : 'Maximize Screen';
+    }
+
+    const btnFsPause = document.getElementById('btn-pause-fullscreen');
+    if (btnFsPause) {
+      btnFsPause.innerText = isFs ? 'RESTORE WINDOW' : 'MAXIMIZE SCREEN';
+      btnFsPause.classList.toggle('btn-maximize-flash', shouldFlash);
+    }
+  }
+
   public tryEnterFullscreen(): void {
     const doc = document as any;
     const docEl = document.documentElement as any;
@@ -5360,6 +5416,8 @@ class WormholeGame {
         }
       } catch {}
     }
+    setTimeout(() => this.updateFullscreenStatus(), 60);
+    setTimeout(() => this.updateFullscreenStatus(), 300);
   }
 
   public toggleFullscreen(): void {
@@ -5395,6 +5453,8 @@ class WormholeGame {
         doc.msExitFullscreen();
       }
     }
+    setTimeout(() => this.updateFullscreenStatus(), 60);
+    setTimeout(() => this.updateFullscreenStatus(), 300);
   }
 
   private update(dt: number): void {
@@ -6851,6 +6911,9 @@ class WormholeGame {
         launchHintEl.textContent = hintText;
       }
     }
+
+    // 4. Mobile Fullscreen / Maximise Status
+    this.updateFullscreenStatus();
   }
 }
 
