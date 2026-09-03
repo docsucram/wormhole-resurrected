@@ -2133,7 +2133,6 @@ class WormholeGame {
 
   private setupMatchCallbacks(): void {
     const countdownEl = document.getElementById('countdown-overlay')!;
-    const matchModal = document.getElementById('match-modal')!;
 
     this.gameState.onRoundStart = () => {
       this.roundStartTime = Date.now();
@@ -2225,8 +2224,6 @@ class WormholeGame {
     };
 
     this.gameState.onMatchEnd = (winner) => {
-      matchModal.classList.add('active');
-      matchModal.style.display = 'block';
       const isP1 = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
       const isLocalWin = (winner === 'PLAYER 1' && isP1) || (winner === 'PLAYER 2' && !isP1);
 
@@ -2236,14 +2233,11 @@ class WormholeGame {
         this.buildShipGrid();
       }
 
-      const myWins = isP1 ? this.gameState.player1Score : this.gameState.player2Score;
-      const oppWins = isP1 ? this.gameState.player2Score : this.gameState.player1Score;
-      document.getElementById('modal-title')!.innerText = isLocalWin ? 'VICTORY!' : 'DEFEAT!';
-      document.getElementById('stat-final-score')!.innerText = `${myWins} - ${oppWins}`;
-      document.getElementById('modal-title')!.style.color = isLocalWin ? 'var(--neon-cyan)' : '#ff3344';
-      document.getElementById('modal-title')!.style.textShadow = isLocalWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
-      document.getElementById('modal-subtitle')!.innerText = isLocalWin ? 'YOU WON THE MATCH!' : 'OPPONENT WON THE MATCH!';
-      document.getElementById('stat-final-score')!.innerText = isP1 ? `${this.gameState.player1Score} - ${this.gameState.player2Score}` : `${this.gameState.player2Score} - ${this.gameState.player1Score}`;
+      const p2Player = this.tablePlayers.find((p) => p && p.slot !== 0) || this.tablePlayers[1];
+      const oppName = p2Player ? p2Player.name : 'Opponent';
+      const winnerName = isLocalWin ? this.playerName : oppName;
+
+      this.renderMatchModal(winnerName, isLocalWin, false);
 
       if (isLocalWin) {
         this.sound.playVictoryFanfare();
@@ -2423,9 +2417,6 @@ class WormholeGame {
   ): void {
     this.gameState.phase = 'MATCH_OVER';
     this.victoryModalOpenTime = Date.now();
-    const matchModal = document.getElementById('match-modal')!;
-    matchModal.classList.add('active');
-    matchModal.style.display = 'block';
 
     if (isLocalWin) {
       this.totalMatchWins++;
@@ -2433,18 +2424,7 @@ class WormholeGame {
       this.buildShipGrid();
     }
 
-    const titleEl = document.getElementById('modal-title')!;
-    const subEl = document.getElementById('modal-subtitle')!;
-    const scoreEl = document.getElementById('stat-final-score')!;
-
-    titleEl.innerText = isLocalWin ? 'VICTORY!' : 'DEFEAT!';
-    titleEl.style.color = isLocalWin ? 'var(--neon-cyan)' : '#ff3344';
-    titleEl.style.textShadow = isLocalWin ? '0 0 20px var(--neon-cyan)' : '0 0 20px #ff3344';
-    subEl.innerText = isLocalWin ? 'YOU WON THE MATCH!' : (isTeamWin ? `${winnerName} WON THE MATCH!` : `${winnerName.toUpperCase()} WON THE MATCH!`);
-
-    if (scoreEl) {
-      scoreEl.innerText = this.formatMatchScoreDisplay();
-    }
+    this.renderMatchModal(winnerName, isLocalWin, isTeamWin);
 
     if (isLocalWin) {
       this.sound.playVictoryFanfare();
@@ -2467,6 +2447,194 @@ class WormholeGame {
     }
 
     if (this.gameState.onPhaseChange) this.gameState.onPhaseChange('MATCH_OVER');
+  }
+
+  private renderMatchModal(winnerName: string, isLocalWin: boolean, isTeamWin: boolean): void {
+    this.gameState.phase = 'MATCH_OVER';
+    this.victoryModalOpenTime = Date.now();
+
+    // 1. Ensure Round Modal is completely dismissed and ship preview stopped
+    const roundModal = document.getElementById('round-modal');
+    if (roundModal) {
+      roundModal.classList.remove('active');
+      roundModal.style.display = 'none';
+      this.modalHangarView.stopPreview();
+    }
+
+    // 2. Configure Match Modal Container theme
+    const matchModal = document.getElementById('match-modal');
+    if (!matchModal) return;
+
+    matchModal.classList.remove('match-win', 'match-loss');
+    matchModal.classList.add(isLocalWin ? 'match-win' : 'match-loss');
+    matchModal.classList.add('active');
+    matchModal.style.display = 'block';
+
+    const ribbonEl = document.getElementById('match-end-ribbon');
+    if (ribbonEl) {
+      ribbonEl.innerText = isLocalWin ? '★ MATCH CONCLUDED // VICTORY ★' : '★ MATCH CONCLUDED // DEFEAT ★';
+    }
+
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) {
+      titleEl.innerText = isLocalWin ? 'MATCH VICTORY!' : 'MATCH DEFEAT!';
+    }
+
+    const subEl = document.getElementById('modal-subtitle');
+    if (subEl) {
+      if (isLocalWin) {
+        subEl.innerText = 'CHAMPION // YOU WON THE MATCH!';
+      } else if (isTeamWin) {
+        subEl.innerText = `${winnerName.toUpperCase()} WON THE MATCH`;
+      } else {
+        subEl.innerText = `${winnerName.toUpperCase()} WON THE MATCH`;
+      }
+    }
+
+    // 3. Compute explicit Series / Games Breakdown (e.g. Won 2 out of 3 games)
+    const targetWins = this.gameState.targetWins;
+    const isTeamMode = this.currentMatchConfig?.matchType === 'TEAM';
+
+    let myWins = 0;
+    let oppWins = 0;
+    let oppName = 'OPPONENT';
+    let myName = this.playerName.toUpperCase();
+
+    if (isTeamMode) {
+      myWins = this.gameState.player1Score;
+      oppWins = this.gameState.player2Score;
+      myName = 'ALPHA TEAM';
+      oppName = 'OMEGA TEAM';
+    } else {
+      const isP1Local = this.isLanMatchHost || (!this.isLanMatchClient && !this.network.isConnected) || (this.network.isConnected && this.network.isHost);
+      const p1 = this.tablePlayers[0];
+      const p2 = this.tablePlayers.find((p) => p && p.slot !== 0) || this.tablePlayers[1];
+
+      const p1Score = p1 ? p1.wins : this.gameState.player1Score;
+      const p2Score = p2 ? p2.wins : this.gameState.player2Score;
+
+      myWins = isP1Local ? p1Score : p2Score;
+      oppWins = isP1Local ? p2Score : p1Score;
+      myName = (isP1Local ? (p1?.name || this.playerName) : (p2?.name || this.playerName)).toUpperCase();
+      oppName = (isP1Local ? (p2?.name || 'OPPONENT') : (p1?.name || 'OPPONENT')).toUpperCase();
+    }
+
+    const totalGames = myWins + oppWins;
+    const seriesOutcomeEl = document.getElementById('match-series-outcome');
+    if (seriesOutcomeEl) {
+      if (targetWins <= 4) {
+        const bestOfCount = (targetWins * 2) - 1;
+        if (isLocalWin) {
+          seriesOutcomeEl.innerText = `WON ${myWins} OUT OF ${totalGames} GAMES (BEST OF ${bestOfCount})`;
+        } else {
+          seriesOutcomeEl.innerText = `LOST ${myWins} TO ${oppWins} (BEST OF ${bestOfCount})`;
+        }
+      } else if (targetWins < 999999) {
+        if (isLocalWin) {
+          seriesOutcomeEl.innerText = `WON ${myWins} OF ${totalGames} GAMES (FIRST TO ${targetWins} WINS)`;
+        } else {
+          seriesOutcomeEl.innerText = `LOST ${myWins} TO ${oppWins} (FIRST TO ${targetWins} WINS)`;
+        }
+      } else {
+        seriesOutcomeEl.innerText = isLocalWin ? `WON ${myWins} TO ${oppWins} (ENDLESS DUEL)` : `LOST ${myWins} TO ${oppWins} (ENDLESS DUEL)`;
+      }
+    }
+
+    // 4. Render Rich Scoreboard into #match-scoreboard
+    const scoreboardEl = document.getElementById('match-scoreboard');
+    if (scoreboardEl) {
+      scoreboardEl.innerHTML = '';
+
+      const activePlayers = this.tablePlayers.filter((p) => p !== null);
+      if (!isTeamMode && activePlayers.length <= 2) {
+        // Versus 1v1 Card Layout
+        const versusCard = document.createElement('div');
+        versusCard.style.cssText = 'display: flex; align-items: center; justify-content: space-around; width: 100%; gap: 12px; margin: 4px 0 8px 0;';
+
+        const renderPilotPill = (name: string, score: number, isWinner: boolean, isSelf: boolean) => {
+          const pill = document.createElement('div');
+          pill.style.cssText = `flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 10px; border-radius: 8px; background: ${isWinner ? 'rgba(0, 255, 204, 0.12)' : 'rgba(255, 255, 255, 0.04)'}; border: 1.5px solid ${isWinner ? '#00ffcc' : 'rgba(255, 255, 255, 0.15)'}; box-shadow: ${isWinner ? '0 0 15px rgba(0, 255, 204, 0.3)' : 'none'};`;
+
+          const tag = document.createElement('div');
+          tag.style.cssText = `font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 1px; color: ${isWinner ? '#00ffcc' : '#94a3b8'}; margin-bottom: 2px;`;
+          tag.innerText = isWinner ? (isSelf ? '🏆 VICTORY' : 'WINNER') : (isSelf ? 'DEFEAT' : 'OPPONENT');
+
+          const callsign = document.createElement('div');
+          callsign.style.cssText = `font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;`;
+          callsign.innerText = name;
+
+          const winsNumber = document.createElement('div');
+          winsNumber.style.cssText = `font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; color: ${isWinner ? '#00ffcc' : '#e2e8f0'}; line-height: 1.1; margin-top: 4px;`;
+          winsNumber.innerText = score.toString();
+
+          const pipsRow = document.createElement('div');
+          pipsRow.style.cssText = 'display: flex; gap: 4px; margin-top: 4px;';
+          for (let w = 0; w < targetWins && targetWins <= 7; w++) {
+            const dot = document.createElement('span');
+            dot.style.cssText = `width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ${w < score ? (isWinner ? '#00ffcc' : '#ffaa00') : 'rgba(255, 255, 255, 0.2)'};`;
+            pipsRow.appendChild(dot);
+          }
+
+          pill.appendChild(tag);
+          pill.appendChild(callsign);
+          pill.appendChild(winsNumber);
+          pill.appendChild(pipsRow);
+          return pill;
+        };
+
+        const leftPill = renderPilotPill(myName, myWins, isLocalWin, true);
+        const vsDivider = document.createElement('div');
+        vsDivider.style.cssText = "font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: #64748b; letter-spacing: 1px;";
+        vsDivider.innerText = 'VS';
+        const rightPill = renderPilotPill(oppName, oppWins, !isLocalWin, false);
+
+        versusCard.appendChild(leftPill);
+        versusCard.appendChild(vsDivider);
+        versusCard.appendChild(rightPill);
+        scoreboardEl.appendChild(versusCard);
+      } else {
+        // Multi-player / Team Standings Table
+        const list = document.createElement('div');
+        list.style.cssText = 'display: flex; flex-direction: column; gap: 4px; width: 100%;';
+
+        const sorted = [...activePlayers].sort((a, b) => (b?.wins || 0) - (a?.wins || 0));
+        sorted.forEach((p, rankIdx) => {
+          if (!p) return;
+          const row = document.createElement('div');
+          const isRowWinner = rankIdx === 0;
+          row.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-radius: 6px; background: ${isRowWinner ? 'rgba(0, 255, 204, 0.12)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isRowWinner ? 'rgba(0, 255, 204, 0.4)' : 'rgba(255, 255, 255, 0.08)'};`;
+
+          const left = document.createElement('div');
+          left.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+          const medal = document.createElement('span');
+          medal.style.cssText = "font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; color: " + (isRowWinner ? '#00ffcc' : '#94a3b8') + ';';
+          medal.innerText = isRowWinner ? '★ 1ST' : `#${rankIdx + 1}`;
+          const pName = document.createElement('span');
+          pName.style.cssText = "font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; color: #ffffff;";
+          pName.innerText = p.name;
+          left.appendChild(medal);
+          left.appendChild(pName);
+
+          const score = document.createElement('span');
+          score.style.cssText = "font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: " + (isRowWinner ? '#00ffcc' : '#e2e8f0') + ';';
+          score.innerText = `${p.wins} WINS`;
+
+          row.appendChild(left);
+          row.appendChild(score);
+          list.appendChild(row);
+        });
+        scoreboardEl.appendChild(list);
+      }
+    }
+
+    // 5. Final Score Text
+    const scoreEl = document.getElementById('stat-final-score');
+    if (scoreEl) {
+      scoreEl.innerText = `${myWins} - ${oppWins}`;
+    }
+
+    // 6. Dynamic Play Again Prompt
+    this.updateDynamicInputPrompts();
   }
 
   private handlePlayerElimination(): void {
@@ -4556,11 +4724,9 @@ class WormholeGame {
   private buildColorSwatches(): void {
     const hangarColorBar = document.getElementById('hangar-color-bar');
     const modalRoundColorBar = document.getElementById('modal-round-color-bar');
-    const modalMatchColorBar = document.getElementById('modal-match-color-bar');
 
     if (hangarColorBar) hangarColorBar.innerHTML = '';
     if (modalRoundColorBar) modalRoundColorBar.innerHTML = '';
-    if (modalMatchColorBar) modalMatchColorBar.innerHTML = '';
 
     PLAYER_COLORS.forEach((profile, index) => {
       const isClaimedByHuman = this.tablePlayers.some(
@@ -4589,7 +4755,6 @@ class WormholeGame {
 
       createSwatch(hangarColorBar);
       createSwatch(modalRoundColorBar);
-      createSwatch(modalMatchColorBar);
     });
 
     this.syncColorSelectionUI(this.selectedColorIndex);
@@ -4609,10 +4774,8 @@ class WormholeGame {
 
     const manualShipBar = document.getElementById('manual-ship-bar');
     const modalRoundBar = document.getElementById('modal-round-ship-bar');
-    const modalMatchBar = document.getElementById('modal-match-ship-bar');
     if (manualShipBar) manualShipBar.innerHTML = '';
     if (modalRoundBar) modalRoundBar.innerHTML = '';
-    if (modalMatchBar) modalMatchBar.innerHTML = '';
 
     const ships = ShipCatalog.getAll();
     const subLabels = ['TANK', 'WING', 'SQUID', 'RABBIT', 'TURTLE', 'FLASH', 'HUNTER', 'FLAGSHIP'];
@@ -4659,7 +4822,6 @@ class WormholeGame {
       };
 
       createModalBtn(modalRoundBar);
-      createModalBtn(modalMatchBar);
     });
 
     this.modalHangarView.setShip(this.selectedShipIndex);
@@ -4671,7 +4833,7 @@ class WormholeGame {
       const idx = parseInt((btn as HTMLElement).dataset.shipIndex || '0', 10);
       btn.classList.toggle('active', idx === this.manualHangarView.selectedShipIndex);
     });
-    document.querySelectorAll('#modal-round-ship-bar .modal-ship-btn, #modal-match-ship-bar .modal-ship-btn').forEach((btn) => {
+    document.querySelectorAll('#modal-round-ship-bar .modal-ship-btn').forEach((btn) => {
       const idx = parseInt((btn as HTMLElement).dataset.shipIndex || '0', 10);
       btn.classList.toggle('active', idx === selectedIndex);
     });
