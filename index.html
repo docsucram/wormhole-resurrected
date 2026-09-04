@@ -2897,7 +2897,6 @@
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          gap: 4px !important;
           margin-bottom: 6px !important;
           flex-shrink: 0 !important;
         }
@@ -2910,7 +2909,7 @@
           align-self: flex-end !important;
           gap: 10px !important;
           width: 100% !important;
-          margin: 0 0 2px 0 !important;
+          margin: 0 0 12px 0 !important; /* Generous gap between utility bar and title */
           padding-top: 2px !important;
         }
 
@@ -2924,7 +2923,7 @@
         .header-title-box {
           order: 2 !important;
           text-align: center !important;
-          margin: 0 !important;
+          margin: 0 0 12px 0 !important; /* Generous gap between title and callsign */
         }
 
         .header-logo {
@@ -2956,7 +2955,7 @@
           justify-content: center !important;
           width: auto !important;
           max-width: 96vw !important;
-          margin: 6px auto 2px auto !important;
+          margin: 0 auto 6px auto !important;
           padding: 0 !important;
           gap: 8px !important;
         }
@@ -3103,8 +3102,18 @@
           display: none !important;
         }
 
-        /* Tab 2: LOUNGE & COMMS */
+        /* Tab 2: LOUNGE & COMMS (matches-action-footer remains visible at bottom) */
         #screen-front-end.tab-comms .matches-browser-panel {
+          display: block !important;
+          height: 0 !important;
+          max-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border: none !important;
+          overflow: visible !important;
+        }
+        #screen-front-end.tab-comms .matches-browser-header,
+        #screen-front-end.tab-comms .matches-list-scroll {
           display: none !important;
         }
         #screen-front-end.tab-comms .lobby-comms-panel {
@@ -3136,7 +3145,60 @@
           flex-shrink: 0 !important;
         }
 
-        /* 1.5: Anchor Primary CTAs to the persistent bottom thumb zone */
+        /* 1.5: Match card full width details with full width Join Match button below */
+        .match-row-card {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 8px !important;
+          padding: 10px 12px !important;
+          background: rgba(8, 18, 38, 0.9) !important;
+          border-radius: 8px !important;
+        }
+
+        .match-info-col {
+          width: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 6px !important;
+        }
+
+        .match-title-line {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          width: 100% !important;
+          font-size: 13px !important;
+          flex-wrap: wrap !important;
+          gap: 4px !important;
+        }
+
+        .match-meta-line {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 5px !important;
+          width: 100% !important;
+        }
+
+        .match-row-card > div:last-child {
+          width: 100% !important;
+        }
+
+        .btn-join-match {
+          width: 100% !important;
+          height: 38px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 6px 12px !important;
+          font-size: 12px !important;
+          font-weight: 900 !important;
+          letter-spacing: 1.5px !important;
+          border-radius: 6px !important;
+          box-sizing: border-box !important;
+        }
+
+        /* 1.6: Anchor Primary CTAs to the persistent bottom thumb zone (on BOTH tabs) */
         .matches-action-footer {
           position: fixed !important;
           bottom: 0 !important;
