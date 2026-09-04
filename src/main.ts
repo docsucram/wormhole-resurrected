@@ -6643,6 +6643,12 @@ class WormholeGame {
         }
       }
 
+      const btnTouchLaunch = this.getHudEl('btn-touch-launch');
+      if (btnTouchLaunch) {
+        const hasLaunchable = this.player.powerupInventory.length > 0;
+        btnTouchLaunch.classList.toggle('empty-inventory', !hasLaunchable);
+      }
+
       // Update mobile mini roster strip with dirty checking
       let mobSig = `${isTeamMode ? 'T' : 'F'}:`;
       for (const p of this.tablePlayers) {

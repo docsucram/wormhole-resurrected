@@ -3503,6 +3503,13 @@
           display: none !important;
         }
 
+        /* Options Modal Tabs Order on Mobile Portrait: Touch before Keyboard */
+        #options-modal #opt-tab-btn-display { order: 1 !important; }
+        #options-modal #opt-tab-btn-touch { order: 2 !important; }
+        #options-modal #opt-tab-btn-keys { order: 3 !important; }
+        #options-modal #opt-tab-btn-gamepad { order: 4 !important; }
+        #options-modal #opt-tab-btn-audio { order: 5 !important; }
+
         /* Article text using 100% width below */
         .manual-content-pane {
           width: 100% !important;
@@ -4003,6 +4010,13 @@
           font-size: 10.5px !important;
           margin-top: 6px !important;
         }
+
+        /* Options Modal Tabs Order on Mobile Landscape: Touch before Keyboard */
+        #options-modal #opt-tab-btn-display { order: 1 !important; }
+        #options-modal #opt-tab-btn-touch { order: 2 !important; }
+        #options-modal #opt-tab-btn-keys { order: 3 !important; }
+        #options-modal #opt-tab-btn-gamepad { order: 4 !important; }
+        #options-modal #opt-tab-btn-audio { order: 5 !important; }
       }
 
       /* Default styles for Spawner Columns (Sequential vertical flow on desktop & portrait) */
@@ -4116,6 +4130,13 @@
         font-size: 10.5px !important;
         margin-top: 6px !important;
       }
+
+      /* Options Modal Tabs Order for all Mobile: Touch before Keyboard */
+      body.is-mobile #options-modal #opt-tab-btn-display { order: 1 !important; }
+      body.is-mobile #options-modal #opt-tab-btn-touch { order: 2 !important; }
+      body.is-mobile #options-modal #opt-tab-btn-keys { order: 3 !important; }
+      body.is-mobile #options-modal #opt-tab-btn-gamepad { order: 4 !important; }
+      body.is-mobile #options-modal #opt-tab-btn-audio { order: 5 !important; }
 
       /* Mobile Top-Left Status Cluster */
       .mob-hud-top-left {
@@ -4473,11 +4494,24 @@
         border-color: #ff00ff;
         color: #ff00ff;
         box-shadow: 0 0 14px rgba(255, 0, 255, 0.35);
+        transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
       }
       .touch-btn.launch-btn.touch-active {
         background: #ff00ff;
         color: #030816;
         box-shadow: 0 0 24px #ff00ff;
+      }
+      .touch-btn.launch-btn.empty-inventory {
+        border-color: #475569 !important;
+        color: #64748b !important;
+        box-shadow: none !important;
+        filter: grayscale(100%) !important;
+        opacity: 0.4 !important;
+      }
+      .touch-btn.launch-btn.empty-inventory.touch-active {
+        background: rgba(100, 116, 139, 0.2) !important;
+        color: #94a3b8 !important;
+        box-shadow: none !important;
       }
       .touch-btn.special-btn {
         border-color: #ffaa00;
@@ -6132,7 +6166,7 @@
 
       <!-- Right Screen Action Pads -->
       <div class="mob-touch-actions">
-        <button class="touch-btn launch-btn" id="btn-touch-launch" title="Launch Stored Hazard">
+        <button class="touch-btn launch-btn empty-inventory" id="btn-touch-launch" title="Launch Stored Hazard">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin-bottom: 2px;">
             <path d="M12 2l3 6-3 3-3-3 3-6z"/>
             <path d="M9 11v6l3 3 3-3v-6"/>
