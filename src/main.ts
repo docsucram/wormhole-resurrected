@@ -4030,10 +4030,9 @@ class WormholeGame {
     const fpsCounterEl = document.getElementById('fps-counter');
     const savedFps = localStorage.getItem('wh_opt_fps');
     if (chkFps && fpsCounterEl) {
-      if (savedFps !== null) {
-        chkFps.checked = savedFps === 'true';
-        fpsCounterEl.style.display = chkFps.checked ? 'block' : 'none';
-      }
+      const isFpsOn = savedFps !== null ? savedFps === 'true' : false;
+      chkFps.checked = isFpsOn;
+      fpsCounterEl.style.display = isFpsOn ? 'block' : 'none';
       chkFps.onchange = () => {
         fpsCounterEl.style.display = chkFps.checked ? 'block' : 'none';
         try { localStorage.setItem('wh_opt_fps', chkFps.checked.toString()); } catch {}
@@ -4090,7 +4089,7 @@ class WormholeGame {
     const touchOpacitySlider = document.getElementById('opt-touch-opacity-slider') as HTMLInputElement | null;
     const touchOpacityVal = document.getElementById('opt-touch-opacity-val');
     const savedTouchOpacity = localStorage.getItem('wh_opt_touch_opacity');
-    const initialTouchOpacity = savedTouchOpacity !== null ? parseFloat(savedTouchOpacity) : 1.0;
+    const initialTouchOpacity = savedTouchOpacity !== null ? parseFloat(savedTouchOpacity) : 0.7;
     if (touchOpacitySlider && mobileTouchRoot) {
       touchOpacitySlider.value = initialTouchOpacity.toString();
       mobileTouchRoot.style.setProperty('--touch-btn-opacity', initialTouchOpacity.toString());
@@ -4589,7 +4588,7 @@ class WormholeGame {
 
     const openSpawner = () => {
       document.getElementById('pause-modal')?.classList.remove('active');
-      if (this.isPortrait && spawnerModal) {
+      if (this.isMobile && spawnerModal) {
         spawnerModal.style.left = '';
         spawnerModal.style.top = '';
       }

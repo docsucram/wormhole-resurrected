@@ -3602,7 +3602,7 @@
       body.is-mobile .arena-top-hud,
       body.is-mobile .arena-dock-left,
       body.is-mobile .arena-dock-right,
-      body.is-mobile #spawner-modal {
+      body.is-mobile #spawner-modal:not(.active) {
         display: none !important;
       }
 
@@ -3908,6 +3908,213 @@
           font-size: 10px !important;
           height: 30px !important;
         }
+
+        /* Mobile Landscape HUD: Centered Score & Right-Aligned Enemy Roster */
+        .mob-score-box {
+          position: fixed !important;
+          top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 13px !important;
+          font-weight: 900 !important;
+          padding: 3px 12px !important;
+          z-index: 35 !important;
+          white-space: nowrap !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+
+        .mob-roster-strip {
+          top: calc(env(safe-area-inset-top, 0px) + 48px) !important;
+          right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
+          left: auto !important;
+          transform: none !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: flex-end !important;
+          gap: 3px !important;
+          max-width: 155px !important;
+          pointer-events: none !important;
+          z-index: 34 !important;
+        }
+
+        .mob-roster-pill {
+          padding: 2px 6px !important;
+          font-size: 8.5px !important;
+        }
+
+        /* Mobile Landscape Test Control Panel (2-Column Responsive Flow) */
+        body.is-mobile #spawner-modal.active,
+        #spawner-modal.active {
+          display: block !important;
+          animation: spawnerFadeIn 0.18s ease-out !important;
+        }
+
+        body.is-mobile #spawner-modal,
+        #spawner-modal {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          width: 94vw !important;
+          max-width: 720px !important;
+          max-height: 90vh !important;
+          max-height: 90dvh !important;
+          overflow-y: auto !important;
+          box-sizing: border-box !important;
+          padding: 8px 12px !important;
+          z-index: 100000 !important;
+        }
+
+        .spawner-cols-wrap {
+          display: grid !important;
+          grid-template-columns: 1fr 1.15fr !important;
+          gap: 8px !important;
+          align-items: start !important;
+        }
+
+        .spawner-col {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 6px !important;
+        }
+
+        #spawner-modal .spawner-drag-header {
+          touch-action: auto !important;
+          cursor: default !important;
+          margin-bottom: 6px !important;
+          padding-bottom: 4px !important;
+        }
+
+        #spawner-modal select.styled-select {
+          font-size: 10px !important;
+          padding: 3px 5px !important;
+        }
+
+        #spawner-modal .action-btn {
+          min-height: 26px !important;
+          font-size: 9px !important;
+          padding: 3px 4px !important;
+        }
+
+        #spawner-modal #btn-close-spawner {
+          min-height: 32px !important;
+          font-size: 10.5px !important;
+          margin-top: 6px !important;
+        }
+      }
+
+      /* Default styles for Spawner Columns (Sequential vertical flow on desktop & portrait) */
+      .spawner-cols-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .spawner-col {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Mobile Horizontal / Landscape In-Game HUD & Test Panel Rules */
+      body.is-mobile.is-landscape .mob-score-box,
+      body.is-mobile:not(.is-portrait) .mob-score-box {
+        position: fixed !important;
+        top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        font-size: 13px !important;
+        font-weight: 900 !important;
+        padding: 3px 12px !important;
+        z-index: 35 !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      body.is-mobile.is-landscape .mob-roster-strip,
+      body.is-mobile:not(.is-portrait) .mob-roster-strip {
+        top: calc(env(safe-area-inset-top, 0px) + 48px) !important;
+        right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
+        left: auto !important;
+        transform: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        gap: 3px !important;
+        max-width: 155px !important;
+        pointer-events: none !important;
+        z-index: 34 !important;
+      }
+
+      body.is-mobile.is-landscape .mob-roster-pill,
+      body.is-mobile:not(.is-portrait) .mob-roster-pill {
+        padding: 2px 6px !important;
+        font-size: 8.5px !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal.active,
+      body.is-mobile:not(.is-portrait) #spawner-modal.active {
+        display: block !important;
+        animation: spawnerFadeIn 0.18s ease-out !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal,
+      body.is-mobile:not(.is-portrait) #spawner-modal {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 94vw !important;
+        max-width: 720px !important;
+        max-height: 90vh !important;
+        max-height: 90dvh !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        padding: 8px 12px !important;
+        z-index: 100000 !important;
+      }
+
+      body.is-mobile.is-landscape .spawner-cols-wrap,
+      body.is-mobile:not(.is-portrait) .spawner-cols-wrap {
+        display: grid !important;
+        grid-template-columns: 1fr 1.15fr !important;
+        gap: 8px !important;
+        align-items: start !important;
+      }
+
+      body.is-mobile.is-landscape .spawner-col,
+      body.is-mobile:not(.is-portrait) .spawner-col {
+        gap: 6px !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal .spawner-drag-header,
+      body.is-mobile:not(.is-portrait) #spawner-modal .spawner-drag-header {
+        touch-action: auto !important;
+        cursor: default !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal select.styled-select,
+      body.is-mobile:not(.is-portrait) #spawner-modal select.styled-select {
+        font-size: 10px !important;
+        padding: 3px 5px !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal .action-btn,
+      body.is-mobile:not(.is-portrait) #spawner-modal .action-btn {
+        min-height: 26px !important;
+        font-size: 9px !important;
+        padding: 3px 4px !important;
+      }
+
+      body.is-mobile.is-landscape #spawner-modal #btn-close-spawner,
+      body.is-mobile:not(.is-portrait) #spawner-modal #btn-close-spawner {
+        min-height: 32px !important;
+        font-size: 10.5px !important;
+        margin-top: 6px !important;
       }
 
       /* Mobile Top-Left Status Cluster */
@@ -4160,7 +4367,7 @@
       /* Mobile Touch Action Pads */
       #mobile-touch-root {
         --touch-btn-scale: 1;
-        --touch-btn-opacity: 1;
+        --touch-btn-opacity: 0.7;
       }
       .mob-touch-steer-zone {
         position: fixed;
@@ -4213,7 +4420,7 @@
         touch-action: none;
         transform: scale(var(--touch-btn-scale, 1));
         transform-origin: bottom right;
-        opacity: var(--touch-btn-opacity, 1);
+        opacity: var(--touch-btn-opacity, 0.7);
         transition: opacity 0.15s ease, transform 0.15s ease;
       }
 
@@ -4327,7 +4534,7 @@
   </head>
   <body>
     <!-- Top-Left Compact FPS Badge -->
-    <div id="fps-counter" style="position: fixed; top: 12px; left: 14px; z-index: 9999999; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 900; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.6); pointer-events: none; background: rgba(2, 8, 20, 0.7); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 255, 136, 0.35); box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);">
+    <div id="fps-counter" style="display: none; position: fixed; top: 12px; left: 14px; z-index: 9999999; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 900; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.6); pointer-events: none; background: rgba(2, 8, 20, 0.7); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 255, 136, 0.35); box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);">
       60
     </div>
 
@@ -4658,7 +4865,7 @@
       <div class="manual-modal-header">
         <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          <span class="guide-title-main">TACTICAL FLIGHT MANUAL</span><span class="guide-title-extra">&nbsp;&amp; STRATEGY GUIDE</span>
+          <span class="guide-title-main">TACTICAL FLIGHT MANUAL</span>
         </div>
         <button id="btn-close-manual-top" class="modal-close-btn" title="Close Manual" style="background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
       </div>
@@ -5161,103 +5368,111 @@
         <button id="btn-close-spawner-top" style="background: transparent; border: none; color: #94a3b8; font-size: 15px; font-weight: bold; cursor: pointer; padding: 0 4px; line-height: 1;">✕</button>
       </div>
       
-      <!-- Card 1: Match & Ship Config -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">MATCH & SHIP CONFIG</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px;">
-          <div>
-            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">SHIP CLASS:</div>
-            <select id="spawner-ship-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
-              <option value="0">The Tank</option>
-              <option value="1">The Wing</option>
-              <option value="2">The Squid</option>
-              <option value="3">The Rabbit</option>
-              <option value="4">The Turtle</option>
-              <option value="5">The Flash</option>
-              <option value="6">The Hunter</option>
-              <option value="7">The Flagship</option>
-            </select>
+      <div class="spawner-cols-wrap">
+        <!-- Left Column: Match Config & Toggles -->
+        <div class="spawner-col spawner-col-left">
+          <!-- Card 1: Match & Ship Config -->
+          <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">MATCH & SHIP CONFIG</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px;">
+              <div>
+                <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">SHIP CLASS:</div>
+                <select id="spawner-ship-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+                  <option value="0">The Tank</option>
+                  <option value="1">The Wing</option>
+                  <option value="2">The Squid</option>
+                  <option value="3">The Rabbit</option>
+                  <option value="4">The Turtle</option>
+                  <option value="5">The Flash</option>
+                  <option value="6">The Hunter</option>
+                  <option value="7">The Flagship</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">ARENA SIZE:</div>
+                <select id="spawner-size-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+                  <option value="SMALL">Small (1v1 Dual)</option>
+                  <option value="MEDIUM">Medium (4P Quad)</option>
+                  <option value="LARGE">Large (6P Hex)</option>
+                  <option value="HUGE">Colossal (8P Oct)</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">MATCH TYPE:</div>
+                <select id="spawner-match-type-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+                  <option value="FFA">Free-For-All (FFA)</option>
+                  <option value="TEAM">Team Battle (A vs B)</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">P1 PILOT:</div>
+                <select id="spawner-pilot-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+                  <option value="human">Human (Manual)</option>
+                  <option value="easy">AI // Novice</option>
+                  <option value="medium">AI // Pilot</option>
+                  <option value="hard">AI // Ace</option>
+                  <option value="insane">AI // Cyborg</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div>
-            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">ARENA SIZE:</div>
-            <select id="spawner-size-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
-              <option value="SMALL">Small (1v1 Dual)</option>
-              <option value="MEDIUM">Medium (4P Quad)</option>
-              <option value="LARGE">Large (6P Hex)</option>
-              <option value="HUGE">Colossal (8P Oct)</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">MATCH TYPE:</div>
-            <select id="spawner-match-type-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
-              <option value="FFA">Free-For-All (FFA)</option>
-              <option value="TEAM">Team Battle (A vs B)</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; margin-bottom: 2px;">P1 PILOT:</div>
-            <select id="spawner-pilot-select" class="styled-select" style="width: 100%; padding: 3px 5px; font-size: 10px; color: #ffffff; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
-              <option value="human">Human (Manual)</option>
-              <option value="easy">AI // Novice</option>
-              <option value="medium">AI // Pilot</option>
-              <option value="hard">AI // Ace</option>
-              <option value="insane">AI // Cyborg</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <!-- Card 2: Toggles & Round State -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">TOGGLES & ROUND STATE</div>
-        
-        <!-- Unified 2-Column Toggle Row -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 5px;">
-          <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(239, 68, 68, 0.4); cursor: pointer; text-align: center;">
-            <input type="checkbox" id="spawner-godmode-toggle" style="accent-color: #ef4444; cursor: pointer;">
-            <span style="font-size: 9.5px; font-weight: 800; color: #f87171;">GOD MODE (HP)</span>
-          </label>
-          <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); cursor: pointer; text-align: center;">
-            <input type="checkbox" id="spawner-ai-brain-toggle" style="accent-color: #38bdf8; cursor: pointer;">
-            <span style="font-size: 9.5px; font-weight: 800; color: #38bdf8;">AI OVERLAY</span>
-          </label>
-        </div>
+          <!-- Card 2: Toggles & Round State -->
+          <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">TOGGLES & ROUND STATE</div>
+            
+            <!-- Unified 2-Column Toggle Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 5px;">
+              <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(239, 68, 68, 0.4); cursor: pointer; text-align: center;">
+                <input type="checkbox" id="spawner-godmode-toggle" style="accent-color: #ef4444; cursor: pointer;">
+                <span style="font-size: 9.5px; font-weight: 800; color: #f87171;">GOD MODE (HP)</span>
+              </label>
+              <label style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px 4px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); cursor: pointer; text-align: center;">
+                <input type="checkbox" id="spawner-ai-brain-toggle" style="accent-color: #38bdf8; cursor: pointer;">
+                <span style="font-size: 9.5px; font-weight: 800; color: #38bdf8;">AI OVERLAY</span>
+              </label>
+            </div>
 
-        <!-- Round Actions -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-          <button class="action-btn" id="btn-drill-clear" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #cbd5e1; color: #f8fafc; background: rgba(255,255,255,0.06);">⚡ CLEAR HAZARDS</button>
-          <button class="action-btn" id="btn-drill-restart" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.06);">🔄 RESTART ROUND</button>
-        </div>
-      </div>
-
-      <!-- Card 3: Eject Powerup -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
-          <span style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">EJECT POWERUP</span>
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <span style="font-size: 9px; font-weight: 700; color: #fbbf24;">TARGET:</span>
-            <select id="spawner-target-select" class="styled-select" style="padding: 2px 4px; font-size: 9.5px; color: #ffffff; border-color: rgba(251, 191, 36, 0.5); font-weight: 700; max-width: 140px;"></select>
+            <!-- Round Actions -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+              <button class="action-btn" id="btn-drill-clear" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #cbd5e1; color: #f8fafc; background: rgba(255,255,255,0.06);">⚡ CLEAR HAZARDS</button>
+              <button class="action-btn" id="btn-drill-restart" style="padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.06);">🔄 RESTART ROUND</button>
+            </div>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-pups-grid">
-          <button class="action-btn pup-eject-btn" data-puptype="-1" style="grid-column: span 3; padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.08);">Random Powerup</button>
-          <button class="action-btn pup-eject-btn" data-puptype="0" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Gun (+1)</button>
-          <button class="action-btn pup-eject-btn" data-puptype="1" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Thrust (+1)</button>
-          <button class="action-btn pup-eject-btn" data-puptype="2" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Retros</button>
-          <button class="action-btn pup-eject-btn" data-puptype="3" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Shield</button>
-          <button class="action-btn pup-eject-btn" data-puptype="4" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Screen Zap</button>
-          <button class="action-btn pup-eject-btn" data-puptype="5" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">+HP Repair</button>
-          <button class="action-btn pup-eject-btn" data-puptype="6" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Heatseeker</button>
-          <button class="action-btn pup-eject-btn" data-puptype="14" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Nuke</button>
-          <button class="action-btn pup-eject-btn" data-puptype="7" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Wall Crawler</button>
-        </div>
-      </div>
+        <!-- Right Column: Powerup Ejection & Direct Hazard Spawning -->
+        <div class="spawner-col spawner-col-right">
+          <!-- Card 3: Eject Powerup -->
+          <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">EJECT POWERUP</span>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 9px; font-weight: 700; color: #fbbf24;">TARGET:</span>
+                <select id="spawner-target-select" class="styled-select" style="padding: 2px 4px; font-size: 9.5px; color: #ffffff; border-color: rgba(251, 191, 36, 0.5); font-weight: 700; max-width: 140px;"></select>
+              </div>
+            </div>
 
-      <!-- Card 4: Spawn Hazard Directly -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">SPAWN HAZARD DIRECTLY</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-btn-grid"></div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-pups-grid">
+              <button class="action-btn pup-eject-btn" data-puptype="-1" style="grid-column: span 3; padding: 4px 6px; font-size: 9.5px; font-weight: 800; border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.08);">Random Powerup</button>
+              <button class="action-btn pup-eject-btn" data-puptype="0" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Gun (+1)</button>
+              <button class="action-btn pup-eject-btn" data-puptype="1" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Thrust (+1)</button>
+              <button class="action-btn pup-eject-btn" data-puptype="2" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Retros</button>
+              <button class="action-btn pup-eject-btn" data-puptype="3" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Shield</button>
+              <button class="action-btn pup-eject-btn" data-puptype="4" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Screen Zap</button>
+              <button class="action-btn pup-eject-btn" data-puptype="5" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">+HP Repair</button>
+              <button class="action-btn pup-eject-btn" data-puptype="6" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Heatseeker</button>
+              <button class="action-btn pup-eject-btn" data-puptype="14" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Nuke</button>
+              <button class="action-btn pup-eject-btn" data-puptype="7" style="padding: 3px 2px; font-size: 9px; border-color: rgba(148,163,184,0.35); color: #e2e8f0;">Wall Crawler</button>
+            </div>
+          </div>
+
+          <!-- Card 4: Spawn Hazard Directly -->
+          <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px;">
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 9.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px; letter-spacing: 0.5px;">SPAWN HAZARD DIRECTLY</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;" id="spawner-btn-grid"></div>
+          </div>
+        </div>
       </div>
 
       <button class="action-btn" id="btn-close-spawner" style="margin-top: 4px; width: 100%; padding: 6px 0; font-size: 10px; font-weight: 800; border-color: #64748b; color: #cbd5e1;">CLOSE TEST PANEL</button>
@@ -5307,7 +5522,7 @@
         <div class="manual-tabs">
           <button class="manual-tab-btn active" id="opt-tab-btn-display" data-opttab="opt-tab-display">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span>GRAPHICS</span><span class="tab-label-extra">&nbsp;&amp; DISPLAY</span>
+            GRAPHICS
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-keys" data-opttab="opt-tab-keys">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
@@ -5319,11 +5534,11 @@
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-touch" data-opttab="opt-tab-touch">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-            <span>TOUCH</span><span class="tab-label-extra">&nbsp;&amp; MOBILE</span>
+            TOUCH
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-audio" data-opttab="opt-tab-audio">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            <span>AUDIO</span><span class="tab-label-extra">&nbsp;&amp; SOUND</span>
+            AUDIO
           </button>
         </div>
 
@@ -5334,7 +5549,7 @@
             <!-- FPS Counter -->
             <div class="opt-row-card">
               <div class="opt-card-title">SHOW FPS COUNTER</div>
-              <input type="checkbox" id="chk-opt-fps" checked style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
+              <input type="checkbox" id="chk-opt-fps" style="width: 18px; height: 18px; accent-color: var(--neon-cyan); cursor: pointer;" />
             </div>
 
             <!-- Neon Vector Glow Slider -->
@@ -5569,11 +5784,11 @@
             <div class="opt-slider-card">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <div class="opt-card-title">TOUCH BUTTON OPACITY</div>
-                <span id="opt-touch-opacity-val" class="opt-card-val">100%</span>
+                <span id="opt-touch-opacity-val" class="opt-card-val">70%</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">30%</span>
-                <input type="range" id="opt-touch-opacity-slider" min="0.3" max="1.0" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+                <input type="range" id="opt-touch-opacity-slider" min="0.3" max="1.0" step="0.05" value="0.7" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
               </div>
             </div>
