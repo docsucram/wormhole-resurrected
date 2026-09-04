@@ -68,7 +68,164 @@ export interface ConnectedPilot {
   lastSeen: number;
 }
 
+class LobbyVortexEffect {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private stars: Array<{ angle: number; dist: number; speed: number; size: number; alpha: number; color: string }> = [];
+  private animId: number = 0;
+  private isRunning: boolean = false;
+  private rotAngle: number = 0;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d')!;
+    this.resize();
+    this.initStars(42);
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  public resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = rect.width || 480;
+    const h = rect.height || 180;
+    this.canvas.width = Math.round(w * dpr);
+    this.canvas.height = Math.round(h * dpr);
+  }
+
+  private initStars(count: number) {
+    this.stars = [];
+    const colors = ['#00e5ff', '#7dd3fc', '#c084fc', '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 5 + Math.random() * 220;
+      this.stars.push({
+        angle,
+        dist,
+        speed: 20 + Math.random() * 45,
+        size: 0.75 + Math.random() * 1.5,
+        alpha: 0.25 + Math.random() * 0.75,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+  }
+
+  public start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.resize();
+    let lastTime = performance.now();
+    const loop = (now: number) => {
+      if (!this.isRunning) return;
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      this.render(dt);
+      this.animId = requestAnimationFrame(loop);
+    };
+    this.animId = requestAnimationFrame(loop);
+  }
+
+  public stop() {
+    this.isRunning = false;
+    if (this.animId) cancelAnimationFrame(this.animId);
+  }
+
+  private render(dt: number) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    if (!w || !h) return;
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxDist = Math.max(cx, cy) * 1.2;
+
+    // 1. Hyperspace Dust / Radial Starfield Drift (#2)
+    for (const s of this.stars) {
+      s.dist += (s.speed + s.dist * 0.22) * dt;
+      if (s.dist > maxDist) {
+        s.dist = 4 + Math.random() * 12;
+        s.angle = Math.random() * Math.PI * 2;
+      }
+      // Elliptical perspective projection (squash Y to match wormhole tilt)
+      const px = cx + Math.cos(s.angle) * s.dist;
+      const py = cy + Math.sin(s.angle) * (s.dist * 0.44);
+
+      const fade = Math.min(1, s.dist / 25) * Math.max(0, 1 - s.dist / maxDist);
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = s.alpha * fade;
+      ctx.beginPath();
+      ctx.arc(px, py, s.size * (w > 600 ? 1.3 : 1.0), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Vector Wormhole Vortex (#1)
+    this.rotAngle += dt * 0.45;
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Subtle 3D perspective tilt
+    const tilt = -0.16;
+    ctx.rotate(tilt);
+
+    // Dynamic scale to fit canvas bounds
+    const scale = Math.min(w / 480, h / 180, 1.3);
+
+    const rings = [
+      { rx: 24 * scale, ry: 10 * scale, color: 'rgba(0, 229, 255, 0.9)', width: 1.6, rot: this.rotAngle * 1.8 },
+      { rx: 55 * scale, ry: 22 * scale, color: 'rgba(168, 85, 247, 0.75)', width: 1.3, rot: -this.rotAngle * 1.3 },
+      { rx: 100 * scale, ry: 38 * scale, color: 'rgba(0, 229, 255, 0.6)', width: 1.2, rot: this.rotAngle * 0.9 },
+      { rx: 155 * scale, ry: 58 * scale, color: 'rgba(192, 132, 252, 0.5)', width: 1.0, rot: -this.rotAngle * 0.6 },
+      { rx: 215 * scale, ry: 80 * scale, color: 'rgba(0, 229, 255, 0.35)', width: 0.9, rot: this.rotAngle * 0.45 },
+      { rx: 280 * scale, ry: 104 * scale, color: 'rgba(56, 189, 248, 0.22)', width: 0.8, rot: -this.rotAngle * 0.3 }
+    ];
+
+    for (let i = 0; i < rings.length; i++) {
+      const r = rings[i];
+      ctx.save();
+      ctx.rotate(r.rot);
+      ctx.strokeStyle = r.color;
+      ctx.lineWidth = r.width;
+      ctx.shadowColor = r.color;
+      ctx.shadowBlur = 8;
+      ctx.globalAlpha = 0.85;
+
+      // Draw dashed vector wireframe ellipse
+      ctx.setLineDash([14 + i * 3, 9 + i * 2]);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r.rx, r.ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Vector ray tick marks radiating inward
+      if (i > 0) {
+        const numTicks = 6 + i * 2;
+        ctx.setLineDash([]);
+        ctx.lineWidth = 0.7;
+        ctx.globalAlpha = 0.22;
+        for (let j = 0; j < numTicks; j++) {
+          const a = (j / numTicks) * Math.PI * 2;
+          const x1 = Math.cos(a) * r.rx;
+          const y1 = Math.sin(a) * r.ry;
+          const prev = rings[i - 1];
+          const x0 = Math.cos(a) * prev.rx;
+          const y0 = Math.sin(a) * prev.ry;
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x1, y1);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1.0;
+  }
+}
+
 class WormholeGame {
+  private lobbyVortex?: LobbyVortexEffect;
   private renderer: VectorRenderer;
   private pipRenderer: VectorRenderer | null = null;
   private starfield: Starfield;
@@ -2002,6 +2159,7 @@ class WormholeGame {
 
     if (active) {
       deck.classList.remove('hidden');
+      this.lobbyVortex?.start();
       hud.style.display = 'none';
       document.body.classList.remove('in-arena');
 
@@ -2058,6 +2216,7 @@ class WormholeGame {
       this.renderLobbyMatches();
     } else {
       deck.classList.add('hidden');
+      this.lobbyVortex?.stop();
       document.body.classList.add('in-arena');
       this.updateOrientationMode();
       if (this.isMobile) {
@@ -3476,6 +3635,13 @@ class WormholeGame {
         if (commsBadge) commsBadge.style.display = 'none';
         this.sound.playClick();
       };
+    }
+
+    // Initialize Vector Wormhole Vortex and Hyperspace Starfield in Lobby Header
+    const vortexCanvas = document.getElementById('wormhole-vortex-canvas') as HTMLCanvasElement | null;
+    if (vortexCanvas) {
+      this.lobbyVortex = new LobbyVortexEffect(vortexCanvas);
+      this.lobbyVortex.start();
     }
 
     // Host New Match Modal Triggers
