@@ -3891,10 +3891,33 @@
         }
 
         .lobby-top-header {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: space-between !important;
           padding: 0 !important;
           min-height: 44px !important;
           height: 44px !important;
           margin-bottom: 4px !important;
+        }
+
+        .player-profile-card {
+          order: 1 !important;
+          margin: 0 !important;
+        }
+
+        .header-title-box {
+          order: 2 !important;
+          margin: 0 auto !important;
+        }
+
+        .desktop-nav-tabs {
+          display: none !important;
+        }
+
+        .lobby-actions-group {
+          order: 3 !important;
+          margin: 0 !important;
         }
 
         .header-subtitle {
@@ -4869,12 +4892,6 @@
         display: none;
       }
 
-      .lobby-top-right-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
       .btn-host-header {
         display: none;
       }
@@ -4982,31 +4999,48 @@
         }
 
         .lobby-top-header {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: space-between !important;
           flex-shrink: 0 !important;
           border-bottom: 1.5px solid rgba(0, 229, 255, 0.2) !important;
-          padding-bottom: 10px !important;
+          padding: 4px 0 10px 0 !important;
+          gap: 16px !important;
         }
 
-        /* Top Desktop Navigation Tabs */
+        .header-title-box {
+          order: 1 !important;
+          margin: 0 !important;
+          align-items: flex-start !important;
+          text-align: left !important;
+        }
+
+        /* Top Desktop Navigation Tabs (Stacked Icon on Top, Text on Bottom, Active Cyan Underline) */
         .desktop-nav-tabs {
+          order: 2 !important;
           display: flex !important;
-          align-items: center !important;
-          gap: 8px !important;
-          background: rgba(6, 16, 32, 0.7) !important;
-          border: 1.5px solid #163658 !important;
-          border-radius: 8px !important;
-          padding: 4px !important;
+          align-items: flex-end !important;
+          justify-content: center !important;
+          gap: 16px !important;
+          margin: 0 auto !important;
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
         }
 
         .desk-nav-btn {
           display: flex !important;
+          flex-direction: column !important;
           align-items: center !important;
-          gap: 8px !important;
+          justify-content: center !important;
+          gap: 5px !important;
+          padding: 6px 18px 6px 18px !important;
           background: transparent !important;
-          border: 1px solid transparent !important;
-          border-radius: 6px !important;
-          padding: 6px 14px !important;
-          color: #7dd3fc !important;
+          border: none !important;
+          border-bottom: 2.5px solid transparent !important;
+          border-radius: 4px 4px 0 0 !important;
+          color: #64748b !important;
           font-family: 'Orbitron', sans-serif !important;
           font-size: 11px !important;
           font-weight: 800 !important;
@@ -5015,17 +5049,50 @@
           transition: all 0.2s ease !important;
         }
 
+        .desk-nav-btn svg {
+          width: 22px !important;
+          height: 22px !important;
+          stroke: currentColor !important;
+          stroke-width: 2 !important;
+          transition: all 0.2s ease !important;
+        }
+
         .desk-nav-btn:hover {
-          color: #ffffff !important;
-          background: rgba(0, 229, 255, 0.1) !important;
-          border-color: rgba(0, 229, 255, 0.3) !important;
+          color: #cbd5e1 !important;
+          background: rgba(0, 229, 255, 0.05) !important;
         }
 
         .desk-nav-btn.active {
-          color: #020c15 !important;
-          background: var(--neon-cyan) !important;
-          border-color: var(--neon-cyan) !important;
-          box-shadow: 0 0 16px rgba(0, 229, 255, 0.5) !important;
+          color: #00e5ff !important;
+          background: linear-gradient(180deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0.02) 100%) !important;
+          border-bottom: 2.5px solid #00e5ff !important;
+          box-shadow: 0 4px 14px rgba(0, 229, 255, 0.4) !important;
+          text-shadow: 0 0 10px rgba(0, 229, 255, 0.7) !important;
+        }
+
+        .desk-nav-btn.active svg {
+          stroke: #00e5ff !important;
+          filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.8)) !important;
+        }
+
+        .player-profile-card {
+          order: 3 !important;
+          display: flex !important;
+          align-items: center !important;
+          margin-left: auto !important;
+          margin-right: 12px !important;
+          margin-top: 0 !important;
+          margin-bottom: 0 !important;
+          gap: 8px !important;
+        }
+
+        .lobby-actions-group {
+          order: 4 !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
 
         .lobby-view-tabs {
@@ -5040,10 +5107,13 @@
         .dashboard-grid-2col {
           display: grid !important;
           grid-template-columns: 260px 1fr 330px !important;
+          grid-template-rows: 1fr !important;
           gap: 16px !important;
           flex: 1 !important;
           min-height: 0 !important;
+          height: calc(100% - 64px) !important;
           overflow: hidden !important;
+          align-items: stretch !important;
         }
 
         .lobby-comms-panel {
@@ -5052,44 +5122,55 @@
 
         .pilots-section-box {
           grid-column: 1 !important;
+          grid-row: 1 !important;
           display: flex !important;
           flex-direction: column !important;
           height: 100% !important;
           min-height: 0 !important;
+          max-height: 100% !important;
           background: rgba(6, 15, 30, 0.85) !important;
           border: 1.5px solid #163658 !important;
           border-radius: 8px !important;
           padding: 12px 14px !important;
           box-sizing: border-box !important;
+          overflow: hidden !important;
         }
 
         .matches-browser-panel {
           grid-column: 2 !important;
+          grid-row: 1 !important;
           display: flex !important;
           flex-direction: column !important;
           height: 100% !important;
           min-height: 0 !important;
+          max-height: 100% !important;
           background: rgba(6, 15, 30, 0.85) !important;
           border: 1.5px solid #163658 !important;
           border-radius: 8px !important;
           padding: 12px 14px !important;
           box-sizing: border-box !important;
+          overflow: hidden !important;
         }
 
         .comms-section-box {
           grid-column: 3 !important;
+          grid-row: 1 !important;
           display: flex !important;
           flex-direction: column !important;
           height: 100% !important;
           min-height: 0 !important;
+          max-height: 100% !important;
           background: rgba(6, 15, 30, 0.85) !important;
           border: 1.5px solid #163658 !important;
           border-radius: 8px !important;
           padding: 12px 14px !important;
           box-sizing: border-box !important;
+          overflow: hidden !important;
         }
 
-        .lobby-pilots-list {
+        .pilots-list-box,
+        #lobby-pilots-list {
+          max-height: none !important;
           flex: 1 !important;
           min-height: 0 !important;
           overflow-y: auto !important;
@@ -5350,9 +5431,42 @@
     <!-- Clean Modern Command Dashboard & Match Lounge -->
     <div id="screen-front-end" class="desk-view-lobby">
       <div class="main-card">
-        <!-- Top Open Header Bar (Logo Left, Desktop Tabs Center, Profile + Actions Right) -->
+        <!-- Top Open Header Bar -->
         <div class="lobby-top-header">
-          <!-- Logo Header (Left on Desktop) -->
+          <!-- Player Profile Unit (Avatar + Attached Identity Capsule) -->
+          <div class="player-profile-card">
+            <div class="avatar-frame" id="btn-change-avatar" title="Tap to Change Pilot Avatar">
+              <img src="/avatars/avatar_1.png" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
+            </div>
+            <div class="player-identity-capsule">
+              <div class="pilot-rank-badge" title="Combat Rank: Pilot Prime">
+                <svg width="22" height="24" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L3 6V12C3 18 7 23 12 25C17 23 21 18 21 12V6L12 2Z" fill="#1c2010" stroke="#d4af37" stroke-width="1.8"/>
+                  <path d="M12 7L8 13H12L11 18L16 12H12L13 7H12Z" fill="#ffd700"/>
+                  <path d="M4 22L12 25L20 22" stroke="#d4af37" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <div class="pilot-identity-col">
+                <span class="pilot-callsign-label">CALLSIGN</span>
+                <span class="pilot-name-display" id="display-callsign" title="Click to edit callsign">VortexPrime</span>
+                <input type="text" class="inline-callsign-input" id="input-callsign" value="VortexPrime" maxlength="16" style="display: none;" />
+              </div>
+              <div class="callsign-controls-row">
+                <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                </button>
+                <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logo Header (Left on Desktop, Center on Mobile Landscape/Portrait) -->
           <div class="header-title-box">
             <canvas id="wormhole-vortex-canvas" class="wormhole-vortex-canvas"></canvas>
             <div class="header-logo">
@@ -5364,60 +5478,25 @@
           <!-- Desktop Navigation Tabs: Lobby / Solo / Guide -->
           <div class="desktop-nav-tabs" id="desktop-nav-tabs">
             <button class="desk-nav-btn active" id="desk-tab-lobby" data-desktab="lobby">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               <span>[LOBBY / MATCHES]</span>
             </button>
             <button class="desk-nav-btn" id="desk-tab-solo" data-desktab="solo">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
               <span>[SOLO PRACTICE]</span>
             </button>
             <button class="desk-nav-btn" id="desk-tab-guide" data-desktab="guide">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
               <span>[GUIDE]</span>
             </button>
           </div>
 
-          <!-- Right Group: Player Profile Capsule & Utility Actions -->
-          <div class="lobby-top-right-group">
-            <div class="player-profile-card">
-              <div class="avatar-frame" id="btn-change-avatar" title="Tap to Change Pilot Avatar">
-                <img src="/avatars/avatar_1.png" id="player-avatar-img" class="player-avatar-thumb" alt="Pilot Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-              </div>
-              <div class="player-identity-capsule">
-                <div class="pilot-rank-badge" title="Combat Rank: Pilot Prime">
-                  <svg width="22" height="24" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L3 6V12C3 18 7 23 12 25C17 23 21 18 21 12V6L12 2Z" fill="#1c2010" stroke="#d4af37" stroke-width="1.8"/>
-                    <path d="M12 7L8 13H12L11 18L16 12H12L13 7H12Z" fill="#ffd700"/>
-                    <path d="M4 22L12 25L20 22" stroke="#d4af37" stroke-width="1.5"/>
-                  </svg>
-                </div>
-                <div class="pilot-identity-col">
-                  <span class="pilot-callsign-label">CALLSIGN</span>
-                  <span class="pilot-name-display" id="display-callsign" title="Click to edit callsign">VortexPrime</span>
-                  <input type="text" class="inline-callsign-input" id="input-callsign" value="VortexPrime" maxlength="16" style="display: none;" />
-                </div>
-                <div class="callsign-controls-row">
-                  <button class="btn-profile-action" id="btn-refresh-callsign" title="Generate Random Callsign">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                    </svg>
-                  </button>
-                  <button class="btn-profile-action" id="btn-edit-callsign" title="Edit Callsign">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Utility Actions (Guide, Options, Sound, Fullscreen) -->
-            <div class="lobby-actions-group">
-              <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
-              <button class="btn-util" id="btn-menu-options" title="Options & Keybindings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-              <button class="btn-util" id="btn-menu-sound" title="Toggle Sound"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
-              <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-            </div>
+          <!-- Utility Actions (Guide, Options, Sound, Fullscreen) -->
+          <div class="lobby-actions-group">
+            <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+            <button class="btn-util" id="btn-menu-options" title="Options & Keybindings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+            <button class="btn-util" id="btn-menu-sound" title="Toggle Sound"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
+            <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
           </div>
         </div>
 
