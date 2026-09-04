@@ -2887,24 +2887,55 @@
         }
 
         .lobby-top-header {
+          display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          gap: 8px !important;
-          margin-bottom: 10px !important;
+          gap: 10px !important;
+          margin-bottom: 12px !important;
         }
 
-        .player-profile-card {
-          width: 100% !important;
-          justify-content: center !important;
-        }
-
-        .header-title-box {
-          text-align: center !important;
-        }
-
+        /* 1.1: Options, Guide, Sound, Fullscreen utility actions at the very top */
         .lobby-actions-group {
+          order: 1 !important;
+          display: flex !important;
           justify-content: center !important;
+          gap: 14px !important;
+          width: 100% !important;
+          margin: 0 !important;
+        }
+
+        .lobby-actions-group .btn-util {
+          width: 38px !important;
+          height: 38px !important;
+        }
+
+        /* 1.2: Wormhole Resurrected Logo in the middle */
+        .header-title-box {
+          order: 2 !important;
+          text-align: center !important;
+          margin: 0 !important;
+        }
+
+        .header-logo {
+          font-size: 22px !important;
+          letter-spacing: 2.5px !important;
+        }
+
+        /* 1.3: Pilot profile & adjustable callsign below the Wormhole logo */
+        .player-profile-card {
+          order: 3 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: auto !important;
+          max-width: 96vw !important;
+          margin: 0 !important;
+          padding: 4px 10px !important;
           gap: 8px !important;
+        }
+
+        .player-identity-capsule {
+          max-width: calc(100vw - 90px) !important;
         }
 
         .dashboard-grid-2col {
@@ -2917,8 +2948,32 @@
         /* Put matches list & host/practice buttons first */
         .matches-browser-panel {
           order: 1 !important;
-          min-height: 320px !important;
+          min-height: 300px !important;
           flex: 1 0 auto !important;
+        }
+
+        /* Prevent button stretching in matches action footer */
+        .matches-action-footer {
+          margin-top: auto !important;
+          padding-top: 8px !important;
+          display: flex !important;
+          flex-direction: row !important;
+          gap: 8px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+
+        .matches-action-footer .btn-host,
+        .matches-action-footer .btn-singleplayer {
+          flex: 1 1 0 !important;
+          min-width: 0 !important;
+          padding: 10px 6px !important;
+          font-size: 11px !important;
+          letter-spacing: 0.5px !important;
+          white-space: nowrap !important;
+          text-align: center !important;
+          justify-content: center !important;
+          box-sizing: border-box !important;
         }
 
         .lobby-comms-panel {
@@ -2970,35 +3025,40 @@
           height: 34px !important;
         }
 
-        /* Center mini roster pills under the top status clusters */
+        /* Enemy roster stacked on the right side beneath the options button */
         .mob-roster-strip {
-          top: calc(env(safe-area-inset-top, 0px) + 48px) !important;
+          top: calc(env(safe-area-inset-top, 0px) + 52px) !important;
+          right: 8px !important;
+          left: auto !important;
+          transform: none !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: flex-end !important;
           gap: 4px !important;
-          max-width: 96vw !important;
-          flex-wrap: wrap !important;
-          justify-content: center !important;
+          max-width: 145px !important;
+          pointer-events: none !important;
         }
 
         .mob-roster-pill {
-          padding: 2px 5px !important;
+          padding: 2px 6px !important;
           font-size: 8.5px !important;
         }
 
         body.is-mobile #alert-banner {
-          top: calc(env(safe-area-inset-top, 0px) + 78px) !important;
+          top: calc(env(safe-area-inset-top, 0px) + 56px) !important;
           font-size: 10px !important;
-          max-width: 90vw !important;
+          max-width: 88vw !important;
         }
 
         .mob-floating-comms {
-          top: calc(env(safe-area-inset-top, 0px) + 105px) !important;
+          top: calc(env(safe-area-inset-top, 0px) + 80px) !important;
           left: 8px !important;
-          max-width: 220px !important;
+          max-width: 200px !important;
         }
 
-        /* 3. Touch Controls in Portrait */
+        /* 3. Touch Controls in Portrait: elevated ~1/5th (20vh) up the screen */
         .mob-touch-actions {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 20vh) !important;
           right: 14px !important;
           gap: 10px !important;
         }
@@ -3031,7 +3091,15 @@
           max-width: 85vw !important;
         }
 
-        /* 4. Modals in Portrait */
+        /* 4. Match Start Countdown in Portrait (prevents oversized ENGAGE! text) */
+        #countdown-overlay {
+          font-size: 46px !important;
+          letter-spacing: 3px !important;
+          width: 92vw !important;
+          white-space: nowrap !important;
+        }
+
+        /* 5. Modals in Portrait */
         #round-modal {
           width: 94vw !important;
           max-width: 94vw !important;

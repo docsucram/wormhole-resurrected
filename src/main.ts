@@ -199,7 +199,7 @@ class WormholeGame {
       document.body.classList.add('is-mobile');
       document.body.classList.toggle('is-portrait', isPortrait);
       document.body.classList.toggle('is-landscape', !isPortrait);
-      this.zoom = isPortrait ? 1.15 : 1.35;
+      this.zoom = 1.15;
     } else {
       document.body.classList.remove('is-mobile', 'is-portrait', 'is-landscape');
       this.zoom = 1.65;
@@ -5450,15 +5450,18 @@ class WormholeGame {
     const btnMobChatSend = document.getElementById('btn-mob-chat-send');
 
     if (btnMobChatToggle && mobChatDrawer) {
+      let lastToggleTime = 0;
       const toggleDrawer = (e: Event) => {
         e.stopPropagation();
         e.preventDefault();
+        const now = Date.now();
+        if (now - lastToggleTime < 280) return;
+        lastToggleTime = now;
         const isHidden = mobChatDrawer.style.display === 'none' || !mobChatDrawer.style.display;
         mobChatDrawer.style.display = isHidden ? 'flex' : 'none';
         // Do NOT auto-focus to prevent unprompted keyboard popups on mobile
       };
       btnMobChatToggle.onclick = toggleDrawer;
-      btnMobChatToggle.onpointerdown = toggleDrawer;
     }
 
     if (mobChatDrawer) {
@@ -5531,8 +5534,10 @@ class WormholeGame {
 
   public updateFullscreenStatus(): void {
     this.isMobile = this.checkIsMobile();
+    const isPortrait = this.isMobile && (window.innerHeight > window.innerWidth);
     const isFs = this.isScreenMaximised();
-    const shouldFlash = this.isMobile && !isFs;
+    // In portrait mode, do NOT flash the fullscreen button
+    const shouldFlash = this.isMobile && !isFs && !isPortrait;
 
     const btnMobFs = document.getElementById('btn-mob-fullscreen');
     if (btnMobFs) {
@@ -5569,7 +5574,8 @@ class WormholeGame {
         docEl.msRequestFullscreen();
       }
       try {
-        if (screen.orientation && (screen.orientation as any).lock) {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (!isPortrait && screen.orientation && (screen.orientation as any).lock) {
           (screen.orientation as any).lock('landscape').catch(() => {});
         }
       } catch {}
@@ -5594,9 +5600,10 @@ class WormholeGame {
       } else if (docEl.msRequestFullscreen) {
         docEl.msRequestFullscreen();
       }
-      // Attempt orientation lock to landscape on supported devices
+      // Attempt orientation lock to landscape on supported devices ONLY if not in portrait mode
       try {
-        if (screen.orientation && (screen.orientation as any).lock) {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (!isPortrait && screen.orientation && (screen.orientation as any).lock) {
           (screen.orientation as any).lock('landscape').catch(() => {});
         }
       } catch {}
