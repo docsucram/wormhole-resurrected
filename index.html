@@ -3289,6 +3289,29 @@
           border-radius: 16px !important;
           color: #ffffff !important;
         }
+        #btn-refresh-matches {
+          padding: 0 !important;
+          height: 28px !important;
+          width: 28px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          flex-shrink: 0 !important;
+          background: #091728 !important;
+          border: 1.5px solid #163658 !important;
+          border-radius: 6px !important;
+          color: var(--neon-cyan) !important;
+          cursor: pointer !important;
+        }
+        #btn-refresh-matches svg {
+          width: 14px !important;
+          height: 14px !important;
+          stroke: var(--neon-cyan) !important;
+        }
+        #btn-refresh-matches:active {
+          border-color: var(--neon-cyan) !important;
+          background: #0d233a !important;
+        }
         .comms-header-row {
           flex-shrink: 0 !important;
           margin-bottom: 4px !important;
@@ -3353,14 +3376,53 @@
           box-shadow: none !important;
         }
         #screen-front-end.tab-comms .pilots-section-box {
-          max-height: 125px !important;
-          min-height: 110px !important;
-          overflow-y: auto !important;
+          height: 175px !important;
+          max-height: 180px !important;
+          min-height: 165px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
           flex-shrink: 0 !important;
           border: 1px solid rgba(0, 229, 255, 0.2) !important;
           border-radius: 8px !important;
-          padding: 6px !important;
-          background: rgba(6, 17, 34, 0.8) !important;
+          padding: 6px 8px !important;
+          background: rgba(6, 17, 34, 0.85) !important;
+          margin-bottom: 6px !important;
+        }
+        #screen-front-end.tab-comms .pilots-section-title {
+          font-size: 9.5px !important;
+          letter-spacing: 0.8px !important;
+          margin-bottom: 4px !important;
+          flex-shrink: 0 !important;
+        }
+        #screen-front-end.tab-comms .pilots-list-box {
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          padding-right: 2px !important;
+        }
+        #screen-front-end.tab-comms .pilot-row {
+          padding: 4px 8px !important;
+          margin-bottom: 0 !important;
+          gap: 8px !important;
+          min-height: 38px !important;
+          box-sizing: border-box !important;
+        }
+        #screen-front-end.tab-comms .pilot-row-avatar {
+          width: 30px !important;
+          height: 30px !important;
+          border-radius: 5px !important;
+        }
+        #screen-front-end.tab-comms .pilot-row-name {
+          font-size: 11px !important;
+        }
+        #screen-front-end.tab-comms .pilot-status-text {
+          font-size: 9px !important;
         }
         #screen-front-end.tab-comms .comms-section-box {
           flex: 1 1 auto !important;
@@ -3381,6 +3443,15 @@
         }
         #screen-front-end.tab-comms .lobby-chat-input-row {
           flex-shrink: 0 !important;
+        }
+        #screen-front-end.tab-comms .chat-styled-input {
+          height: 32px !important;
+          font-size: 10.5px !important;
+        }
+        #screen-front-end.tab-comms .btn-chat-send {
+          height: 32px !important;
+          font-size: 10.5px !important;
+          padding: 0 10px !important;
         }
 
         /* 1.5: Match card full width details with full width Join Match button below */
@@ -4154,11 +4225,22 @@
           align-items: center !important;
           justify-content: center !important;
           flex-shrink: 0 !important;
+          background: #091728 !important;
+          border: 1.5px solid #163658 !important;
+          border-radius: 6px !important;
+          color: var(--neon-cyan) !important;
+          cursor: pointer !important;
         }
 
         #btn-refresh-matches svg {
           width: 13px !important;
           height: 13px !important;
+          stroke: var(--neon-cyan) !important;
+        }
+
+        #btn-refresh-matches:active {
+          border-color: var(--neon-cyan) !important;
+          background: #0d233a !important;
         }
 
         .matches-list-scroll {
@@ -4913,6 +4995,38 @@
 
       .desk-refresh-text {
         display: none;
+      }
+
+      .btn-refresh-matches {
+        background: #091728;
+        border: 1.5px solid #163658;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 6px 10px;
+        color: var(--neon-cyan);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+        transition: all 0.15s ease;
+      }
+      .btn-refresh-matches:hover,
+      .btn-refresh-matches:active {
+        border-color: var(--neon-cyan);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+        background: #0d233a;
+      }
+      .btn-refresh-matches svg {
+        display: block;
+        stroke: var(--neon-cyan);
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
       }
 
       /* Pilot Lounge Row Styling (All Platforms) */
