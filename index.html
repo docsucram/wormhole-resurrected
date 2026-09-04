@@ -2280,7 +2280,7 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
       }
 
-      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal, #solo-difficulty-modal, #avatar-picker-modal {
+      #match-modal, #disconnect-modal, #manual-modal, #pause-modal, #round-modal, #create-match-modal, #options-modal, #solo-difficulty-modal, #avatar-picker-modal, #timeout-modal {
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
@@ -2666,13 +2666,20 @@
         display: none !important;
       }
 
-      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active, #callsign-modal.active {
+      #match-modal.active, #disconnect-modal.active, #pause-modal.active, #round-modal.active, #create-match-modal.active, #solo-difficulty-modal.active, #avatar-picker-modal.active, #callsign-modal.active, #timeout-modal.active {
         display: block !important;
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
         animation: modalPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      #timeout-modal {
+        border-color: rgba(245, 158, 11, 0.65) !important;
+        box-shadow: 0 0 35px rgba(245, 158, 11, 0.25), 0 10px 40px rgba(0, 0, 0, 0.92) !important;
+        max-width: 420px;
+        width: 90vw;
       }
 
       #manual-modal.active,
@@ -3258,8 +3265,18 @@
         }
 
         .mob-score-box {
+          position: fixed !important;
+          top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
           font-size: 13px !important;
-          padding: 4px 9px !important;
+          font-weight: 900 !important;
+          padding: 4px 12px !important;
+          z-index: 35 !important;
+          white-space: nowrap !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
         }
 
         .mob-btn-pause {
@@ -3372,13 +3389,71 @@
         #manual-modal,
         #create-match-modal,
         #avatar-picker-modal,
-        #disconnect-modal {
+        #disconnect-modal,
+        #timeout-modal {
           width: 94vw !important;
           max-width: 94vw !important;
           max-height: 90dvh !important;
           overflow-y: auto !important;
           padding: 16px 14px !important;
           box-sizing: border-box !important;
+        }
+
+        /* Format Test Control Panel to fit mobile portrait */
+        body.is-mobile #spawner-modal.active,
+        #spawner-modal.active {
+          display: block !important;
+          animation: spawnerFadeIn 0.18s ease-out !important;
+        }
+
+        #spawner-modal {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          width: 92vw !important;
+          max-width: 390px !important;
+          max-height: 85vh !important;
+          max-height: 85dvh !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding: 10px 12px !important;
+          border-radius: 12px !important;
+          box-shadow: 0 0 35px rgba(56, 189, 248, 0.3), 0 12px 40px rgba(0, 0, 0, 0.95) !important;
+          z-index: 100000 !important;
+          box-sizing: border-box !important;
+        }
+
+        #spawner-modal .spawner-drag-header {
+          touch-action: auto !important;
+          cursor: default !important;
+          padding-bottom: 6px !important;
+          margin-bottom: 7px !important;
+        }
+
+        #spawner-modal select.styled-select {
+          font-size: 11px !important;
+          padding: 4px 6px !important;
+          height: 30px !important;
+        }
+
+        #spawner-modal .action-btn {
+          min-height: 28px !important;
+          font-size: 9.5px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+
+        #spawner-modal #btn-close-spawner {
+          min-height: 36px !important;
+          font-size: 11px !important;
+          margin-top: 6px !important;
+        }
+
+        #spawner-modal #btn-close-spawner-top {
+          font-size: 18px !important;
+          padding: 4px 8px !important;
         }
       }
 
@@ -5077,6 +5152,7 @@
 
         <button class="action-btn" id="btn-pause-options">OPTIONS</button>
         <button class="action-btn" id="btn-pause-fullscreen">TOGGLE FULLSCREEN</button>
+        <button class="action-btn" id="btn-menu-spawner" style="border-color: #ffaa00; color: #ffaa00; font-weight: 900; display: none;">⚡ TEST CONTROL PANEL</button>
 
         <!-- Grouped Destructive / Session Reset Actions -->
         <div style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255, 51, 68, 0.25); display: flex; flex-direction: column; gap: 8px;">
@@ -5495,6 +5571,18 @@
       <div style="font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 900; color: #ff3344; margin-bottom: 8px;">PEER DISCONNECTED</div>
       <div style="font-size: 12px; color: #88bbdd; margin-bottom: 14px;" id="disconnect-reason">OPPONENT LEFT THE MATCH</div>
       <button class="action-btn" id="btn-return-solo" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">RETURN TO LOBBY</button>
+    </div>
+
+    <!-- Match Inactivity Timeout Notice Modal -->
+    <div id="timeout-modal">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span style="font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; color: #fbbf24; letter-spacing: 1.5px;">MATCH TIMEOUT</span>
+      </div>
+      <p id="timeout-modal-msg" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0 0 20px 0; font-family: sans-serif;">Match was closed due to 15 minutes of inactivity.</p>
+      <div style="display: flex; justify-content: center;">
+        <button class="action-btn" id="btn-close-timeout" style="background: rgba(245, 158, 11, 0.15); border: 1.5px solid #f59e0b; color: #fbbf24; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1.2px; padding: 9px 26px; border-radius: 6px; cursor: pointer; box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);">ACKNOWLEDGE</button>
+      </div>
     </div>
 
     <div id="countdown-overlay">3</div>

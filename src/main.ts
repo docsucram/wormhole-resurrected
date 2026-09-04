@@ -168,6 +168,10 @@ class WormholeGame {
   private activePortraitTab: 'matches' | 'comms' = 'matches';
   private lobbyUnreadCommsCount = 0;
 
+  public get isPortrait(): boolean {
+    return this.isMobile && (window.innerHeight > window.innerWidth);
+  }
+
   // DOM Cache & Dirty Checking for high-performance zero-reflow HUD rendering
   private hudElementsCache: Map<string, HTMLElement> = new Map();
   private lastHudValues: Record<string, string | number | boolean> = {};
@@ -788,7 +792,7 @@ class WormholeGame {
           this.handlePeerDeparture(pkt.slot ?? data.fromSlot, pkt.clientId, pkt.playerName);
         } else if (pkt.type === 'EVICT_TIMEOUT') {
           if (this.isLanMatchClient) {
-            this.showAlert('DISCONNECTED // INACTIVITY TIMEOUT');
+            this.showTimeoutNotice('Disconnected from match due to inactivity timeout.');
             this.addChatLog('Disconnected from host due to inactivity / timeout.', 'system');
             this.leaveMatchToLobby('TIMEOUT_INACTIVE');
             return;
@@ -1128,7 +1132,7 @@ class WormholeGame {
         this.currentMatchConfig = null;
         this.setDeckActive(true);
         if (data.reason === 'TIMEOUT_INACTIVE') {
-          this.showAlert('MATCH TERMINATED // HOST INACTIVE FOR 15 MINUTES');
+          this.showTimeoutNotice('Match was terminated because the host was inactive for 15 minutes.');
           this.addChatLog('Host was inactive for 15 minutes. Match closed.', 'system');
         } else {
           this.showAlert('HOST HAS LEFT THE MATCH // RETURNING TO LOBBY');
@@ -1270,12 +1274,12 @@ class WormholeGame {
         if (elapsedInactive >= WormholeGame.MATCH_INACTIVITY_TIMEOUT_MS) {
           if (this.isLanMatchHost) {
             this.setDeckActive(true, 'TIMEOUT_INACTIVE');
-            this.showAlert('MATCH TERMINATED // 15 MIN INACTIVITY TIMEOUT');
+            this.showTimeoutNotice('Hosted match terminated due to 15 minutes of inactivity.');
             this.addChatLog('Hosted match terminated due to 15 minutes of inactivity.', 'system');
             this.sound.playDefeatFanfare();
           } else if (this.isLanMatchClient || this.network.isConnected) {
-            this.setDeckActive(true);
-            this.showAlert('DISCONNECTED // 15 MIN INACTIVITY TIMEOUT');
+            this.setDeckActive(true, 'TIMEOUT_INACTIVE');
+            this.showTimeoutNotice('Disconnected from match due to 15 minutes of inactivity.');
             this.addChatLog('Disconnected from match due to 15 minutes of inactivity.', 'system');
             this.sound.playDefeatFanfare();
           }
@@ -1978,6 +1982,11 @@ class WormholeGame {
     const disconnectModal = document.getElementById('disconnect-modal');
     if (disconnectModal) {
       disconnectModal.classList.remove('active');
+    }
+    const timeoutModal = document.getElementById('timeout-modal');
+    if (timeoutModal && reason !== 'TIMEOUT_INACTIVE') {
+      timeoutModal.classList.remove('active');
+      timeoutModal.style.display = 'none';
     }
 
     this.modalHangarView.stopPreview();
@@ -3871,6 +3880,17 @@ class WormholeGame {
       document.getElementById('disconnect-modal')?.classList.remove('active');
       this.leaveMatchToLobby('PLAYER_QUIT');
     };
+    const btnCloseTimeout = document.getElementById('btn-close-timeout');
+    if (btnCloseTimeout) {
+      btnCloseTimeout.onclick = () => {
+        const modal = document.getElementById('timeout-modal');
+        if (modal) {
+          modal.classList.remove('active');
+          modal.style.display = 'none';
+        }
+        this.sound.playClick();
+      };
+    }
 
     // Match Victory Buttons
     document.getElementById('btn-play-again')!.onclick = () => {
@@ -4316,6 +4336,7 @@ class WormholeGame {
 
       const onPointerDown = (e: PointerEvent) => {
         if ((e.target as HTMLElement).id === 'btn-close-spawner-top') return;
+        if (this.isPortrait) return;
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
@@ -4548,6 +4569,11 @@ class WormholeGame {
     }
 
     const openSpawner = () => {
+      document.getElementById('pause-modal')?.classList.remove('active');
+      if (this.isPortrait && spawnerModal) {
+        spawnerModal.style.left = '';
+        spawnerModal.style.top = '';
+      }
       populateTargets();
       if (shipSelect) shipSelect.value = this.selectedShipIndex.toString();
       if (sizeSelect) sizeSelect.value = this.currentArenaSize;
@@ -4569,7 +4595,12 @@ class WormholeGame {
     };
 
     const btnMenuSpawner = document.getElementById('btn-menu-spawner');
-    if (btnMenuSpawner) btnMenuSpawner.onclick = openSpawner;
+    if (btnMenuSpawner) {
+      btnMenuSpawner.onclick = () => {
+        document.getElementById('pause-modal')?.classList.remove('active');
+        openSpawner();
+      };
+    }
 
     const btnTableSpawner = document.getElementById('btn-match-spawner') || document.getElementById('btn-table-spawner');
     if (btnTableSpawner) btnTableSpawner.onclick = openSpawner;
@@ -5138,6 +5169,10 @@ class WormholeGame {
     if (btnSpawner) {
       btnSpawner.style.display = showTestFeatures ? 'block' : 'none';
     }
+    const btnMenuSpawner = document.getElementById('btn-menu-spawner');
+    if (btnMenuSpawner) {
+      btnMenuSpawner.style.display = showTestFeatures ? 'block' : 'none';
+    }
 
     const pipCard = document.getElementById('pip-camera-card');
     const pipNameEl = document.getElementById('pip-opponent-name');
@@ -5266,6 +5301,16 @@ class WormholeGame {
     banner.innerText = text;
     banner.classList.add('active');
     this.alertTimer = 2.5;
+  }
+
+  public showTimeoutNotice(text: string): void {
+    const modal = document.getElementById('timeout-modal');
+    const msg = document.getElementById('timeout-modal-msg');
+    if (msg) msg.innerText = text;
+    if (modal) {
+      modal.classList.add('active');
+      modal.style.display = 'block';
+    }
   }
 
   public highlightAddBotRosterButton(): void {
@@ -5434,6 +5479,14 @@ class WormholeGame {
       btnMobilePause.onclick = () => {
         const pauseModal = document.getElementById('pause-modal');
         if (pauseModal) {
+          const isSolo = !this.isLanMatchHost && !this.isLanMatchClient && !this.network.isConnected;
+          const isHostTestMode = this.isLanMatchHost && !!this.currentMatchConfig?.isTestMode;
+          const isSoloTestMode = isSolo && this.isSoloTestModeEnabled;
+          const showTestFeatures = isSoloTestMode || isHostTestMode;
+          const btnMenuSpawner = document.getElementById('btn-menu-spawner');
+          if (btnMenuSpawner) {
+            btnMenuSpawner.style.display = showTestFeatures ? 'block' : 'none';
+          }
           pauseModal.classList.add('active');
           this.sound.playClick();
         }
@@ -6970,6 +7023,14 @@ class WormholeGame {
         return;
       }
       if (this.inArena && pauseModal) {
+        const isSolo = !this.isLanMatchHost && !this.isLanMatchClient && !this.network.isConnected;
+        const isHostTestMode = this.isLanMatchHost && !!this.currentMatchConfig?.isTestMode;
+        const isSoloTestMode = isSolo && this.isSoloTestModeEnabled;
+        const showTestFeatures = isSoloTestMode || isHostTestMode;
+        const btnMenuSpawner = document.getElementById('btn-menu-spawner');
+        if (btnMenuSpawner) {
+          btnMenuSpawner.style.display = showTestFeatures ? 'block' : 'none';
+        }
         pauseModal.classList.toggle('active');
         this.clearGamepadFocus();
         this.sound.playClick();
@@ -6978,12 +7039,12 @@ class WormholeGame {
     }
 
     // 4. Modal / Dialog Navigation
-    const activeModal = (document.querySelector('#pause-modal.active, #options-modal.active, #manual-modal.active, #create-match-modal.active, #join-lan-modal.active, #spawner-modal.active, #disconnect-modal.active') as HTMLElement | null);
+    const activeModal = (document.querySelector('#pause-modal.active, #options-modal.active, #manual-modal.active, #create-match-modal.active, #join-lan-modal.active, #spawner-modal.active, #disconnect-modal.active, #timeout-modal.active') as HTMLElement | null);
 
     if (activeModal) {
       if (nav.cancel) {
         // Close modal
-        const closeBtn = activeModal.querySelector('#btn-close-options-x, #btn-close-manual-top, #btn-close-manual, #btn-pause-resume, #btn-close-spawner, #btn-create-cancel, #btn-join-cancel, #btn-return-solo') as HTMLElement | null;
+        const closeBtn = activeModal.querySelector('#btn-close-options-x, #btn-close-manual-top, #btn-close-manual, #btn-pause-resume, #btn-close-spawner, #btn-create-cancel, #btn-join-cancel, #btn-return-solo, #btn-close-timeout') as HTMLElement | null;
         if (closeBtn) {
           closeBtn.click();
         } else {
