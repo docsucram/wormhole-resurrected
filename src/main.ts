@@ -1530,18 +1530,14 @@ class WormholeGame {
     // Render self first
     const selfRow = document.createElement('div');
     selfRow.className = 'pilot-row self' + (this.isLoungeTimedOut ? ' timed-out' : '');
-    const pingPill = this.isLoungeTimedOut
-      ? `<span class="pilot-ping-pill away" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;">AWAY</span>`
-      : `<span class="pilot-ping-pill local">LOCAL</span>`;
     const selfStatusText = this.isLoungeTimedOut ? 'AWAY' : (this.inArena ? 'IN-MATCH: BATTLE' : 'LOBBY');
     const selfStatusClass = this.isLoungeTimedOut ? 'status-away' : (this.inArena ? 'status-inmatch' : 'status-lobby');
     selfRow.innerHTML = `
       <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
       <div class="pilot-info-stack">
-        <span class="pilot-row-name">${this.playerName} ${this.isLoungeTimedOut ? '(AWAY)' : '(YOU)'}</span>
+        <span class="pilot-row-name">${this.playerName} (YOU)</span>
         <span class="pilot-status-text ${selfStatusClass}">${selfStatusText}</span>
       </div>
-      ${pingPill}
     `;
     pilotsListEl.appendChild(selfRow);
 
@@ -1559,7 +1555,6 @@ class WormholeGame {
           <span class="pilot-row-name">${pilot.callsign}</span>
           <span class="pilot-status-text ${pilotStatusClass}">${pilotStatusText}</span>
         </div>
-        <span class="pilot-ping-pill lan">LAN</span>
       `;
       pilotsListEl.appendChild(row);
     }

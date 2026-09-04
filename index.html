@@ -5027,6 +5027,7 @@
           background: transparent !important;
           border: none !important;
           padding: 0 !important;
+          flex-shrink: 0 !important;
         }
 
         .desk-nav-btn {
@@ -5035,7 +5036,7 @@
           align-items: center !important;
           justify-content: center !important;
           gap: 5px !important;
-          padding: 6px 18px 6px 18px !important;
+          padding: 6px 14px 6px 14px !important;
           background: transparent !important;
           border: none !important;
           border-bottom: 2.5px solid transparent !important;
@@ -5045,8 +5046,14 @@
           font-size: 11px !important;
           font-weight: 800 !important;
           letter-spacing: 1px !important;
+          white-space: nowrap !important;
           cursor: pointer !important;
           transition: all 0.2s ease !important;
+        }
+
+        .desk-nav-btn span {
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
 
         .desk-nav-btn svg {
@@ -5522,8 +5529,10 @@
               <div class="pilots-list-box" id="lobby-pilots-list">
                 <div class="pilot-row self">
                   <img src="/avatars/avatar_1.png" class="pilot-row-avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-                  <span class="pilot-row-name" id="lobby-self-name">VortexPrime (YOU)</span>
-                  <span class="pilot-ping-pill local">LOCAL</span>
+                  <div class="pilot-info-stack">
+                    <span class="pilot-row-name" id="lobby-self-name">VortexPrime (YOU)</span>
+                    <span class="pilot-status-text status-lobby">LOBBY</span>
+                  </div>
                 </div>
               </div>
             </div>
