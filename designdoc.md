@@ -100,10 +100,14 @@ The overarching directive of **Wormhole Resurrected** is to preserve **100% fait
 The user interface follows a responsive cybernetic vector aesthetic utilizing CSS custom variables (`--neon-cyan`, `--neon-magenta`, `--neon-green`, `--neon-amber`) and high-legibility HUD fonts (`Orbitron` and `Rajdhani`).
 
 ### 4.1 Front-End Lobby Screen (`#screen-front-end`)
-* **Desktop Mode**:
-  - Split two-column cockpit layout:
-    - **Left Column**: Pilot profile card, active callsign configuration, and Pilot Comms & Roster panel.
-    - **Right Column**: Live Matches browser with instant search filtering, match creation modal, and solo practice launcher.
+* **Desktop Command Hub Mode (`@media (min-width: 901px) and (min-height: 561px)`)**:
+  - **Expansive Cockpit Architecture**: High-efficiency 3-column command dashboard utilizing desktop screen real estate cleanly without tiny fixed constraints:
+    - **Top Header Bar**: Left animated vector vortex logo (`WORMHOLE RESURRECTED`), center desktop navigation switcher (`[LOBBY / MATCHES]`, `[SOLO PRACTICE]`, `[GUIDE]`), and right player profile capsule with avatar, callsign, and quick utilities (`Guide`, `Options`, `Sound`, `Fullscreen`).
+    - **Left Column (~260px)**: Dedicated **Pilots in Lounge** roster box displaying total online presence count, pilot avatars, and real-time activity status (`LOBBY` cyan, `IN-MATCH: BATTLE` rose-red, or `AWAY` amber).
+    - **Center Column (`1fr`)**: Dedicated **Live Lobbies** browser with instant criteria search box, glowing `+ HOST LOBBY` header button, `REFRESH` trigger, and a 5-column PC table format (`HOST` | `GAME MODE` | `MAP / RULES` | `SLOTS` | `ACTION`).
+    - **Right Column (~330px)**: Full-height **Global Sub-Space Comms** stream with instant chat logging and message transmission.
+  - **Desktop Navigation Tabs & View Switching**: Seamlessly toggles the main viewport between Lobby, an expansive multi-column Solo Practice directive console, and the Tactical Flight Manual without modal clutter.
+  - **Presence Broadcast & Status Sync**: Pilots dynamically broadcast their live status (`LOBBY` vs `IN_MATCH`) over LAN broadcast and WebSocket relay as games start and end.
 * **Mobile Portrait Mode**:
   - Smart single-column vertical flow with locked outer viewport scrolling (`overflow: hidden`) and clean borderless full-bleed main card.
   - Top utility action bar right-aligned with safe-area notch padding (`env(safe-area-inset-top)`).

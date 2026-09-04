@@ -66,6 +66,7 @@ export interface ConnectedPilot {
   avatar?: string;
   isHost?: boolean;
   lastSeen: number;
+  status?: 'LOBBY' | 'IN_MATCH' | 'AWAY';
 }
 
 class LobbyVortexEffect {
@@ -651,6 +652,7 @@ class WormholeGame {
         callsign: data.callsign || 'Pilot',
         avatar: data.avatar || 'avatar_1.svg',
         lastSeen: Date.now(),
+        status: data.status || 'LOBBY',
       });
       this.renderConnectedPilots();
       // If we are hosting a match, inform the newly arrived pilot
@@ -1365,18 +1367,21 @@ class WormholeGame {
 
   public sendPresence(): void {
     if (this.isLoungeTimedOut) return;
+    const currentStatus: 'LOBBY' | 'IN_MATCH' = this.inArena ? 'IN_MATCH' : 'LOBBY';
     this.connectedPilots.set(this.localClientId, {
       id: this.localClientId,
       callsign: this.playerName,
       avatar: this.playerAvatar,
       isHost: true,
       lastSeen: Date.now(),
+      status: currentStatus,
     });
     this.sendLanPacket({
       type: 'PRESENCE',
       id: this.localClientId,
       callsign: this.playerName,
       avatar: this.playerAvatar,
+      status: currentStatus,
       timestamp: Date.now(),
     });
   }
@@ -1528,9 +1533,14 @@ class WormholeGame {
     const pingPill = this.isLoungeTimedOut
       ? `<span class="pilot-ping-pill away" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;">AWAY</span>`
       : `<span class="pilot-ping-pill local">LOCAL</span>`;
+    const selfStatusText = this.isLoungeTimedOut ? 'AWAY' : (this.inArena ? 'IN-MATCH: BATTLE' : 'LOBBY');
+    const selfStatusClass = this.isLoungeTimedOut ? 'status-away' : (this.inArena ? 'status-inmatch' : 'status-lobby');
     selfRow.innerHTML = `
       <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-      <span class="pilot-row-name">${this.playerName} ${this.isLoungeTimedOut ? '(AWAY)' : '(YOU)'}</span>
+      <div class="pilot-info-stack">
+        <span class="pilot-row-name">${this.playerName} ${this.isLoungeTimedOut ? '(AWAY)' : '(YOU)'}</span>
+        <span class="pilot-status-text ${selfStatusClass}">${selfStatusText}</span>
+      </div>
       ${pingPill}
     `;
     pilotsListEl.appendChild(selfRow);
@@ -1541,9 +1551,14 @@ class WormholeGame {
       const row = document.createElement('div');
       row.className = 'pilot-row';
       const pilotAvatar = pilot.avatar || 'avatar_1.png';
+      const pilotStatusText = pilot.status === 'IN_MATCH' ? 'IN-MATCH: BATTLE' : (pilot.status === 'AWAY' ? 'AWAY' : 'LOBBY');
+      const pilotStatusClass = pilot.status === 'IN_MATCH' ? 'status-inmatch' : (pilot.status === 'AWAY' ? 'status-away' : 'status-lobby');
       row.innerHTML = `
         <img src="/avatars/${pilotAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-        <span class="pilot-row-name">${pilot.callsign}</span>
+        <div class="pilot-info-stack">
+          <span class="pilot-row-name">${pilot.callsign}</span>
+          <span class="pilot-status-text ${pilotStatusClass}">${pilotStatusText}</span>
+        </div>
         <span class="pilot-ping-pill lan">LAN</span>
       `;
       pilotsListEl.appendChild(row);
@@ -1663,73 +1678,103 @@ class WormholeGame {
       }
 
       card.innerHTML = `
-        <div class="match-info-col">
-          <div class="match-title-line">
-            <span class="match-name-text">${match.name}</span>
-            <span class="match-host-sub">Host: ${match.hostName}</span>
+        <!-- Mobile View (Default flex row) -->
+        <div class="match-card-mobile">
+          <div class="match-info-col">
+            <div class="match-title-line">
+              <span class="match-name-text">${match.name}</span>
+              <span class="match-host-sub">Host: ${match.hostName}</span>
+            </div>
+            <div class="match-meta-line">
+              <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
+              <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
+              ${statusBadge}
+              ${testBadge}
+              <span class="match-badge badge-meta-subtle">${pupsLabel}</span>
+              <span class="match-badge badge-meta-subtle">FIRST TO ${match.targetWins}</span>
+            </div>
           </div>
-          <div class="match-meta-line">
-            <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
-            <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
-            ${statusBadge}
-            ${testBadge}
-            <span class="match-badge badge-meta-subtle">${pupsLabel}</span>
-            <span class="match-badge badge-meta-subtle">FIRST TO ${match.targetWins}</span>
+          <div>
+            <button class="btn-join-match">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
           </div>
         </div>
-        <div>
-          <button class="btn-join-match">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
+
+        <!-- Desktop View (5-Column Cockpit Table Row) -->
+        <div class="match-cell desk-cell-host">
+          <div class="desk-host-name">${match.name}</div>
+          <div class="desk-host-sub">Host: ${match.hostName}</div>
+        </div>
+        <div class="match-cell desk-cell-mode">
+          <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
+          ${testBadge}
+        </div>
+        <div class="match-cell desk-cell-rules">
+          <div class="desk-rule-item">${pupsLabel}</div>
+          <div class="desk-rule-sub">First to ${match.targetWins} pts</div>
+        </div>
+        <div class="match-cell desk-cell-slots">
+          <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers}</span>
+          ${statusBadge}
+        </div>
+        <div class="match-cell desk-cell-action">
+          <button class="btn-join-match btn-desk-join">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
         </div>
       `;
 
-      const joinBtn = card.querySelector('.btn-join-match') as HTMLButtonElement;
-      joinBtn.onclick = () => {
-        if (match.isPasswordProtected) {
-          const pass = window.prompt(`Match "${match.name}" is password protected. Enter password:`);
-          if (pass !== match.password) {
-            alert('Incorrect match access code.');
-            return;
+      const joinBtns = card.querySelectorAll('.btn-join-match') as NodeListOf<HTMLButtonElement>;
+      joinBtns.forEach((joinBtn) => {
+        joinBtn.onclick = () => {
+          if (match.isPasswordProtected) {
+            const pass = window.prompt(`Match "${match.name}" is password protected. Enter password:`);
+            if (pass !== match.password) {
+              alert('Incorrect match access code.');
+              return;
+            }
           }
-        }
-        if (match.hostName === this.playerName) {
-          this.isLanMatchHost = true;
-          this.isLanMatchClient = false;
-          this.joinLobbyMatch(match);
-        } else {
-          this.isLanMatchHost = false;
-          this.isLanMatchClient = true;
-          this.currentMatchConfig = match;
-          joinBtn.disabled = true;
-          joinBtn.innerText = 'CONNECTING...';
+          if (match.hostName === this.playerName) {
+            this.isLanMatchHost = true;
+            this.isLanMatchClient = false;
+            this.joinLobbyMatch(match);
+          } else {
+            this.isLanMatchHost = false;
+            this.isLanMatchClient = true;
+            this.currentMatchConfig = match;
+            joinBtns.forEach((b) => {
+              b.disabled = true;
+              b.innerText = 'CONNECTING...';
+            });
 
-          const sendJoinReq = () => {
-            if (this.isLanMatchClient && !this.inArena) {
-              this.sendLanPacket({
-                type: 'MATCH_JOIN_REQUEST',
-                matchId: match.id,
-                clientId: this.localClientId,
-                playerName: this.playerName,
-                shipId: this.selectedShipIndex,
-              });
-            }
-          };
+            const sendJoinReq = () => {
+              if (this.isLanMatchClient && !this.inArena) {
+                this.sendLanPacket({
+                  type: 'MATCH_JOIN_REQUEST',
+                  matchId: match.id,
+                  clientId: this.localClientId,
+                  playerName: this.playerName,
+                  shipId: this.selectedShipIndex,
+                });
+              }
+            };
 
-          sendJoinReq();
-          setTimeout(sendJoinReq, 1000);
-          setTimeout(sendJoinReq, 2200);
+            sendJoinReq();
+            setTimeout(sendJoinReq, 1000);
+            setTimeout(sendJoinReq, 2200);
 
-          setTimeout(() => {
-            if (!this.inArena && this.isLanMatchClient) {
-              this.isLanMatchClient = false;
-              joinBtn.disabled = false;
-              joinBtn.innerText = isFull ? 'SPECTATE' : 'JOIN MATCH';
-              this.showAlert('COULD NOT REACH HOST // RETRY JOIN');
-            }
-          }, 6000);
+            setTimeout(() => {
+              if (!this.inArena && this.isLanMatchClient) {
+                this.isLanMatchClient = false;
+                joinBtns.forEach((b) => {
+                  b.disabled = false;
+                  b.innerText = isFull ? 'SPECTATE' : 'JOIN MATCH';
+                });
+                this.showAlert('COULD NOT REACH HOST // RETRY JOIN');
+              }
+            }, 6000);
 
-          this.addChatLog(`Requesting entry into ${match.hostName}'s Match...`, 'system');
-        }
-      };
+            this.addChatLog(`Requesting entry into ${match.hostName}'s Match...`, 'system');
+          }
+        };
+      });
 
       listEl.appendChild(card);
     });
@@ -2143,6 +2188,8 @@ class WormholeGame {
       this.isLoungeTimedOut = false;
       this.recordUserActivity();
     }
+    this.sendPresence();
+    this.renderConnectedPilots();
     if (active) {
       this.tutorialManager.stop();
     }
@@ -3568,11 +3615,84 @@ class WormholeGame {
     const createModal = document.getElementById('create-match-modal');
     let selectedSoloDiff: BotDifficulty = 'medium';
 
+    // Desktop Navigation Tabs & Multi-Screen Workspace Controller
+    const setDesktopTab = (tab: 'lobby' | 'solo' | 'guide') => {
+      const deck = document.getElementById('screen-front-end');
+      if (deck) {
+        deck.classList.remove('desk-view-lobby', 'desk-view-solo', 'desk-view-guide');
+        deck.classList.add(`desk-view-${tab}`);
+      }
+
+      const deskTabs = document.querySelectorAll('.desk-nav-btn');
+      deskTabs.forEach((btn) => {
+        if ((btn as HTMLElement).dataset.desktab === tab) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const sModal = document.getElementById('solo-difficulty-modal');
+      const mModal = document.getElementById('manual-modal');
+
+      if (tab === 'lobby') {
+        if (sModal) {
+          sModal.classList.remove('active');
+          sModal.style.display = 'none';
+        }
+        if (mModal) {
+          mModal.classList.remove('active');
+          mModal.style.display = 'none';
+          this.manualHangarView.stopPreview();
+        }
+      } else if (tab === 'solo') {
+        if (mModal) {
+          mModal.classList.remove('active');
+          mModal.style.display = 'none';
+          this.manualHangarView.stopPreview();
+        }
+        if (sModal) {
+          const soloTestToggle = document.getElementById('solo-test-mode-toggle') as HTMLInputElement | null;
+          if (soloTestToggle) soloTestToggle.checked = false;
+          sModal.classList.add('active');
+          sModal.style.display = 'block';
+        }
+      } else if (tab === 'guide') {
+        if (sModal) {
+          sModal.classList.remove('active');
+          sModal.style.display = 'none';
+        }
+        const optionsModal = document.getElementById('options-modal');
+        if (optionsModal) {
+          optionsModal.classList.remove('active');
+          optionsModal.style.display = 'none';
+        }
+        if (mModal) {
+          mModal.classList.add('active');
+          mModal.style.display = 'flex';
+          const activeTab = document.querySelector('.manual-tab-pane.active');
+          if (activeTab && activeTab.id === 'tab-fleet') {
+            setTimeout(() => this.manualHangarView.startPreview(), 30);
+          }
+        }
+      }
+    };
+
+    const tabLobby = document.getElementById('desk-tab-lobby');
+    const tabSolo = document.getElementById('desk-tab-solo');
+    const tabGuide = document.getElementById('desk-tab-guide');
+    if (tabLobby) tabLobby.onclick = () => { setDesktopTab('lobby'); this.sound.playClick(); };
+    if (tabSolo) tabSolo.onclick = () => { setDesktopTab('solo'); this.sound.playClick(); };
+    if (tabGuide) tabGuide.onclick = () => { setDesktopTab('guide'); this.sound.playClick(); };
+
     document.getElementById('btn-main-engage')!.onclick = () => {
       if (createModal && (createModal.classList.contains('active') || createModal.style.display === 'block')) {
         return;
       }
-      if (soloModal) {
+      const isDesktop = window.innerWidth >= 901 && window.innerHeight >= 561;
+      if (isDesktop) {
+        setDesktopTab('solo');
+      } else if (soloModal) {
         const soloTestToggle = document.getElementById('solo-test-mode-toggle') as HTMLInputElement | null;
         if (soloTestToggle) soloTestToggle.checked = false;
         soloModal.classList.add('active');
@@ -3617,6 +3737,10 @@ class WormholeGame {
       btnSoloCancel.onclick = () => {
         soloModal.classList.remove('active');
         soloModal.style.display = 'none';
+        const isDesktop = window.innerWidth >= 901 && window.innerHeight >= 561;
+        if (isDesktop) {
+          setDesktopTab('lobby');
+        }
       };
     }
 
@@ -3627,6 +3751,10 @@ class WormholeGame {
         this.isSoloTestModeEnabled = !!(soloTestToggle && soloTestToggle.checked);
         soloModal.classList.remove('active');
         soloModal.style.display = 'none';
+        const isDesktop = window.innerWidth >= 901 && window.innerHeight >= 561;
+        if (isDesktop) {
+          setDesktopTab('lobby');
+        }
         this.joinLobbyMatch({
           id: 'match-practice',
           name: 'Solo Practice Simulation',
@@ -3699,6 +3827,13 @@ class WormholeGame {
         createModal.style.display = 'block';
       }
     };
+
+    const btnCreateHostHeader = document.getElementById('btn-create-host-header');
+    if (btnCreateHostHeader) {
+      btnCreateHostHeader.onclick = () => {
+        btnCreateHost.click();
+      };
+    }
 
     const btnCancelCreate = document.getElementById('btn-create-match-cancel');
     if (btnCancelCreate && createModal) {
@@ -3940,6 +4075,16 @@ class WormholeGame {
       const m = document.getElementById('manual-modal');
       if (m) m.classList.remove('active');
       this.manualHangarView.stopPreview();
+      const isDesktop = window.innerWidth >= 901 && window.innerHeight >= 561;
+      if (isDesktop) {
+        document.getElementById('screen-front-end')?.classList.remove('desk-view-guide', 'desk-view-solo');
+        document.getElementById('screen-front-end')?.classList.add('desk-view-lobby');
+        const deskTabs = document.querySelectorAll('.desk-nav-btn');
+        deskTabs.forEach((btn) => {
+          if ((btn as HTMLElement).dataset.desktab === 'lobby') btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
+      }
     };
 
     const openManual = () => {
@@ -3953,6 +4098,16 @@ class WormholeGame {
       const activeTab = document.querySelector('.manual-tab-pane.active');
       if (activeTab && activeTab.id === 'tab-fleet') {
         setTimeout(() => this.manualHangarView.startPreview(), 30);
+      }
+      const isDesktop = window.innerWidth >= 901 && window.innerHeight >= 561;
+      if (isDesktop) {
+        document.getElementById('screen-front-end')?.classList.remove('desk-view-lobby', 'desk-view-solo');
+        document.getElementById('screen-front-end')?.classList.add('desk-view-guide');
+        const deskTabs = document.querySelectorAll('.desk-nav-btn');
+        deskTabs.forEach((btn) => {
+          if ((btn as HTMLElement).dataset.desktab === 'guide') btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
       }
     };
 
