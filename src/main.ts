@@ -192,15 +192,22 @@ class WormholeGame {
     return Boolean(isMobileUA || isIPadOS || isCoarseAndSmall);
   }
 
-  constructor() {
+  public updateOrientationMode(): void {
     this.isMobile = this.checkIsMobile();
+    const isPortrait = this.isMobile && (window.innerHeight > window.innerWidth);
     if (this.isMobile) {
       document.body.classList.add('is-mobile');
-      this.zoom = 1.35;
+      document.body.classList.toggle('is-portrait', isPortrait);
+      document.body.classList.toggle('is-landscape', !isPortrait);
+      this.zoom = isPortrait ? 1.15 : 1.35;
     } else {
-      document.body.classList.remove('is-mobile');
+      document.body.classList.remove('is-mobile', 'is-portrait', 'is-landscape');
       this.zoom = 1.65;
     }
+  }
+
+  constructor() {
+    this.updateOrientationMode();
 
     const savedCallsign = localStorage.getItem('wh_callsign');
     this.playerName = savedCallsign || WormholeGame.generateRandomCallsign();
@@ -2024,15 +2031,11 @@ class WormholeGame {
     } else {
       deck.classList.add('hidden');
       document.body.classList.add('in-arena');
-      this.isMobile = this.checkIsMobile();
+      this.updateOrientationMode();
       if (this.isMobile) {
-        document.body.classList.add('is-mobile');
         hud.style.display = 'none';
-        this.zoom = 1.35;
       } else {
-        document.body.classList.remove('is-mobile');
         hud.style.display = 'grid';
-        this.zoom = 1.65;
       }
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
@@ -5301,19 +5304,14 @@ class WormholeGame {
   }
 
   private setupEventListeners(): void {
-    window.addEventListener('resize', () => {
-      this.isMobile = this.checkIsMobile();
-      if (this.isMobile) {
-        document.body.classList.add('is-mobile');
-        this.zoom = 1.35;
-      } else {
-        document.body.classList.remove('is-mobile');
-        this.zoom = 1.65;
-      }
+    const onResizeOrOrientation = () => {
+      this.updateOrientationMode();
       this.renderer.resize();
       if (this.pipRenderer) this.pipRenderer.resize();
       this.updateFullscreenStatus();
-    });
+    };
+
+    window.addEventListener('resize', onResizeOrOrientation);
 
     const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
     fsEvents.forEach((evt) => {
@@ -5323,10 +5321,8 @@ class WormholeGame {
     });
 
     window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        this.isMobile = this.checkIsMobile();
-        this.updateFullscreenStatus();
-      }, 100);
+      setTimeout(onResizeOrOrientation, 80);
+      setTimeout(onResizeOrOrientation, 250);
     });
 
     this.setupMobileControls();

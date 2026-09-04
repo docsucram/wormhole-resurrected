@@ -2856,20 +2856,219 @@
         text-align: center !important;
         line-height: 1.3 !important;
       }
+      /* ==========================================================================
+         MOBILE PORTRAIT ORIENTATION STYLES (Smart Vertical Flow)
+         ========================================================================== */
       @media (max-width: 900px) and (orientation: portrait) {
         body.is-mobile #mobile-orientation-prompt {
-          display: flex;
-          position: fixed;
-          inset: 0;
-          background: rgba(2, 6, 16, 0.96);
-          z-index: 99999999;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          padding: 24px;
-          color: var(--neon-cyan);
-          font-family: 'Orbitron', sans-serif;
+          display: none !important;
+        }
+
+        /* 1. Lobby / Front-End Screen in Portrait */
+        #screen-front-end {
+          height: 100vh !important;
+          height: 100dvh !important;
+          width: 100vw !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px calc(env(safe-area-inset-bottom, 0px) + 8px) 6px !important;
+          box-sizing: border-box !important;
+        }
+
+        .main-card {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: calc(100dvh - 16px) !important;
+          border-radius: 10px !important;
+          padding: 10px 8px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          box-sizing: border-box !important;
+        }
+
+        .lobby-top-header {
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 8px !important;
+          margin-bottom: 10px !important;
+        }
+
+        .player-profile-card {
+          width: 100% !important;
+          justify-content: center !important;
+        }
+
+        .header-title-box {
+          text-align: center !important;
+        }
+
+        .lobby-actions-group {
+          justify-content: center !important;
+          gap: 8px !important;
+        }
+
+        .dashboard-grid-2col {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 12px !important;
+          flex: 1 !important;
+        }
+
+        /* Put matches list & host/practice buttons first */
+        .matches-browser-panel {
+          order: 1 !important;
+          min-height: 320px !important;
+          flex: 1 0 auto !important;
+        }
+
+        .lobby-comms-panel {
+          order: 2 !important;
+          min-height: 200px !important;
+          max-height: 260px !important;
+        }
+
+        .pilots-section-box {
+          max-height: 80px !important;
+          overflow-y: auto !important;
+        }
+
+        .comms-section-box {
+          flex: 1 !important;
+          min-height: 120px !important;
+        }
+
+        /* 2. In-Arena Floating HUD in Portrait */
+        .mob-hud-top-left {
+          top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+          left: 8px !important;
+          padding: 4px 8px !important;
+          gap: 3px !important;
+        }
+
+        .mob-hud-name-row {
+          font-size: 10px !important;
+        }
+
+        .mob-hud-hp-track {
+          width: 105px !important;
+          height: 6px !important;
+        }
+
+        .mob-hud-top-right {
+          top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+          right: 8px !important;
+          gap: 6px !important;
+        }
+
+        .mob-score-box {
+          font-size: 13px !important;
+          padding: 4px 9px !important;
+        }
+
+        .mob-btn-pause {
+          width: 34px !important;
+          height: 34px !important;
+        }
+
+        /* Center mini roster pills under the top status clusters */
+        .mob-roster-strip {
+          top: calc(env(safe-area-inset-top, 0px) + 48px) !important;
+          gap: 4px !important;
+          max-width: 96vw !important;
+          flex-wrap: wrap !important;
+          justify-content: center !important;
+        }
+
+        .mob-roster-pill {
+          padding: 2px 5px !important;
+          font-size: 8.5px !important;
+        }
+
+        body.is-mobile #alert-banner {
+          top: calc(env(safe-area-inset-top, 0px) + 78px) !important;
+          font-size: 10px !important;
+          max-width: 90vw !important;
+        }
+
+        .mob-floating-comms {
+          top: calc(env(safe-area-inset-top, 0px) + 105px) !important;
+          left: 8px !important;
+          max-width: 220px !important;
+        }
+
+        /* 3. Touch Controls in Portrait */
+        .mob-touch-actions {
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+          right: 14px !important;
+          gap: 10px !important;
+        }
+
+        .touch-btn {
+          width: 58px !important;
+          height: 58px !important;
+        }
+
+        .touch-btn.fire-btn {
+          width: 72px !important;
+          height: 72px !important;
+        }
+
+        .touch-btn.special-btn {
+          width: 52px !important;
+          height: 52px !important;
+        }
+
+        .mob-chat-trigger {
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+          left: 12px !important;
+          width: 38px !important;
+          height: 38px !important;
+        }
+
+        .mob-chat-drawer {
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 68px) !important;
+          left: 10px !important;
+          max-width: 85vw !important;
+        }
+
+        /* 4. Modals in Portrait */
+        #round-modal {
+          width: 94vw !important;
+          max-width: 94vw !important;
+          max-height: 88dvh !important;
+          padding: 12px 14px !important;
+          overflow-y: auto !important;
+          box-sizing: border-box !important;
+        }
+
+        #round-modal .modal-ship-grid {
+          overflow-x: auto !important;
+          flex-wrap: nowrap !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding-bottom: 4px !important;
+        }
+
+        #match-modal {
+          width: 94vw !important;
+          max-width: 94vw !important;
+          max-height: 90dvh !important;
+          padding: 16px 14px 14px 14px !important;
+          overflow-y: auto !important;
+          box-sizing: border-box !important;
+        }
+
+        #pause-modal,
+        #options-modal,
+        #manual-modal,
+        #create-match-modal,
+        #avatar-picker-modal,
+        #disconnect-modal {
+          width: 94vw !important;
+          max-width: 94vw !important;
+          max-height: 90dvh !important;
+          overflow-y: auto !important;
+          padding: 16px 14px !important;
+          box-sizing: border-box !important;
         }
       }
 
