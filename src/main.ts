@@ -3760,6 +3760,7 @@ class WormholeGame {
         document.querySelectorAll('.manual-tab-pane').forEach((p) => p.classList.remove('active'));
 
         btn.classList.add('active');
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         const tabId = (btn as HTMLElement).dataset.tab;
         if (tabId) {
           document.getElementById(tabId)?.classList.add('active');
@@ -3990,6 +3991,7 @@ class WormholeGame {
       btn.onclick = () => {
         optTabBtns.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         const targetId = btn.getAttribute('data-opttab');
         document.querySelectorAll('.opt-tab-pane').forEach((p) => {
           (p as HTMLElement).style.display = 'none';
@@ -4111,6 +4113,23 @@ class WormholeGame {
           this.input.triggerHaptic(20);
         }
         try { localStorage.setItem('wh_opt_touch_haptics', chkHaptics.checked.toString()); } catch {}
+      };
+    }
+
+    // 5. Mobile Portrait Button Vertical Height Offset (2% to 25%, default 10%)
+    const touchVOffsetSlider = document.getElementById('opt-touch-voffset-slider') as HTMLInputElement | null;
+    const touchVOffsetVal = document.getElementById('opt-touch-voffset-val');
+    const savedTouchVOffset = localStorage.getItem('wh_opt_touch_voffset');
+    const initialTouchVOffset = savedTouchVOffset !== null ? parseInt(savedTouchVOffset, 10) : 10;
+    document.documentElement.style.setProperty('--mob-touch-v-offset', `${initialTouchVOffset}vh`);
+    if (touchVOffsetSlider) {
+      touchVOffsetSlider.value = initialTouchVOffset.toString();
+      if (touchVOffsetVal) touchVOffsetVal.innerText = `${initialTouchVOffset}%`;
+      touchVOffsetSlider.oninput = () => {
+        const v = parseInt(touchVOffsetSlider.value, 10);
+        if (touchVOffsetVal) touchVOffsetVal.innerText = `${v}%`;
+        document.documentElement.style.setProperty('--mob-touch-v-offset', `${v}vh`);
+        try { localStorage.setItem('wh_opt_touch_voffset', v.toString()); } catch {}
       };
     }
 

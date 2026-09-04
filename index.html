@@ -3315,9 +3315,9 @@
           max-width: 200px !important;
         }
 
-        /* 3. Touch Controls in Portrait: elevated ~1/5th (20vh) up the screen */
+        /* 3. Touch Controls in Portrait: elevated 10vh (halfway down between previous 20vh and bottom) with dynamic offset */
         .mob-touch-actions {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 20vh) !important;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + var(--mob-touch-v-offset, 10vh)) !important;
           right: 14px !important;
           gap: 10px !important;
         }
@@ -3385,8 +3385,6 @@
         }
 
         #pause-modal,
-        #options-modal,
-        #manual-modal,
         #create-match-modal,
         #avatar-picker-modal,
         #disconnect-modal,
@@ -3397,6 +3395,138 @@
           overflow-y: auto !important;
           padding: 16px 14px !important;
           box-sizing: border-box !important;
+        }
+
+        /* 6. Tactical Flight Manual & Options Menu in Portrait: Horizontally Scrolling Chip Bar & 100% Width Article Text */
+        #manual-modal,
+        #options-modal {
+          width: 95vw !important;
+          max-width: 95vw !important;
+          height: 86vh !important;
+          height: 86dvh !important;
+          max-height: 86dvh !important;
+          padding: 12px 14px !important;
+          box-sizing: border-box !important;
+          display: none !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+        }
+
+        #manual-modal.active,
+        #options-modal.active {
+          display: flex !important;
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+        }
+
+        .manual-modal-header {
+          margin-bottom: 8px !important;
+          padding-bottom: 6px !important;
+          flex-shrink: 0 !important;
+        }
+
+        .manual-modal-header div {
+          font-size: 13px !important;
+          letter-spacing: 0.8px !important;
+        }
+
+        .guide-title-extra {
+          display: none !important;
+        }
+
+        .manual-layout {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 10px !important;
+          flex: 1 !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
+          width: 100% !important;
+        }
+
+        /* Horizontally Scrolling Chip Bar */
+        .manual-tabs {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          flex-shrink: 0 !important;
+          border-right: none !important;
+          border-bottom: 1px solid rgba(0, 229, 255, 0.25) !important;
+          padding-right: 0 !important;
+          padding-bottom: 8px !important;
+          margin-bottom: 2px !important;
+          gap: 6px !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          white-space: nowrap !important;
+          -webkit-overflow-scrolling: touch !important;
+          scrollbar-width: none !important;
+        }
+        .manual-tabs::-webkit-scrollbar {
+          display: none !important;
+        }
+
+        /* Chip buttons */
+        .manual-tab-btn {
+          flex-shrink: 0 !important;
+          white-space: nowrap !important;
+          border-radius: 20px !important;
+          padding: 6px 12px !important;
+          font-size: 10.5px !important;
+          font-weight: 800 !important;
+          letter-spacing: 0.5px !important;
+          gap: 6px !important;
+          background: rgba(6, 22, 48, 0.75) !important;
+          border: 1px solid rgba(0, 229, 255, 0.3) !important;
+          color: #94a3b8 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+        }
+
+        .manual-tab-btn.active {
+          background: var(--neon-cyan) !important;
+          color: #020612 !important;
+          border-color: var(--neon-cyan) !important;
+          box-shadow: 0 0 10px rgba(0, 229, 255, 0.45) !important;
+        }
+
+        .manual-tab-btn svg {
+          width: 12px !important;
+          height: 12px !important;
+        }
+
+        .tab-label-extra {
+          display: none !important;
+        }
+
+        /* Article text using 100% width below */
+        .manual-content-pane {
+          width: 100% !important;
+          flex: 1 !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding-right: 2px !important;
+          box-sizing: border-box !important;
+        }
+
+        .manual-card {
+          width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 12px 14px !important;
+          margin-bottom: 10px !important;
+        }
+
+        .opt-row-card,
+        .opt-slider-card {
+          width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 10px 12px !important;
+          margin-bottom: 8px !important;
         }
 
         /* Format Test Control Panel to fit mobile portrait */
@@ -4528,7 +4658,7 @@
       <div class="manual-modal-header">
         <div style="font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          TACTICAL FLIGHT MANUAL & STRATEGY GUIDE
+          <span class="guide-title-main">TACTICAL FLIGHT MANUAL</span><span class="guide-title-extra">&nbsp;&amp; STRATEGY GUIDE</span>
         </div>
         <button id="btn-close-manual-top" class="modal-close-btn" title="Close Manual" style="background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; color: #ff0055; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
       </div>
@@ -5167,7 +5297,7 @@
       <div class="manual-modal-header">
         <div style="font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; color: var(--neon-cyan); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          SYSTEM CONFIGURATION // OPTIONS
+          <span class="guide-title-main">SYSTEM OPTIONS</span><span class="guide-title-extra">&nbsp;// CONFIGURATION</span>
         </div>
         <button id="btn-close-options-x" style="background: none; border: none; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: bold; cursor: pointer; padding: 2px 8px;">✕</button>
       </div>
@@ -5177,7 +5307,7 @@
         <div class="manual-tabs">
           <button class="manual-tab-btn active" id="opt-tab-btn-display" data-opttab="opt-tab-display">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            GRAPHICS & DISPLAY
+            <span>GRAPHICS</span><span class="tab-label-extra">&nbsp;&amp; DISPLAY</span>
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-keys" data-opttab="opt-tab-keys">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
@@ -5189,11 +5319,11 @@
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-touch" data-opttab="opt-tab-touch">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-            TOUCH & MOBILE
+            <span>TOUCH</span><span class="tab-label-extra">&nbsp;&amp; MOBILE</span>
           </button>
           <button class="manual-tab-btn" id="opt-tab-btn-audio" data-opttab="opt-tab-audio">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            AUDIO & SOUND
+            <span>AUDIO</span><span class="tab-label-extra">&nbsp;&amp; SOUND</span>
           </button>
         </div>
 
@@ -5445,6 +5575,19 @@
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">30%</span>
                 <input type="range" id="opt-touch-opacity-slider" min="0.3" max="1.0" step="0.05" value="1.0" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">100%</span>
+              </div>
+            </div>
+
+            <!-- Mobile Portrait Button Vertical Height Slider -->
+            <div class="opt-slider-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div class="opt-card-title">PORTRAIT BUTTON VERTICAL HEIGHT</div>
+                <span id="opt-touch-voffset-val" class="opt-card-val">10%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">LOW (2%)</span>
+                <input type="range" id="opt-touch-voffset-slider" min="2" max="25" step="1" value="10" style="flex: 1; accent-color: var(--neon-cyan); cursor: pointer;" />
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #64748b;">HIGH (25%)</span>
               </div>
             </div>
 
