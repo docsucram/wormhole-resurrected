@@ -91,7 +91,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(circle at center, rgba(3, 8, 22, 0.92) 0%, rgba(2, 6, 18, 0.98) 100%);
+        background-color: #020612;
+        background-image:
+          linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+          radial-gradient(circle at 50% 35%, rgba(0, 229, 255, 0.09) 0%, rgba(138, 43, 226, 0.05) 40%, rgba(2, 6, 18, 0.98) 85%);
+        background-size: 36px 36px, 36px 36px, 100% 100%;
+        background-position: -1px -1px, -1px -1px, 0 0;
       }
 
       #screen-front-end.hidden {
@@ -103,18 +109,33 @@
         max-width: 1280px;
         max-height: 94vh;
         overflow-y: auto;
-        background: linear-gradient(180deg, rgba(8, 16, 32, 0.96) 0%, rgba(4, 9, 20, 0.98) 100%);
-        border: 2px solid rgba(0, 229, 255, 0.35);
+        background: linear-gradient(180deg, rgba(8, 18, 36, 0.94) 0%, rgba(4, 9, 20, 0.97) 100%);
+        border: 1.5px solid rgba(0, 229, 255, 0.35);
         border-radius: 14px;
-        box-shadow: 0 0 50px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.05);
+        box-shadow: 0 0 60px rgba(0, 229, 255, 0.16), 0 0 20px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.15);
         padding: 18px 24px;
         display: flex;
         flex-direction: column;
         gap: 14px;
+        position: relative;
       }
 
       .header-title-box {
         text-align: center;
+        position: relative;
+      }
+
+      .header-title-box::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(0, 229, 255, 0.14) 0%, rgba(192, 64, 255, 0.09) 45%, transparent 75%);
+        pointer-events: none;
+        z-index: 0;
       }
 
       .header-logo {
@@ -123,16 +144,22 @@
         font-weight: 900;
         letter-spacing: 6px;
         line-height: 1.1;
+        position: relative;
+        z-index: 1;
       }
 
       .logo-white {
-        color: #ffffff;
-        text-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+        background: linear-gradient(90deg, #00f0ff 0%, #7dd3fc 35%, #ffffff 70%, #f0abfc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.55));
       }
 
       .logo-magenta {
-        color: var(--neon-magenta);
-        text-shadow: 0 0 24px var(--neon-magenta), 0 0 40px var(--neon-magenta-glow);
+        background: linear-gradient(90deg, #38bdf8 0%, #818cf8 32%, #c084fc 65%, #f43f5e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 16px rgba(217, 70, 239, 0.55));
         margin-left: 8px;
       }
 
@@ -143,6 +170,8 @@
         color: #64748b;
         letter-spacing: 4px;
         margin-top: 3px;
+        position: relative;
+        z-index: 1;
       }
 
       /* Top Lobby Header Bar (Unboxed & Clean) */
@@ -169,19 +198,19 @@
       .avatar-frame {
         width: 52px;
         height: 52px;
-        border-radius: 8px;
+        border-radius: 50%;
         border: 1.5px solid #00e5ff;
-        box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 14px rgba(0, 229, 255, 0.5), inset 0 0 4px rgba(0, 229, 255, 0.25);
         cursor: pointer;
         overflow: hidden;
         background: #040c1a;
         flex-shrink: 0;
-        transition: all 0.15s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .avatar-frame:hover {
         border-color: #ffffff;
-        box-shadow: 0 0 20px var(--neon-cyan);
-        transform: scale(1.04);
+        box-shadow: 0 0 22px var(--neon-cyan);
+        transform: scale(1.05);
       }
 
       .player-avatar-thumb {
@@ -195,12 +224,13 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        background: #091728;
-        border: 1.5px solid #163658;
-        border-radius: 8px;
-        padding: 4px 10px 4px 12px;
+        background: linear-gradient(90deg, rgba(8, 22, 40, 0.95) 0%, rgba(4, 12, 24, 0.9) 100%);
+        border: 1.5px solid rgba(0, 229, 255, 0.28);
+        border-radius: 26px;
+        padding: 4px 14px 4px 12px;
         height: 52px;
         box-sizing: border-box;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
       }
 
       .pilot-rank-badge {
@@ -522,9 +552,10 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        background: #061122;
-        border: 1.5px solid #163658;
+        background: linear-gradient(180deg, rgba(6, 17, 34, 0.9) 0%, rgba(3, 9, 20, 0.95) 100%);
+        border: 1.5px solid rgba(0, 229, 255, 0.25);
         border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(0, 229, 255, 0.1);
         padding: 14px;
         height: 460px;
         box-sizing: border-box;
@@ -542,6 +573,15 @@
         align-items: center;
         gap: 6px;
         position: relative;
+      }
+
+      .matches-search-box input {
+        font-size: 11px;
+        padding: 6px 12px 6px 28px;
+        width: 190px;
+        background: #040c1a;
+        border: 1px solid #163658;
+        border-radius: 16px;
       }
 
       .matches-list-scroll {
@@ -2936,8 +2976,11 @@
           min-height: 0 !important;
           max-height: 100% !important;
           overflow: hidden !important;
-          border-radius: 10px !important;
-          padding: 6px 8px 4px 8px !important;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          padding: 6px 12px 4px 12px !important;
           display: flex !important;
           flex-direction: column !important;
           box-sizing: border-box !important;
@@ -2957,16 +3000,29 @@
           display: flex !important;
           justify-content: flex-end !important;
           align-self: flex-end !important;
-          gap: 10px !important;
+          gap: 8px !important;
           width: 100% !important;
-          margin: 0 0 12px 0 !important; /* Generous gap between utility bar and title */
+          margin: 0 0 10px 0 !important; /* Generous gap between utility bar and title */
           padding-top: 2px !important;
         }
 
         .lobby-actions-group .btn-util {
-          width: 36px !important;
-          height: 36px !important;
+          width: 34px !important;
+          height: 34px !important;
+          min-width: 34px !important;
+          min-height: 34px !important;
+          background: rgba(8, 20, 40, 0.6) !important;
+          border: 1px solid rgba(0, 229, 255, 0.2) !important;
+          border-radius: 8px !important;
+          color: #94a3b8 !important;
           flex-shrink: 0 !important;
+          transition: all 0.2s ease !important;
+        }
+        .lobby-actions-group .btn-util:hover,
+        .lobby-actions-group .btn-util:active {
+          color: #00e5ff !important;
+          border-color: #00e5ff !important;
+          box-shadow: 0 0 10px rgba(0, 229, 255, 0.4) !important;
         }
 
         /* 1.2: Wormhole Resurrected Logo bigger and on TWO LINES */
@@ -2988,6 +3044,10 @@
           font-size: 32px !important;
           letter-spacing: 3.5px !important;
           display: block !important;
+          background: linear-gradient(90deg, #00f0ff 0%, #a5f3fc 45%, #ffffff 80%, #f0abfc 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+          filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.6)) !important;
         }
 
         .header-logo .logo-magenta {
@@ -2995,6 +3055,11 @@
           letter-spacing: 2.5px !important;
           display: block !important;
           margin-top: 2px !important;
+          margin-left: 0 !important;
+          background: linear-gradient(90deg, #00e5ff 0%, #818cf8 35%, #c084fc 68%, #f43f5e 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+          filter: drop-shadow(0 0 16px rgba(217, 70, 239, 0.6)) !important;
         }
 
         /* 1.3: Pilot profile & adjustable callsign below the Wormhole logo with even spacing */
@@ -3005,7 +3070,7 @@
           justify-content: center !important;
           width: auto !important;
           max-width: 96vw !important;
-          margin: 0 auto 6px auto !important;
+          margin: 0 auto 10px auto !important;
           padding: 0 !important;
           gap: 8px !important;
         }
@@ -3013,20 +3078,25 @@
         .avatar-frame {
           width: 44px !important;
           height: 44px !important;
-          border-radius: 7px !important;
+          border-radius: 50% !important;
+          border: 1.5px solid #00e5ff !important;
+          box-shadow: 0 0 14px rgba(0, 229, 255, 0.5), inset 0 0 4px rgba(0, 229, 255, 0.25) !important;
           flex-shrink: 0 !important;
         }
 
         .player-identity-capsule {
-          max-width: calc(100vw - 84px) !important;
+          max-width: calc(100vw - 76px) !important;
           margin: 0 !important;
-          padding: 4px 10px !important;
+          padding: 4px 14px 4px 12px !important;
           height: 44px !important;
           box-sizing: border-box !important;
-          border-radius: 7px !important;
+          border-radius: 22px !important;
+          border: 1px solid rgba(0, 229, 255, 0.28) !important;
+          background: linear-gradient(90deg, rgba(8, 22, 42, 0.95) 0%, rgba(4, 12, 26, 0.9) 100%) !important;
           display: flex !important;
           align-items: center !important;
           gap: 8px !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
         }
 
         .pilot-callsign-label {
@@ -3035,35 +3105,37 @@
         }
 
         .pilot-name-display {
-          font-size: 13px !important;
+          font-size: 13.5px !important;
         }
 
-        /* 1.4: Mobile Portrait Segmented Tab Switcher (Matches vs Lounge & Comms) */
+        /* 1.4: Mobile Portrait Cyber Tabs (Concept Art Alignment) */
         .lobby-portrait-tabs {
           display: flex !important;
           width: 100% !important;
-          margin: 4px 0 8px 0 !important;
+          margin: 2px 0 8px 0 !important;
           box-sizing: border-box !important;
           flex-shrink: 0 !important;
-          background: rgba(3, 10, 24, 0.95) !important;
-          border: 1.5px solid rgba(0, 229, 255, 0.35) !important;
-          border-radius: 10px !important;
-          padding: 3px !important;
-          gap: 4px !important;
-          box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 229, 255, 0.1) !important;
+          background: rgba(3, 10, 22, 0.6) !important;
+          border: none !important;
+          border-bottom: 2px solid rgba(22, 54, 88, 0.7) !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          gap: 0 !important;
+          box-shadow: none !important;
         }
 
         .lobby-tab-btn {
           flex: 1 !important;
-          height: 36px !important;
+          height: 40px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
           gap: 8px !important;
           padding: 6px 10px !important;
           background: transparent !important;
-          border: 1px solid transparent !important;
-          border-radius: 7px !important;
+          border: none !important;
+          border-bottom: 2.5px solid transparent !important;
+          border-radius: 0 !important;
           color: #64748b !important;
           font-family: 'Orbitron', sans-serif !important;
           font-size: 11px !important;
@@ -3074,39 +3146,36 @@
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
+        .lobby-tab-btn:first-child {
+          border-right: 1px solid rgba(22, 54, 88, 0.6) !important;
+        }
+
         .lobby-tab-btn svg {
           width: 15px !important;
           height: 15px !important;
           stroke-width: 2.2 !important;
-          opacity: 0.65 !important;
+          stroke: #64748b !important;
+          opacity: 0.7 !important;
           transition: opacity 0.2s ease, stroke 0.2s ease !important;
         }
 
         .lobby-tab-btn.active {
-          background: linear-gradient(180deg, rgba(0, 229, 255, 0.24) 0%, rgba(0, 180, 216, 0.12) 100%) !important;
-          border: 1px solid var(--neon-cyan) !important;
+          background: rgba(0, 229, 255, 0.08) !important;
+          border-bottom: 2.5px solid #00e5ff !important;
+          margin-bottom: -2px !important;
           color: #ffffff !important;
-          text-shadow: 0 0 8px rgba(0, 229, 255, 0.7) !important;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 229, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+          text-shadow: 0 0 10px rgba(0, 229, 255, 0.7) !important;
+          box-shadow: inset 0 1px 0 rgba(0, 229, 255, 0.15), 0 3px 12px rgba(0, 229, 255, 0.35) !important;
         }
 
         .lobby-tab-btn.active svg {
           opacity: 1 !important;
-          stroke: var(--neon-cyan) !important;
-          filter: drop-shadow(0 0 4px var(--neon-cyan)) !important;
+          stroke: #00e5ff !important;
+          filter: drop-shadow(0 0 4px #00e5ff) !important;
         }
 
-        /* Distinctive active tab indicator bar on bottom */
         .lobby-tab-btn.active::after {
-          content: '' !important;
-          position: absolute !important;
-          bottom: 2px !important;
-          left: 20% !important;
-          right: 20% !important;
-          height: 2px !important;
-          background: var(--neon-cyan) !important;
-          border-radius: 1px !important;
-          box-shadow: 0 0 8px var(--neon-cyan) !important;
+          display: none !important;
         }
 
         .tab-badge {
@@ -3138,20 +3207,57 @@
           overflow: hidden !important;
         }
 
+        .matches-browser-panel {
+          border: none !important;
+          background: transparent !important;
+          padding: 4px 0 0 0 !important;
+          box-shadow: none !important;
+          height: auto !important;
+        }
+
+        .lobby-comms-panel {
+          border: none !important;
+          background: transparent !important;
+          padding: 4px 0 0 0 !important;
+          box-shadow: none !important;
+          height: auto !important;
+        }
+
         /* Compact section headers for live hosted matches & comms */
         .matches-browser-header {
-          margin-bottom: 4px !important;
-          padding-bottom: 2px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          margin-bottom: 8px !important;
+          padding: 2px 0 !important;
           flex-shrink: 0 !important;
+          gap: 8px !important;
         }
         .matches-browser-header .section-title {
-          font-size: 10px !important;
-          letter-spacing: 0.8px !important;
+          font-family: 'Orbitron', sans-serif !important;
+          font-size: 11.5px !important;
+          font-weight: 800 !important;
+          color: #00e5ff !important;
+          letter-spacing: 1px !important;
+          margin: 0 !important;
+          white-space: nowrap !important;
+        }
+        .matches-search-box {
+          flex: 1 !important;
+          max-width: 220px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          position: relative !important;
         }
         .matches-search-box input {
-          width: 135px !important;
-          font-size: 10px !important;
-          padding: 3px 8px 3px 24px !important;
+          width: 100% !important;
+          font-size: 10.5px !important;
+          padding: 5px 8px 5px 26px !important;
+          background: rgba(4, 14, 28, 0.85) !important;
+          border: 1px solid rgba(0, 229, 255, 0.25) !important;
+          border-radius: 16px !important;
+          color: #ffffff !important;
         }
         .comms-header-row {
           flex-shrink: 0 !important;
@@ -3174,6 +3280,10 @@
           flex: 1 1 auto !important;
           min-height: 0 !important;
           overflow: hidden !important;
+          border: none !important;
+          background: transparent !important;
+          padding: 0 !important;
+          box-shadow: none !important;
         }
         #screen-front-end.tab-matches .matches-list-scroll {
           flex: 1 1 auto !important;
@@ -3195,6 +3305,7 @@
           margin: 0 !important;
           border: none !important;
           overflow: visible !important;
+          box-shadow: none !important;
         }
         #screen-front-end.tab-comms .matches-browser-header,
         #screen-front-end.tab-comms .matches-list-scroll {
@@ -3206,11 +3317,19 @@
           flex: 1 1 auto !important;
           min-height: 0 !important;
           overflow: hidden !important;
+          border: none !important;
+          background: transparent !important;
+          padding: 0 !important;
+          box-shadow: none !important;
         }
         #screen-front-end.tab-comms .pilots-section-box {
           max-height: 80px !important;
           overflow-y: auto !important;
           flex-shrink: 0 !important;
+          border: 1px solid rgba(0, 229, 255, 0.2) !important;
+          border-radius: 8px !important;
+          padding: 6px !important;
+          background: rgba(6, 17, 34, 0.8) !important;
         }
         #screen-front-end.tab-comms .comms-section-box {
           flex: 1 1 auto !important;
@@ -3218,6 +3337,10 @@
           display: flex !important;
           flex-direction: column !important;
           overflow: hidden !important;
+          border: 1px solid rgba(0, 229, 255, 0.2) !important;
+          border-radius: 8px !important;
+          padding: 6px !important;
+          background: rgba(6, 17, 34, 0.8) !important;
         }
         #screen-front-end.tab-comms .lobby-chat-log {
           flex: 1 1 auto !important;
@@ -4755,9 +4878,9 @@
           <!-- Col 2: Live Match Browser -->
           <div class="matches-browser-panel">
             <div class="matches-browser-header">
-              <div class="section-title" style="font-size: 12px; margin-bottom: 0;">LIVE HOSTED MATCHES</div>
+              <div class="section-title">LIVE MATCHES</div>
               <div class="matches-search-box">
-                <input type="text" class="styled-input" id="input-match-search" placeholder="Search matches..." style="font-size: 11px; padding: 6px 12px 6px 28px; width: 170px; background: #040c1a; border-color: #163658;" />
+                <input type="text" class="styled-input" id="input-match-search" placeholder="Search all match criteria" />
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 9px; pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <button class="btn-join" id="btn-refresh-matches" title="Refresh Match List" style="padding: 6px 9px; font-size: 11px; background: #091728; border-color: #163658; display: flex; align-items: center; justify-content: center;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -105,12 +105,12 @@ The user interface follows a responsive cybernetic vector aesthetic utilizing CS
     - **Left Column**: Pilot profile card, active callsign configuration, and Pilot Comms & Roster panel.
     - **Right Column**: Live Matches browser with instant search filtering, match creation modal, and solo practice launcher.
 * **Mobile Portrait Mode**:
-  - Smart single-column vertical flow with locked outer viewport scrolling (`overflow: hidden`).
+  - Smart single-column vertical flow with locked outer viewport scrolling (`overflow: hidden`) and clean borderless full-bleed main card.
   - Top utility action bar right-aligned with safe-area notch padding (`env(safe-area-inset-top)`).
-  - Centered multi-line *Wormhole Resurrected* title logo.
-  - **Segmented Tab Switcher (`.lobby-portrait-tabs`)**: A unified, cyber-framed segmented control dock toggling between `MATCHES` and `LOUNGE & COMMS` with glowing active indicator and neon underline.
+  - Centered multi-line *Wormhole Resurrected* title logo with high-impact electric cyan and neon magenta gradient text, celestial back-glow nebula, and circular glowing pilot avatar.
+  - **Clean Cyber Tab Switcher (`.lobby-portrait-tabs`)**: A flush, edge-to-edge cyber tab bar toggling between `MATCHES` and `LOUNGE & COMMS` with an illuminated cyan underline indicator, subtle dark tint, and zero nested outer borders.
   - **Match Cards Hierarchy**:
-    - Match Title with subtle muted host attribution (`Hosted by [Name]`).
+    - Match Title with subtle muted host attribution (`Host: [Name]`).
     - High-prominence badges: Mode (`[FFA]` / `[TEAM]`), Capacity (`[X/Y SLOTS]`), Security (`[🔒 PRIVATE]`), and Status (`[IN MATCH]` / `[FULL]`).
     - Low-prominence secondary metadata: Subtle muted pills for powerup rules (`[STANDARD]` / `[EXTENDED]`) and win criteria (`[FIRST TO X]`).
     - Full-width `[JOIN MATCH]` / `[SPECTATE]` CTA button pinned below details.
