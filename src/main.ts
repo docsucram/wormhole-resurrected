@@ -1453,29 +1453,37 @@ class WormholeGame {
       const card = document.createElement('div');
       card.className = 'match-row-card';
 
-      const sizeLabel = match.size === 'SMALL' ? '2-P DUEL' : match.size === 'MEDIUM' ? '4-P BATTLE' : match.size === 'LARGE' ? '6-P ARENA' : '8-P MEGA';
-      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD (17)' : 'EXTENDED (20)';
+      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD' : 'EXTENDED';
       const isFull = match.currentPlayers >= match.maxPlayers;
 
       const testBadge = match.isTestMode
-        ? `<span class="match-badge badge-rule" style="background: rgba(255, 170, 0, 0.25); border: 1px solid #ffaa00; color: #ffaa00; font-weight: 900; box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);">TEST MODE</span>`
+        ? `<span class="match-badge badge-test">⚡ TEST MODE</span>`
         : '';
       const modeLabel = match.matchType === 'TEAM' ? 'TEAM' : 'FFA';
+
+      // Security / Status Badge: Show PRIVATE if password protected, FULL if full, IN MATCH if playing
+      let statusBadge = '';
+      if (match.isPasswordProtected) {
+        statusBadge = `<span class="match-badge badge-lock">🔒 PRIVATE</span>`;
+      } else if (isFull) {
+        statusBadge = `<span class="match-badge badge-status-busy">FULL</span>`;
+      } else if (match.status === 'IN_MATCH') {
+        statusBadge = `<span class="match-badge badge-status-inmatch">IN MATCH</span>`;
+      }
 
       card.innerHTML = `
         <div class="match-info-col">
           <div class="match-title-line">
-            <span>${match.isPasswordProtected ? '🔒 ' : ''}${match.name}</span>
-            <span style="font-size: 10px; font-weight: 700; color: #88bbdd;">(HOST: ${match.hostName})</span>
+            <span class="match-name-text">${match.name}</span>
+            <span class="match-host-sub">Host: ${match.hostName}</span>
           </div>
           <div class="match-meta-line">
-            <span class="match-badge badge-rule" style="border-color: ${match.matchType === 'TEAM' ? '#c040ff' : '#00e5ff'}; color: ${match.matchType === 'TEAM' ? '#df70ff' : '#00e5ff'};">${modeLabel}</span>
+            <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
+            <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
+            ${statusBadge}
             ${testBadge}
-            <span class="match-badge badge-size">${sizeLabel}</span>
-            <span class="match-badge badge-size">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
-            <span class="match-badge badge-rule">${pupsLabel}</span>
-            <span class="match-badge badge-rule">FIRST TO ${match.targetWins}</span>
-            <span class="match-badge ${isFull ? 'badge-status-busy' : 'badge-status-open'}">${isFull ? 'FULL' : 'OPEN'}</span>
+            <span class="match-badge badge-meta-subtle">${pupsLabel}</span>
+            <span class="match-badge badge-meta-subtle">FIRST TO ${match.targetWins}</span>
           </div>
         </div>
         <div>

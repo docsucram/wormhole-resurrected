@@ -916,11 +916,22 @@
       .match-title-line {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+      }
+
+      .match-name-text {
         font-family: 'Orbitron', sans-serif;
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 800;
         color: #ffffff;
+      }
+
+      .match-host-sub {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        letter-spacing: 0.5px;
       }
 
       .match-meta-line {
@@ -939,34 +950,66 @@
         letter-spacing: 0.5px;
       }
 
-      .badge-size {
-        background: rgba(0, 229, 255, 0.12);
-        border: 1px solid rgba(0, 229, 255, 0.35);
-        color: var(--neon-cyan);
+      .badge-mode-ffa {
+        background: rgba(0, 229, 255, 0.1);
+        border: 1px solid rgba(0, 229, 255, 0.45);
+        color: #00e5ff;
       }
 
-      .badge-rule {
-        background: rgba(255, 170, 0, 0.12);
-        border: 1px solid rgba(255, 170, 0, 0.35);
+      .badge-mode-team {
+        background: rgba(192, 64, 255, 0.12);
+        border: 1px solid #c040ff;
+        color: #df70ff;
+      }
+
+      .badge-slots {
+        background: rgba(0, 229, 255, 0.18);
+        border: 1px solid #00e5ff;
+        color: #ffffff;
+        font-weight: 900;
+        box-shadow: 0 0 6px rgba(0, 229, 255, 0.25);
+      }
+
+      .badge-slots.slots-full {
+        background: rgba(255, 0, 127, 0.18);
+        border: 1px solid #ff007f;
+        color: #ff99cc;
+        box-shadow: none;
+      }
+
+      .badge-meta-subtle {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        color: #94a3b8;
+        font-size: 8.5px;
+        font-weight: 600;
+      }
+
+      .badge-test {
+        background: rgba(255, 170, 0, 0.22);
+        border: 1px solid #ffaa00;
         color: #ffaa00;
+        font-weight: 900;
+        box-shadow: 0 0 8px rgba(255, 170, 0, 0.35);
       }
 
-      .badge-status-open {
-        background: rgba(0, 255, 136, 0.12);
-        border: 1px solid rgba(0, 255, 136, 0.35);
-        color: #00ff88;
+      .badge-status-inmatch {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid #f59e0b;
+        color: #fbbf24;
       }
 
       .badge-status-busy {
-        background: rgba(255, 0, 127, 0.12);
-        border: 1px solid rgba(255, 0, 127, 0.35);
+        background: rgba(255, 0, 127, 0.15);
+        border: 1px solid rgba(255, 0, 127, 0.4);
         color: #ff55aa;
       }
 
       .badge-lock {
         background: rgba(255, 204, 0, 0.15);
-        border: 1px solid rgba(255, 204, 0, 0.4);
+        border: 1px solid rgba(255, 204, 0, 0.5);
         color: #ffcc00;
+        font-weight: 900;
       }
 
       .btn-join-match {
@@ -2995,41 +3038,75 @@
           font-size: 13px !important;
         }
 
-        /* 1.4: Mobile Portrait Tab Switcher (Matches vs Lounge & Comms) */
+        /* 1.4: Mobile Portrait Segmented Tab Switcher (Matches vs Lounge & Comms) */
         .lobby-portrait-tabs {
           display: flex !important;
-          gap: 8px !important;
           width: 100% !important;
           margin: 4px 0 8px 0 !important;
           box-sizing: border-box !important;
           flex-shrink: 0 !important;
+          background: rgba(3, 10, 24, 0.95) !important;
+          border: 1.5px solid rgba(0, 229, 255, 0.35) !important;
+          border-radius: 10px !important;
+          padding: 3px !important;
+          gap: 4px !important;
+          box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 229, 255, 0.1) !important;
         }
 
         .lobby-tab-btn {
           flex: 1 !important;
-          height: 34px !important;
+          height: 36px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          gap: 6px !important;
-          padding: 6px 8px !important;
-          background: rgba(9, 23, 40, 0.85) !important;
-          border: 1.5px solid #163658 !important;
-          border-radius: 6px !important;
-          color: #94a3b8 !important;
+          gap: 8px !important;
+          padding: 6px 10px !important;
+          background: transparent !important;
+          border: 1px solid transparent !important;
+          border-radius: 7px !important;
+          color: #64748b !important;
           font-family: 'Orbitron', sans-serif !important;
-          font-size: 10.5px !important;
+          font-size: 11px !important;
           font-weight: 800 !important;
-          letter-spacing: 0.8px !important;
+          letter-spacing: 1px !important;
           cursor: pointer !important;
-          transition: all 0.15s ease !important;
+          position: relative !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .lobby-tab-btn svg {
+          width: 15px !important;
+          height: 15px !important;
+          stroke-width: 2.2 !important;
+          opacity: 0.65 !important;
+          transition: opacity 0.2s ease, stroke 0.2s ease !important;
         }
 
         .lobby-tab-btn.active {
-          background: rgba(0, 229, 255, 0.16) !important;
-          border-color: var(--neon-cyan) !important;
+          background: linear-gradient(180deg, rgba(0, 229, 255, 0.24) 0%, rgba(0, 180, 216, 0.12) 100%) !important;
+          border: 1px solid var(--neon-cyan) !important;
           color: #ffffff !important;
-          box-shadow: 0 0 12px rgba(0, 229, 255, 0.35) !important;
+          text-shadow: 0 0 8px rgba(0, 229, 255, 0.7) !important;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 229, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .lobby-tab-btn.active svg {
+          opacity: 1 !important;
+          stroke: var(--neon-cyan) !important;
+          filter: drop-shadow(0 0 4px var(--neon-cyan)) !important;
+        }
+
+        /* Distinctive active tab indicator bar on bottom */
+        .lobby-tab-btn.active::after {
+          content: '' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          left: 20% !important;
+          right: 20% !important;
+          height: 2px !important;
+          background: var(--neon-cyan) !important;
+          border-radius: 1px !important;
+          box-shadow: 0 0 8px var(--neon-cyan) !important;
         }
 
         .tab-badge {
