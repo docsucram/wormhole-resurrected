@@ -3898,18 +3898,36 @@ class WormholeGame {
     this.buildShipGrid();
 
     // Flight Manual & Controls Toggle
-    document.getElementById('btn-manual-toggle')!.onclick = () => {
+    const closeManual = () => {
+      const m = document.getElementById('manual-modal');
+      if (m) m.classList.remove('active');
+      this.manualHangarView.stopPreview();
+    };
+
+    const openManual = () => {
+      // Mutual exclusion: Close options modal if open
+      const optionsModal = document.getElementById('options-modal');
+      if (optionsModal) {
+        optionsModal.classList.remove('active');
+        optionsModal.style.display = 'none';
+      }
       document.getElementById('manual-modal')?.classList.add('active');
       const activeTab = document.querySelector('.manual-tab-pane.active');
       if (activeTab && activeTab.id === 'tab-fleet') {
         setTimeout(() => this.manualHangarView.startPreview(), 30);
       }
     };
-    const closeManual = () => {
+
+    const toggleManual = () => {
       const m = document.getElementById('manual-modal');
-      if (m) m.classList.remove('active');
-      this.manualHangarView.stopPreview();
+      if (m && m.classList.contains('active')) {
+        closeManual();
+      } else {
+        openManual();
+      }
     };
+
+    document.getElementById('btn-manual-toggle')!.onclick = toggleManual;
     const modalEl = document.getElementById('manual-modal');
     if (modalEl) {
       modalEl.addEventListener('click', (e) => {
@@ -4138,7 +4156,20 @@ class WormholeGame {
     const btnCloseOptions = document.getElementById('btn-close-options');
     const btnCloseOptionsX = document.getElementById('btn-close-options-x');
 
+    const closeOptions = () => {
+      if (optionsModal) {
+        optionsModal.classList.remove('active');
+        optionsModal.style.display = 'none';
+      }
+    };
+
     const openOptions = () => {
+      // Mutual exclusion: Close flight manual if open
+      const manualModal = document.getElementById('manual-modal');
+      if (manualModal && manualModal.classList.contains('active')) {
+        manualModal.classList.remove('active');
+        this.manualHangarView?.stopPreview();
+      }
       if (optionsModal) {
         optionsModal.classList.add('active');
         optionsModal.style.display = 'flex';
@@ -4147,14 +4178,15 @@ class WormholeGame {
       }
     };
 
-    const closeOptions = () => {
-      if (optionsModal) {
-        optionsModal.classList.remove('active');
-        optionsModal.style.display = 'none';
+    const toggleOptions = () => {
+      if (optionsModal && (optionsModal.classList.contains('active') || optionsModal.style.display === 'flex')) {
+        closeOptions();
+      } else {
+        openOptions();
       }
     };
 
-    if (btnMenuOptions) btnMenuOptions.onclick = openOptions;
+    if (btnMenuOptions) btnMenuOptions.onclick = toggleOptions;
     if (btnPauseOptions) btnPauseOptions.onclick = openOptions;
     if (btnCloseOptions) btnCloseOptions.onclick = closeOptions;
     if (btnCloseOptionsX) btnCloseOptionsX.onclick = closeOptions;
@@ -5826,16 +5858,24 @@ class WormholeGame {
     // In portrait mode, do NOT flash the fullscreen button
     const shouldFlash = this.isMobile && !isFs && !isPortrait;
 
+    const FS_ENTER_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+    const FS_EXIT_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+
+    const MOB_FS_ENTER_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+    const MOB_FS_EXIT_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+
     const btnMobFs = document.getElementById('btn-mob-fullscreen');
     if (btnMobFs) {
       btnMobFs.classList.toggle('btn-maximize-flash', shouldFlash);
-      btnMobFs.title = isFs ? 'Restore Window' : 'Maximize Screen';
+      btnMobFs.title = isFs ? 'Exit Fullscreen' : 'Toggle Fullscreen';
+      btnMobFs.innerHTML = isFs ? MOB_FS_EXIT_SVG : MOB_FS_ENTER_SVG;
     }
 
     const btnFsLobby = document.getElementById('btn-fullscreen-toggle');
     if (btnFsLobby) {
       btnFsLobby.classList.toggle('btn-maximize-flash', shouldFlash);
-      btnFsLobby.title = isFs ? 'Restore Window' : 'Maximize Screen';
+      btnFsLobby.title = isFs ? 'Exit Fullscreen' : 'Toggle Fullscreen';
+      btnFsLobby.innerHTML = isFs ? FS_EXIT_SVG : FS_ENTER_SVG;
     }
 
     const btnFsPause = document.getElementById('btn-pause-fullscreen');
