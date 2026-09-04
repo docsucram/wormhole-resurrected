@@ -144,9 +144,9 @@ The user interface follows a responsive cybernetic vector aesthetic utilizing CS
   - Integrated diagnostic testbed available in solo practice and host test matches.
   - Mobile Portrait: Single scrollable vertical sheet.
   - Mobile Landscape: Two-column responsive side-by-side grid (`.spawner-cols-wrap`) optimizing short viewport heights (`max-height: 90dvh`).
-  - Features: Direct hazard spawning (12+ types), powerup ejection, ship class switching, AI overlay toggle, and HP God Mode.
-* **15-Minute Match Timeout Modal (`#timeout-modal`)**:
-  - Controlled alert modal providing an `[ACKNOWLEDGE]` button to dismiss, replacing intrusive screen-wide flashing banners.
+* **Inactivity Timeout Modals (`#timeout-modal`)**:
+  - **15-Minute Match Timeout**: Auto-terminates or disconnects hosted matches and client connections after 15 minutes of user inactivity to prevent abandoned lobbies, prompting the user with an `[ACKNOWLEDGE]` dialog.
+  - **30-Minute Lounge Idle Timeout**: If a player remains idle in the Pilot Lounge / front screen for 30 minutes, presence heartbeats are paused and a `PILOT_LEAVE` packet is dispatched so they disappear from other players' rosters to conserve bandwidth. The player is presented with an *"ARE YOU STILL THERE?"* prompt with `[I'M STILL HERE // RE-ENTER LOUNGE]` to re-ping and rejoin the lounge roster.
 
 ---
 

@@ -267,11 +267,17 @@ class WormholeGame {
   public isSpectating = false;
   public isLocalPlayerEliminatedThisRound = false;
 
-  // Inactivity tracking (15 minute idle timeout for hosted matches & clients)
+  // Inactivity tracking (15 minute idle timeout for hosted matches & clients, 30 minute idle timeout for lounge)
   public static readonly MATCH_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  public static readonly LOBBY_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
   public lastUserActivityTime = Date.now();
+  public isLoungeTimedOut = false;
 
   public recordUserActivity(): void {
+    if (this.isLoungeTimedOut) {
+      // Do not reset inactivity while timed out; player must explicitly click the dialog button
+      return;
+    }
     this.lastUserActivityTime = Date.now();
   }
 
@@ -650,6 +656,11 @@ class WormholeGame {
       // If we are hosting a match, inform the newly arrived pilot
       if (this.isLanMatchHost && this.currentMatchConfig) {
         this.broadcastMatches();
+      }
+    } else if (data.type === 'PILOT_LEAVE' || data.type === 'PRESENCE_LEAVE') {
+      if (this.connectedPilots.has(data.id)) {
+        this.connectedPilots.delete(data.id);
+        this.renderConnectedPilots();
       }
     } else if (data.type === 'MATCH_QUERY') {
       // If we are hosting an active match, reply with current match list
@@ -1353,6 +1364,7 @@ class WormholeGame {
   }
 
   public sendPresence(): void {
+    if (this.isLoungeTimedOut) return;
     this.connectedPilots.set(this.localClientId, {
       id: this.localClientId,
       callsign: this.playerName,
@@ -1424,22 +1436,28 @@ class WormholeGame {
       }
     }, 2000);
 
-    // Inactivity timeout monitor: auto-terminate/disconnect match after 15 minutes of user inactivity
+    // Inactivity timeout monitor: auto-terminate/disconnect match after 15 minutes of user inactivity,
+    // or unlist idle lounge players after 30 minutes of inactivity
     setInterval(() => {
       if (this.currentMatchConfig && (this.isLanMatchHost || this.isLanMatchClient || this.network.isConnected)) {
         const elapsedInactive = Date.now() - this.lastUserActivityTime;
         if (elapsedInactive >= WormholeGame.MATCH_INACTIVITY_TIMEOUT_MS) {
           if (this.isLanMatchHost) {
             this.setDeckActive(true, 'TIMEOUT_INACTIVE');
-            this.showTimeoutNotice('Hosted match terminated due to 15 minutes of inactivity.');
+            this.showTimeoutNotice('Hosted match terminated due to 15 minutes of inactivity.', 'MATCH TIMEOUT', 'ACKNOWLEDGE');
             this.addChatLog('Hosted match terminated due to 15 minutes of inactivity.', 'system');
             this.sound.playDefeatFanfare();
           } else if (this.isLanMatchClient || this.network.isConnected) {
             this.setDeckActive(true, 'TIMEOUT_INACTIVE');
-            this.showTimeoutNotice('Disconnected from match due to 15 minutes of inactivity.');
+            this.showTimeoutNotice('Disconnected from match due to 15 minutes of inactivity.', 'MATCH TIMEOUT', 'ACKNOWLEDGE');
             this.addChatLog('Disconnected from match due to 15 minutes of inactivity.', 'system');
             this.sound.playDefeatFanfare();
           }
+        }
+      } else if (!this.inArena && !this.currentMatchConfig && !this.isLoungeTimedOut) {
+        const elapsedInactive = Date.now() - this.lastUserActivityTime;
+        if (elapsedInactive >= WormholeGame.LOBBY_INACTIVITY_TIMEOUT_MS) {
+          this.triggerLoungeTimeout();
         }
       }
     }, 5000);
@@ -1467,6 +1485,12 @@ class WormholeGame {
             },
           });
         }
+      } else {
+        this.sendLanPacket({
+          type: 'PILOT_LEAVE',
+          id: this.localClientId,
+          callsign: this.playerName,
+        });
       }
     });
 
@@ -1481,7 +1505,7 @@ class WormholeGame {
     const playerAvatarImg = document.getElementById('player-avatar-img') as HTMLImageElement | null;
 
     if (selfNameEl) {
-      selfNameEl.innerText = `${this.playerName} (YOU)`;
+      selfNameEl.innerText = this.isLoungeTimedOut ? `${this.playerName} (AWAY)` : `${this.playerName} (YOU)`;
     }
     if (displayCallsign) {
       displayCallsign.innerText = this.playerName;
@@ -1490,7 +1514,7 @@ class WormholeGame {
       playerAvatarImg.src = `/avatars/${this.playerAvatar}`;
     }
 
-    const count = Math.max(1, this.connectedPilots.size);
+    const count = this.isLoungeTimedOut ? this.connectedPilots.size : Math.max(1, this.connectedPilots.size);
     if (onlineCountEl) {
       onlineCountEl.innerText = `PILOTS IN LOUNGE (${count})`;
     }
@@ -1500,11 +1524,14 @@ class WormholeGame {
 
     // Render self first
     const selfRow = document.createElement('div');
-    selfRow.className = 'pilot-row self';
+    selfRow.className = 'pilot-row self' + (this.isLoungeTimedOut ? ' timed-out' : '');
+    const pingPill = this.isLoungeTimedOut
+      ? `<span class="pilot-ping-pill away" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;">AWAY</span>`
+      : `<span class="pilot-ping-pill local">LOCAL</span>`;
     selfRow.innerHTML = `
       <img src="/avatars/${this.playerAvatar}" class="pilot-row-avatar" alt="Avatar" onerror="this.src='/avatars/avatar_1.svg'" />
-      <span class="pilot-row-name">${this.playerName} (YOU)</span>
-      <span class="pilot-ping-pill local">LOCAL</span>
+      <span class="pilot-row-name">${this.playerName} ${this.isLoungeTimedOut ? '(AWAY)' : '(YOU)'}</span>
+      ${pingPill}
     `;
     pilotsListEl.appendChild(selfRow);
 
@@ -1526,6 +1553,13 @@ class WormholeGame {
   public sendLobbyChat(text: string): void {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    if (this.isLoungeTimedOut) {
+      this.isLoungeTimedOut = false;
+      this.recordUserActivity();
+      this.sendPresence();
+      this.renderConnectedPilots();
+    }
 
     this.appendLobbyChatMessage(this.playerName, trimmed, true);
 
@@ -2105,6 +2139,10 @@ class WormholeGame {
 
   private setDeckActive(active: boolean, reason?: string): void {
     this.inArena = !active;
+    if (!active) {
+      this.isLoungeTimedOut = false;
+      this.recordUserActivity();
+    }
     if (active) {
       this.tutorialManager.stop();
     }
@@ -4081,6 +4119,13 @@ class WormholeGame {
           modal.classList.remove('active');
           modal.style.display = 'none';
         }
+        if (this.isLoungeTimedOut) {
+          this.isLoungeTimedOut = false;
+          this.recordUserActivity();
+          this.sendPresence();
+          this.renderConnectedPilots();
+          this.appendLobbyChatMessage('SYSTEM', 'Presence re-established in Pilot Lounge.', false);
+        }
         this.sound.playClick();
       };
     }
@@ -5527,14 +5572,45 @@ class WormholeGame {
     this.alertTimer = 2.5;
   }
 
-  public showTimeoutNotice(text: string): void {
+  public showTimeoutNotice(text: string, title = 'MATCH TIMEOUT', btnText = 'ACKNOWLEDGE'): void {
     const modal = document.getElementById('timeout-modal');
+    const titleEl = document.getElementById('timeout-modal-title');
     const msg = document.getElementById('timeout-modal-msg');
+    const btn = document.getElementById('btn-close-timeout');
+
+    if (titleEl) titleEl.innerText = title;
     if (msg) msg.innerText = text;
+    if (btn) btn.innerText = btnText;
+
     if (modal) {
       modal.classList.add('active');
       modal.style.display = 'block';
     }
+  }
+
+  public triggerLoungeTimeout(): void {
+    if (this.isLoungeTimedOut) return;
+    this.isLoungeTimedOut = true;
+
+    // Send leave notice so all peers drop this client from their lounge roster
+    this.sendLanPacket({
+      type: 'PILOT_LEAVE',
+      id: this.localClientId,
+      callsign: this.playerName,
+    });
+
+    // Drop self from local connectedPilots map and refresh UI
+    this.connectedPilots.delete(this.localClientId);
+    this.renderConnectedPilots();
+
+    // Display "Are you still there?" notice
+    this.showTimeoutNotice(
+      'You have been idle in the Pilot Lounge for 30 minutes. Your presence was paused to save bandwidth. Click below to re-ping and reappear in the global lobby.',
+      'ARE YOU STILL THERE?',
+      "I'M STILL HERE // RE-ENTER LOUNGE"
+    );
+
+    this.sound.playDefeatFanfare();
   }
 
   public highlightAddBotRosterButton(): void {
@@ -7424,5 +7500,6 @@ class WormholeGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new WormholeGame();
+  const game = new WormholeGame();
+  (window as any).wormholeGame = game;
 });
