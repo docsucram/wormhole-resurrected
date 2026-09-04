@@ -261,6 +261,7 @@ class WormholeGame {
   public lanChannel: BroadcastChannel | null = null;
   public connectedPilots: Map<string, ConnectedPilot> = new Map();
   public lobbyMatches: LobbyMatch[] = [];
+  private lastMatchesFingerprint = '';
   public currentMatchConfig: LobbyMatch | null = null;
   public isMatchWaitingForPilots = false;
   public isLanMatchHost = false;
@@ -674,9 +675,13 @@ class WormholeGame {
       this.appendLobbyChatMessage(data.sender, data.text, false);
     } else if (data.type === 'MATCH_UPDATE') {
       if (Array.isArray(data.matches)) {
+        const fingerprint = JSON.stringify(data.matches);
+        const hasChanged = this.lastMatchesFingerprint !== fingerprint;
+        this.lastMatchesFingerprint = fingerprint;
         this.lobbyMatches = data.matches;
-        if (!this.inArena && !this.isLanMatchClient) {
-          this.renderLobbyMatches();
+        if (hasChanged && !this.inArena && !this.isLanMatchClient) {
+          const searchInput = (document.getElementById('input-match-search') as HTMLInputElement | null)?.value || '';
+          this.renderLobbyMatches(searchInput);
         }
       }
     } else if (data.type === 'PLAYER_LEAVE') {
@@ -1614,7 +1619,6 @@ class WormholeGame {
     const listEl = document.getElementById('lobby-matches-list');
     if (!listEl) return;
 
-    listEl.innerHTML = '';
     const q = filter.trim().toLowerCase();
     const filtered = this.lobbyMatches.filter((m) =>
       !q || m.name.toLowerCase().includes(q) || m.hostName.toLowerCase().includes(q)
@@ -1650,13 +1654,30 @@ class WormholeGame {
       return;
     }
 
-    filtered.forEach((match) => {
-      const card = document.createElement('div');
-      card.className = 'match-row-card';
+    const emptyRadar = listEl.querySelector('.matches-empty-radar-container');
+    if (emptyRadar) {
+      emptyRadar.remove();
+    }
 
-      const pupsLabel = match.powerupRule === 'STANDARD' ? 'STANDARD' : 'EXTENDED';
+    const activeMatchIds = new Set(filtered.map((m) => m.id));
+    const existingCards = listEl.querySelectorAll('.match-row-card');
+    existingCards.forEach((cardEl) => {
+      const id = cardEl.getAttribute('data-match-id');
+      if (!id || !activeMatchIds.has(id)) {
+        cardEl.remove();
+      }
+    });
+
+    filtered.forEach((match, idx) => {
+      const mapRaw = match.size ? match.size.toUpperCase() : 'MEDIUM';
+      const mapSizeName = mapRaw === 'HUGE' ? 'Colossal' : (mapRaw.charAt(0) + mapRaw.slice(1).toLowerCase());
+      const mapSizeDisplay = `${mapSizeName} Map`;
+
+      const pupsDisplay = match.powerupRule === 'STANDARD' ? 'Std. Powerups' : 'All Powerups';
+      const shipsDisplay = match.shipRestriction === 'STANDARD' ? 'Std. Ships' : 'All Ships';
+      const winTargetDisplay = match.targetWins === 999999 ? 'Endless' : `First to ${match.targetWins || 3}`;
+
       const isFull = match.currentPlayers >= match.maxPlayers;
-
       const testBadge = match.isTestMode
         ? `<span class="match-badge badge-test">⚡ TEST MODE</span>`
         : '';
@@ -1672,106 +1693,127 @@ class WormholeGame {
         statusBadge = `<span class="match-badge badge-status-inmatch">IN MATCH</span>`;
       }
 
-      card.innerHTML = `
-        <!-- Mobile View (Default flex row) -->
-        <div class="match-card-mobile">
-          <div class="match-info-col">
-            <div class="match-title-line">
-              <span class="match-name-text">${match.name}</span>
-              <span class="match-host-sub">Host: ${match.hostName}</span>
+      const contentFingerprint = `${match.name}_${match.hostName}_${match.matchType}_${match.targetWins}_${match.size}_${match.powerupRule}_${match.shipRestriction}_${match.currentPlayers}_${match.maxPlayers}_${match.status}_${match.isPasswordProtected}_${match.isTestMode}`;
+
+      let card = listEl.querySelector(`.match-row-card[data-match-id="${match.id}"]`) as HTMLElement | null;
+      const isNew = !card;
+
+      if (!card) {
+        card = document.createElement('div');
+        card.className = 'match-row-card';
+        card.setAttribute('data-match-id', match.id);
+      }
+
+      if (isNew || card.getAttribute('data-content-fingerprint') !== contentFingerprint) {
+        card.setAttribute('data-content-fingerprint', contentFingerprint);
+        card.innerHTML = `
+          <!-- Mobile View (Default flex row) -->
+          <div class="match-card-mobile">
+            <div class="match-info-col">
+              <div class="match-title-line">
+                <span class="match-name-text">${match.name}</span>
+                <span class="match-host-sub">Host: ${match.hostName}</span>
+              </div>
+              <div class="match-meta-line">
+                <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
+                <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
+                ${statusBadge}
+                ${testBadge}
+                <span class="match-badge badge-meta-subtle">${mapSizeDisplay}</span>
+                <span class="match-badge badge-meta-subtle">${pupsDisplay}</span>
+                <span class="match-badge badge-meta-subtle">${shipsDisplay}</span>
+                <span class="match-badge badge-meta-subtle">${winTargetDisplay.toUpperCase()}</span>
+              </div>
             </div>
-            <div class="match-meta-line">
+            <div>
+              <button class="btn-join-match">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
+            </div>
+          </div>
+
+          <!-- Desktop View (5-Column Cockpit Table Row) -->
+          <div class="match-cell desk-cell-host">
+            <div class="desk-host-name">${match.name}</div>
+            <div class="desk-host-sub">Host: ${match.hostName}</div>
+          </div>
+          <div class="match-cell desk-cell-mode">
+            <div class="desk-mode-badges">
               <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
-              <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers} SLOTS</span>
-              ${statusBadge}
               ${testBadge}
-              <span class="match-badge badge-meta-subtle">${pupsLabel}</span>
-              <span class="match-badge badge-meta-subtle">FIRST TO ${match.targetWins}</span>
             </div>
+            <div class="desk-mode-sub">${winTargetDisplay}</div>
           </div>
-          <div>
-            <button class="btn-join-match">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
+          <div class="match-cell desk-cell-rules">
+            <div class="desk-rule-item">${mapSizeDisplay}</div>
+            <div class="desk-rule-sub">${pupsDisplay} &bull; ${shipsDisplay}</div>
           </div>
-        </div>
+          <div class="match-cell desk-cell-slots">
+            <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers}</span>
+            ${statusBadge}
+          </div>
+          <div class="match-cell desk-cell-action">
+            <button class="btn-join-match btn-desk-join">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
+          </div>
+        `;
 
-        <!-- Desktop View (5-Column Cockpit Table Row) -->
-        <div class="match-cell desk-cell-host">
-          <div class="desk-host-name">${match.name}</div>
-          <div class="desk-host-sub">Host: ${match.hostName}</div>
-        </div>
-        <div class="match-cell desk-cell-mode">
-          <span class="match-badge ${match.matchType === 'TEAM' ? 'badge-mode-team' : 'badge-mode-ffa'}">${modeLabel}</span>
-          ${testBadge}
-        </div>
-        <div class="match-cell desk-cell-rules">
-          <div class="desk-rule-item">${pupsLabel}</div>
-          <div class="desk-rule-sub">First to ${match.targetWins} pts</div>
-        </div>
-        <div class="match-cell desk-cell-slots">
-          <span class="match-badge badge-slots ${isFull ? 'slots-full' : 'slots-open'}">${match.currentPlayers}/${match.maxPlayers}</span>
-          ${statusBadge}
-        </div>
-        <div class="match-cell desk-cell-action">
-          <button class="btn-join-match btn-desk-join">${isFull ? 'SPECTATE' : 'JOIN MATCH'}</button>
-        </div>
-      `;
-
-      const joinBtns = card.querySelectorAll('.btn-join-match') as NodeListOf<HTMLButtonElement>;
-      joinBtns.forEach((joinBtn) => {
-        joinBtn.onclick = () => {
-          if (match.isPasswordProtected) {
-            const pass = window.prompt(`Match "${match.name}" is password protected. Enter password:`);
-            if (pass !== match.password) {
-              alert('Incorrect match access code.');
-              return;
+        const joinBtns = card.querySelectorAll('.btn-join-match') as NodeListOf<HTMLButtonElement>;
+        joinBtns.forEach((joinBtn) => {
+          joinBtn.onclick = () => {
+            if (match.isPasswordProtected) {
+              const pass = window.prompt(`Match "${match.name}" is password protected. Enter password:`);
+              if (pass !== match.password) {
+                alert('Incorrect match access code.');
+                return;
+              }
             }
-          }
-          if (match.hostName === this.playerName) {
-            this.isLanMatchHost = true;
-            this.isLanMatchClient = false;
-            this.joinLobbyMatch(match);
-          } else {
-            this.isLanMatchHost = false;
-            this.isLanMatchClient = true;
-            this.currentMatchConfig = match;
-            joinBtns.forEach((b) => {
-              b.disabled = true;
-              b.innerText = 'CONNECTING...';
-            });
+            if (match.hostName === this.playerName) {
+              this.isLanMatchHost = true;
+              this.isLanMatchClient = false;
+              this.joinLobbyMatch(match);
+            } else {
+              this.isLanMatchHost = false;
+              this.isLanMatchClient = true;
+              this.currentMatchConfig = match;
+              joinBtns.forEach((b) => {
+                b.disabled = true;
+                b.innerText = 'CONNECTING...';
+              });
 
-            const sendJoinReq = () => {
-              if (this.isLanMatchClient && !this.inArena) {
-                this.sendLanPacket({
-                  type: 'MATCH_JOIN_REQUEST',
-                  matchId: match.id,
-                  clientId: this.localClientId,
-                  playerName: this.playerName,
-                  shipId: this.selectedShipIndex,
-                });
-              }
-            };
+              const sendJoinReq = () => {
+                if (this.isLanMatchClient && !this.inArena) {
+                  this.sendLanPacket({
+                    type: 'MATCH_JOIN_REQUEST',
+                    matchId: match.id,
+                    clientId: this.localClientId,
+                    playerName: this.playerName,
+                    shipId: this.selectedShipIndex,
+                  });
+                }
+              };
 
-            sendJoinReq();
-            setTimeout(sendJoinReq, 1000);
-            setTimeout(sendJoinReq, 2200);
+              sendJoinReq();
+              setTimeout(sendJoinReq, 1000);
+              setTimeout(sendJoinReq, 2200);
 
-            setTimeout(() => {
-              if (!this.inArena && this.isLanMatchClient) {
-                this.isLanMatchClient = false;
-                joinBtns.forEach((b) => {
-                  b.disabled = false;
-                  b.innerText = isFull ? 'SPECTATE' : 'JOIN MATCH';
-                });
-                this.showAlert('COULD NOT REACH HOST // RETRY JOIN');
-              }
-            }, 6000);
+              setTimeout(() => {
+                if (!this.inArena && this.isLanMatchClient) {
+                  this.isLanMatchClient = false;
+                  joinBtns.forEach((b) => {
+                    b.disabled = false;
+                    b.innerText = isFull ? 'SPECTATE' : 'JOIN MATCH';
+                  });
+                  this.showAlert('COULD NOT REACH HOST // RETRY JOIN');
+                }
+              }, 6000);
 
-            this.addChatLog(`Requesting entry into ${match.hostName}'s Match...`, 'system');
-          }
-        };
-      });
+              this.addChatLog(`Requesting entry into ${match.hostName}'s Match...`, 'system');
+            }
+          };
+        });
+      }
 
-      listEl.appendChild(card);
+      if (listEl.children[idx] !== card) {
+        listEl.insertBefore(card, listEl.children[idx] || null);
+      }
     });
   }
 

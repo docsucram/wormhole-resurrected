@@ -5396,16 +5396,18 @@
           gap: 12px !important;
           padding: 10px 16px !important;
           background: linear-gradient(90deg, rgba(8, 20, 42, 0.8) 0%, rgba(5, 14, 30, 0.9) 100%) !important;
-          border: 1px solid rgba(0, 229, 255, 0.2) !important;
+          border: 1.5px solid rgba(0, 229, 255, 0.2) !important;
           border-radius: 6px !important;
           margin-bottom: 8px !important;
-          transition: all 0.15s ease !important;
+          transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+          transform: none !important;
         }
 
         .match-row-card:hover {
           border-color: var(--neon-cyan) !important;
-          background: linear-gradient(90deg, rgba(12, 32, 64, 0.9) 0%, rgba(8, 22, 46, 0.95) 100%) !important;
+          background: linear-gradient(90deg, rgba(12, 32, 64, 0.95) 0%, rgba(8, 22, 46, 0.98) 100%) !important;
           box-shadow: 0 0 16px rgba(0, 229, 255, 0.25) !important;
+          transform: none !important;
         }
 
         .match-card-mobile {
@@ -5443,10 +5445,25 @@
 
         .desk-cell-mode {
           display: flex !important;
-          flex-direction: row !important;
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          justify-content: center !important;
+          gap: 3px !important;
+        }
+
+        .desk-mode-badges {
+          display: flex !important;
           align-items: center !important;
           gap: 6px !important;
           flex-wrap: wrap !important;
+        }
+
+        .desk-mode-sub {
+          font-family: 'Rajdhani', sans-serif !important;
+          font-size: 11px !important;
+          font-weight: 700 !important;
+          color: #94a3b8 !important;
+          letter-spacing: 0.5px !important;
         }
 
         .desk-cell-rules {
@@ -5460,11 +5477,15 @@
           font-size: 11px !important;
           font-weight: 700 !important;
           color: #e2e8f0 !important;
+          letter-spacing: 0.5px !important;
         }
 
         .desk-rule-sub {
-          font-size: 10px !important;
-          color: #94a3b8 !important;
+          font-family: 'Rajdhani', sans-serif !important;
+          font-size: 11px !important;
+          font-weight: 600 !important;
+          color: #00e5ff !important;
+          letter-spacing: 0.4px !important;
         }
 
         .desk-cell-slots {
