@@ -2872,18 +2872,22 @@
           height: 100vh !important;
           height: 100dvh !important;
           width: 100vw !important;
-          overflow-y: auto !important;
-          -webkit-overflow-scrolling: touch !important;
-          padding: calc(env(safe-area-inset-top, 0px) + 6px) 8px calc(env(safe-area-inset-bottom, 0px) + 80px) 8px !important;
+          overflow: hidden !important; /* Locks the page so it does NOT scroll up and down */
+          padding: calc(env(safe-area-inset-top, 0px) + 14px) 8px calc(env(safe-area-inset-bottom, 0px) + 68px) 8px !important;
           box-sizing: border-box !important;
+          display: flex !important;
+          flex-direction: column !important;
         }
 
         .main-card {
           width: 100% !important;
           max-width: 100% !important;
-          min-height: calc(100dvh - 16px) !important;
+          height: 100% !important;
+          min-height: 0 !important;
+          max-height: 100% !important;
+          overflow: hidden !important;
           border-radius: 10px !important;
-          padding: 10px 8px !important;
+          padding: 6px 8px 4px 8px !important;
           display: flex !important;
           flex-direction: column !important;
           box-sizing: border-box !important;
@@ -2893,52 +2897,55 @@
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          gap: 6px !important;
-          margin-bottom: 8px !important;
+          gap: 4px !important;
+          margin-bottom: 6px !important;
+          flex-shrink: 0 !important;
         }
 
-        /* 1.1: Options, Guide, Sound, Fullscreen utility actions ALIGNED LEFT */
+        /* 1.1: Options, Guide, Sound, Fullscreen utility actions ALIGNED RIGHT & top not cut off */
         .lobby-actions-group {
           order: 1 !important;
           display: flex !important;
-          justify-content: flex-start !important;
-          align-self: flex-start !important;
-          gap: 12px !important;
+          justify-content: flex-end !important;
+          align-self: flex-end !important;
+          gap: 10px !important;
           width: 100% !important;
           margin: 0 0 2px 0 !important;
+          padding-top: 2px !important;
         }
 
         .lobby-actions-group .btn-util {
           width: 36px !important;
           height: 36px !important;
+          flex-shrink: 0 !important;
         }
 
         /* 1.2: Wormhole Resurrected Logo bigger and on TWO LINES */
         .header-title-box {
           order: 2 !important;
           text-align: center !important;
-          margin: 2px 0 !important;
+          margin: 0 !important;
         }
 
         .header-logo {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          line-height: 1.05 !important;
+          line-height: 1.02 !important;
           text-align: center !important;
         }
 
         .header-logo .logo-white {
-          font-size: 28px !important;
-          letter-spacing: 3px !important;
+          font-size: 32px !important;
+          letter-spacing: 3.5px !important;
           display: block !important;
         }
 
         .header-logo .logo-magenta {
-          font-size: 20px !important;
+          font-size: 22px !important;
           letter-spacing: 2.5px !important;
           display: block !important;
-          margin-top: 1px !important;
+          margin-top: 2px !important;
         }
 
         /* 1.3: Pilot profile & adjustable callsign below the Wormhole logo with even spacing */
@@ -2949,22 +2956,37 @@
           justify-content: center !important;
           width: auto !important;
           max-width: 96vw !important;
-          margin: 6px auto !important;
+          margin: 6px auto 2px auto !important;
           padding: 0 !important;
-          gap: 10px !important;
-        }
-
-        .player-identity-capsule {
-          max-width: calc(100vw - 90px) !important;
-          margin: 0 !important;
-          padding: 6px 14px !important;
-          height: 48px !important;
-          box-sizing: border-box !important;
+          gap: 8px !important;
         }
 
         .avatar-frame {
-          width: 48px !important;
-          height: 48px !important;
+          width: 44px !important;
+          height: 44px !important;
+          border-radius: 7px !important;
+          flex-shrink: 0 !important;
+        }
+
+        .player-identity-capsule {
+          max-width: calc(100vw - 84px) !important;
+          margin: 0 !important;
+          padding: 4px 10px !important;
+          height: 44px !important;
+          box-sizing: border-box !important;
+          border-radius: 7px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+
+        .pilot-callsign-label {
+          font-size: 7.5px !important;
+          letter-spacing: 0.8px !important;
+        }
+
+        .pilot-name-display {
+          font-size: 13px !important;
         }
 
         /* 1.4: Mobile Portrait Tab Switcher (Matches vs Lounge & Comms) */
@@ -2972,25 +2994,27 @@
           display: flex !important;
           gap: 8px !important;
           width: 100% !important;
-          margin: 6px 0 10px 0 !important;
+          margin: 4px 0 8px 0 !important;
           box-sizing: border-box !important;
+          flex-shrink: 0 !important;
         }
 
         .lobby-tab-btn {
           flex: 1 !important;
+          height: 34px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
           gap: 6px !important;
-          padding: 8px 10px !important;
+          padding: 6px 8px !important;
           background: rgba(9, 23, 40, 0.85) !important;
           border: 1.5px solid #163658 !important;
           border-radius: 6px !important;
           color: #94a3b8 !important;
           font-family: 'Orbitron', sans-serif !important;
-          font-size: 11px !important;
+          font-size: 10.5px !important;
           font-weight: 800 !important;
-          letter-spacing: 1px !important;
+          letter-spacing: 0.8px !important;
           cursor: pointer !important;
           transition: all 0.15s ease !important;
         }
@@ -3025,15 +3049,55 @@
         .dashboard-grid-2col {
           display: flex !important;
           flex-direction: column !important;
-          gap: 10px !important;
-          flex: 1 !important;
+          gap: 6px !important;
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
+        }
+
+        /* Compact section headers for live hosted matches & comms */
+        .matches-browser-header {
+          margin-bottom: 4px !important;
+          padding-bottom: 2px !important;
+          flex-shrink: 0 !important;
+        }
+        .matches-browser-header .section-title {
+          font-size: 10px !important;
+          letter-spacing: 0.8px !important;
+        }
+        .matches-search-box input {
+          width: 135px !important;
+          font-size: 10px !important;
+          padding: 3px 8px 3px 24px !important;
+        }
+        .comms-header-row {
+          flex-shrink: 0 !important;
+          margin-bottom: 4px !important;
+        }
+        .comms-header-row .comms-title {
+          font-size: 10px !important;
+          letter-spacing: 0.8px !important;
+        }
+        .pilots-section-title {
+          font-size: 9.5px !important;
+          letter-spacing: 0.8px !important;
+          flex-shrink: 0 !important;
         }
 
         /* Tab 1: MATCHES (Default) */
         #screen-front-end.tab-matches .matches-browser-panel {
           display: flex !important;
+          flex-direction: column !important;
           flex: 1 1 auto !important;
-          min-height: 280px !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
+        }
+        #screen-front-end.tab-matches .matches-list-scroll {
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding-bottom: 12px !important;
         }
         #screen-front-end.tab-matches .lobby-comms-panel {
           display: none !important;
@@ -3045,21 +3109,31 @@
         }
         #screen-front-end.tab-comms .lobby-comms-panel {
           display: flex !important;
+          flex-direction: column !important;
           flex: 1 1 auto !important;
-          min-height: 280px !important;
-          max-height: none !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
         }
         #screen-front-end.tab-comms .pilots-section-box {
-          max-height: 90px !important;
+          max-height: 80px !important;
           overflow-y: auto !important;
+          flex-shrink: 0 !important;
         }
         #screen-front-end.tab-comms .comms-section-box {
-          flex: 1 !important;
-          min-height: 200px !important;
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
         }
         #screen-front-end.tab-comms .lobby-chat-log {
-          flex: 1 !important;
-          min-height: 160px !important;
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+        #screen-front-end.tab-comms .lobby-chat-input-row {
+          flex-shrink: 0 !important;
         }
 
         /* 1.5: Anchor Primary CTAs to the persistent bottom thumb zone */
@@ -3070,12 +3144,12 @@
           right: 0 !important;
           width: 100vw !important;
           box-sizing: border-box !important;
-          background: rgba(3, 10, 24, 0.95) !important;
+          background: rgba(3, 10, 24, 0.96) !important;
           backdrop-filter: blur(12px) !important;
           -webkit-backdrop-filter: blur(12px) !important;
           border-top: 1.5px solid rgba(0, 229, 255, 0.35) !important;
           box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.85) !important;
-          padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 12px) 14px !important;
+          padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 8px) 12px !important;
           z-index: 100 !important;
           display: flex !important;
           flex-direction: row !important;
@@ -3087,10 +3161,10 @@
         .matches-action-footer .btn-singleplayer {
           flex: 1 1 0 !important;
           min-width: 0 !important;
-          height: 42px !important;
-          padding: 8px 6px !important;
-          font-size: 11.5px !important;
-          letter-spacing: 0.8px !important;
+          height: 38px !important;
+          padding: 6px 6px !important;
+          font-size: 11px !important;
+          letter-spacing: 0.6px !important;
           white-space: nowrap !important;
           text-align: center !important;
           justify-content: center !important;
