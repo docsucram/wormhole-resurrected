@@ -165,6 +165,8 @@ class WormholeGame {
 
   // Mobile device adaptation flag
   public isMobile = false;
+  private activePortraitTab: 'matches' | 'comms' = 'matches';
+  private lobbyUnreadCommsCount = 0;
 
   // DOM Cache & Dirty Checking for high-performance zero-reflow HUD rendering
   private hudElementsCache: Map<string, HTMLElement> = new Map();
@@ -1385,6 +1387,15 @@ class WormholeGame {
     msgEl.innerHTML = `<span style="color: #64748b;">[${timeStr}]</span> <strong style="color: ${isSelf ? 'var(--neon-cyan)' : '#ff55aa'};">${sender}:</strong> ${text}`;
     chatLog.appendChild(msgEl);
     chatLog.scrollTop = chatLog.scrollHeight;
+
+    if (!isSelf && this.activePortraitTab === 'matches') {
+      this.lobbyUnreadCommsCount++;
+      const commsBadge = document.getElementById('lobby-comms-badge');
+      if (commsBadge) {
+        commsBadge.innerText = this.lobbyUnreadCommsCount.toString();
+        commsBadge.style.display = 'inline-flex';
+      }
+    }
   }
 
   private broadcastMatches(): void {
@@ -3416,6 +3427,37 @@ class WormholeGame {
           currentPlayers: 2,
           status: 'WAITING',
         });
+      };
+    }
+
+    // Mobile Portrait Tab Switcher
+    const tabMatches = document.getElementById('tab-btn-matches');
+    const tabComms = document.getElementById('tab-btn-comms');
+    const deckScreen = document.getElementById('screen-front-end');
+    const commsBadge = document.getElementById('lobby-comms-badge');
+
+    if (deckScreen) {
+      deckScreen.classList.add('tab-matches');
+    }
+
+    if (tabMatches && tabComms && deckScreen) {
+      tabMatches.onclick = () => {
+        tabMatches.classList.add('active');
+        tabComms.classList.remove('active');
+        deckScreen.classList.add('tab-matches');
+        deckScreen.classList.remove('tab-comms');
+        this.activePortraitTab = 'matches';
+        this.sound.playClick();
+      };
+      tabComms.onclick = () => {
+        tabComms.classList.add('active');
+        tabMatches.classList.remove('active');
+        deckScreen.classList.add('tab-comms');
+        deckScreen.classList.remove('tab-matches');
+        this.activePortraitTab = 'comms';
+        this.lobbyUnreadCommsCount = 0;
+        if (commsBadge) commsBadge.style.display = 'none';
+        this.sound.playClick();
       };
     }
 

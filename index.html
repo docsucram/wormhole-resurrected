@@ -2843,6 +2843,9 @@
       #mobile-touch-root {
         display: none;
       }
+      .lobby-portrait-tabs {
+        display: none;
+      }
       body.is-mobile #mobile-orientation-prompt {
         display: none;
       }
@@ -2871,7 +2874,7 @@
           width: 100vw !important;
           overflow-y: auto !important;
           -webkit-overflow-scrolling: touch !important;
-          padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px calc(env(safe-area-inset-bottom, 0px) + 8px) 6px !important;
+          padding: calc(env(safe-area-inset-top, 0px) + 6px) 8px calc(env(safe-area-inset-bottom, 0px) + 80px) 8px !important;
           box-sizing: border-box !important;
         }
 
@@ -2890,38 +2893,55 @@
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          gap: 10px !important;
-          margin-bottom: 12px !important;
+          gap: 6px !important;
+          margin-bottom: 8px !important;
         }
 
-        /* 1.1: Options, Guide, Sound, Fullscreen utility actions at the very top */
+        /* 1.1: Options, Guide, Sound, Fullscreen utility actions ALIGNED LEFT */
         .lobby-actions-group {
           order: 1 !important;
           display: flex !important;
-          justify-content: center !important;
-          gap: 14px !important;
+          justify-content: flex-start !important;
+          align-self: flex-start !important;
+          gap: 12px !important;
           width: 100% !important;
-          margin: 0 !important;
+          margin: 0 0 2px 0 !important;
         }
 
         .lobby-actions-group .btn-util {
-          width: 38px !important;
-          height: 38px !important;
+          width: 36px !important;
+          height: 36px !important;
         }
 
-        /* 1.2: Wormhole Resurrected Logo in the middle */
+        /* 1.2: Wormhole Resurrected Logo bigger and on TWO LINES */
         .header-title-box {
           order: 2 !important;
           text-align: center !important;
-          margin: 0 !important;
+          margin: 2px 0 !important;
         }
 
         .header-logo {
-          font-size: 22px !important;
-          letter-spacing: 2.5px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          line-height: 1.05 !important;
+          text-align: center !important;
         }
 
-        /* 1.3: Pilot profile & adjustable callsign below the Wormhole logo */
+        .header-logo .logo-white {
+          font-size: 28px !important;
+          letter-spacing: 3px !important;
+          display: block !important;
+        }
+
+        .header-logo .logo-magenta {
+          font-size: 20px !important;
+          letter-spacing: 2.5px !important;
+          display: block !important;
+          margin-top: 1px !important;
+        }
+
+        /* 1.3: Pilot profile & adjustable callsign below the Wormhole logo with even spacing */
         .player-profile-card {
           order: 3 !important;
           display: flex !important;
@@ -2929,67 +2949,153 @@
           justify-content: center !important;
           width: auto !important;
           max-width: 96vw !important;
-          margin: 0 !important;
-          padding: 4px 10px !important;
-          gap: 8px !important;
+          margin: 6px auto !important;
+          padding: 0 !important;
+          gap: 10px !important;
         }
 
         .player-identity-capsule {
           max-width: calc(100vw - 90px) !important;
+          margin: 0 !important;
+          padding: 6px 14px !important;
+          height: 48px !important;
+          box-sizing: border-box !important;
+        }
+
+        .avatar-frame {
+          width: 48px !important;
+          height: 48px !important;
+        }
+
+        /* 1.4: Mobile Portrait Tab Switcher (Matches vs Lounge & Comms) */
+        .lobby-portrait-tabs {
+          display: flex !important;
+          gap: 8px !important;
+          width: 100% !important;
+          margin: 6px 0 10px 0 !important;
+          box-sizing: border-box !important;
+        }
+
+        .lobby-tab-btn {
+          flex: 1 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 6px !important;
+          padding: 8px 10px !important;
+          background: rgba(9, 23, 40, 0.85) !important;
+          border: 1.5px solid #163658 !important;
+          border-radius: 6px !important;
+          color: #94a3b8 !important;
+          font-family: 'Orbitron', sans-serif !important;
+          font-size: 11px !important;
+          font-weight: 800 !important;
+          letter-spacing: 1px !important;
+          cursor: pointer !important;
+          transition: all 0.15s ease !important;
+        }
+
+        .lobby-tab-btn.active {
+          background: rgba(0, 229, 255, 0.16) !important;
+          border-color: var(--neon-cyan) !important;
+          color: #ffffff !important;
+          box-shadow: 0 0 12px rgba(0, 229, 255, 0.35) !important;
+        }
+
+        .tab-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #ff0055;
+          color: #ffffff;
+          font-size: 9px;
+          font-weight: 900;
+          border-radius: 10px;
+          min-width: 16px;
+          height: 16px;
+          padding: 0 4px;
+          box-shadow: 0 0 8px #ff0055;
+          animation: pulseBadge 1.2s infinite alternate;
+        }
+        @keyframes pulseBadge {
+          0% { transform: scale(1); }
+          100% { transform: scale(1.15); }
         }
 
         .dashboard-grid-2col {
           display: flex !important;
           flex-direction: column !important;
-          gap: 12px !important;
+          gap: 10px !important;
           flex: 1 !important;
         }
 
-        /* Put matches list & host/practice buttons first */
-        .matches-browser-panel {
-          order: 1 !important;
-          min-height: 300px !important;
-          flex: 1 0 auto !important;
+        /* Tab 1: MATCHES (Default) */
+        #screen-front-end.tab-matches .matches-browser-panel {
+          display: flex !important;
+          flex: 1 1 auto !important;
+          min-height: 280px !important;
+        }
+        #screen-front-end.tab-matches .lobby-comms-panel {
+          display: none !important;
         }
 
-        /* Prevent button stretching in matches action footer */
+        /* Tab 2: LOUNGE & COMMS */
+        #screen-front-end.tab-comms .matches-browser-panel {
+          display: none !important;
+        }
+        #screen-front-end.tab-comms .lobby-comms-panel {
+          display: flex !important;
+          flex: 1 1 auto !important;
+          min-height: 280px !important;
+          max-height: none !important;
+        }
+        #screen-front-end.tab-comms .pilots-section-box {
+          max-height: 90px !important;
+          overflow-y: auto !important;
+        }
+        #screen-front-end.tab-comms .comms-section-box {
+          flex: 1 !important;
+          min-height: 200px !important;
+        }
+        #screen-front-end.tab-comms .lobby-chat-log {
+          flex: 1 !important;
+          min-height: 160px !important;
+        }
+
+        /* 1.5: Anchor Primary CTAs to the persistent bottom thumb zone */
         .matches-action-footer {
-          margin-top: auto !important;
-          padding-top: 8px !important;
+          position: fixed !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          width: 100vw !important;
+          box-sizing: border-box !important;
+          background: rgba(3, 10, 24, 0.95) !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+          border-top: 1.5px solid rgba(0, 229, 255, 0.35) !important;
+          box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.85) !important;
+          padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 12px) 14px !important;
+          z-index: 100 !important;
           display: flex !important;
           flex-direction: row !important;
-          gap: 8px !important;
-          width: 100% !important;
-          box-sizing: border-box !important;
+          gap: 10px !important;
+          margin-top: 0 !important;
         }
 
         .matches-action-footer .btn-host,
         .matches-action-footer .btn-singleplayer {
           flex: 1 1 0 !important;
           min-width: 0 !important;
-          padding: 10px 6px !important;
-          font-size: 11px !important;
-          letter-spacing: 0.5px !important;
+          height: 42px !important;
+          padding: 8px 6px !important;
+          font-size: 11.5px !important;
+          letter-spacing: 0.8px !important;
           white-space: nowrap !important;
           text-align: center !important;
           justify-content: center !important;
           box-sizing: border-box !important;
-        }
-
-        .lobby-comms-panel {
-          order: 2 !important;
-          min-height: 200px !important;
-          max-height: 260px !important;
-        }
-
-        .pilots-section-box {
-          max-height: 80px !important;
-          overflow-y: auto !important;
-        }
-
-        .comms-section-box {
-          flex: 1 !important;
-          min-height: 120px !important;
+          border-radius: 6px !important;
         }
 
         /* 2. In-Arena Floating HUD in Portrait */
@@ -3943,6 +4049,19 @@
             <button class="btn-util" id="btn-manual-toggle" title="Flight Guide & Tactical Manual"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
             <button class="btn-util" id="btn-fullscreen-toggle" title="Toggle Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
           </div>
+        </div>
+
+        <!-- Mobile Portrait Tabs Switcher (Matches vs Lounge & Comms) -->
+        <div class="lobby-portrait-tabs" id="lobby-portrait-tabs">
+          <button class="lobby-tab-btn active" id="tab-btn-matches" data-tab="matches">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>MATCHES</span>
+          </button>
+          <button class="lobby-tab-btn" id="tab-btn-comms" data-tab="comms">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>LOUNGE &amp; COMMS</span>
+            <span class="tab-badge" id="lobby-comms-badge" style="display: none;">0</span>
+          </button>
         </div>
 
         <!-- 2-Column Command Hub Grid -->

@@ -37,7 +37,7 @@ export class TutorialManager {
   }
 
   public onPowerupSpawned(pupType: number): void {
-    if (!this.isActive) return;
+    if (!this.isActive || this.hasLaunchedOffensive || this.currentStep === 'OBJECTIVE_WIN' || this.currentStep === 'COMPLETED') return;
 
     if (pupType < 6) {
       this.hasSeenDefensive = true;
@@ -52,7 +52,7 @@ export class TutorialManager {
   }
 
   public onPowerupCollected(pupType: number): void {
-    if (!this.isActive) return;
+    if (!this.isActive || this.hasLaunchedOffensive || this.currentStep === 'OBJECTIVE_WIN' || this.currentStep === 'COMPLETED') return;
 
     if (pupType < 6) {
       if (this.currentStep === 'COLLECT_DEFENSIVE') {
@@ -65,7 +65,7 @@ export class TutorialManager {
   }
 
   public onOffensiveLaunched(): void {
-    if (!this.isActive) return;
+    if (!this.isActive || this.hasLaunchedOffensive) return;
     this.hasLaunchedOffensive = true;
     this.currentStep = 'OBJECTIVE_WIN';
     this.bannerTimer = 6.0;
@@ -76,7 +76,7 @@ export class TutorialManager {
 
     this.stepTimer += dt;
 
-    if (this.currentStep === 'OBJECTIVE_WIN') {
+    if (this.hasLaunchedOffensive || this.currentStep === 'OBJECTIVE_WIN') {
       this.bannerTimer -= dt;
       if (this.bannerTimer <= 0) {
         this.stop();
