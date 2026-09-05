@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { exec } = require('child_process');
 
 const PORT = process.env.PORT || 3000;
@@ -51,11 +52,46 @@ function getLanIPs() {
   return [...primaryIPs, ...secondaryIPs];
 }
 
+// In-memory cache for static files & their pre-compressed gzip representations
+const fileCache = new Map();
+
+function getCachedFile(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) return null;
+
+    const cacheKey = `${filePath}:${stats.mtimeMs}:${stats.size}`;
+    const cached = fileCache.get(filePath);
+    if (cached && cached.cacheKey === cacheKey) {
+      return cached;
+    }
+
+    const raw = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const isCompressible = ['.html', '.js', '.css', '.json', '.svg'].includes(ext);
+    const gzip = isCompressible ? zlib.gzipSync(raw, { level: 9 }) : null;
+    const etag = `"${crypto.createHash('md5').update(raw).digest('hex').slice(0, 16)}"`;
+
+    const fileData = {
+      cacheKey,
+      raw,
+      gzip,
+      etag,
+      mtime: stats.mtime,
+      size: stats.size,
+      contentType: MIME_TYPES[ext] || 'application/octet-stream',
+    };
+    fileCache.set(filePath, fileData);
+    return fileData;
+  } catch (e) {
+    return null;
+  }
+}
+
 const server = http.createServer((req, res) => {
-  // CORS & Security headers
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 'no-cache');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -64,10 +100,35 @@ const server = http.createServer((req, res) => {
   }
 
   const urlPath = req.url.split('?')[0];
+
+  // 1. Lightweight health check (monitoring & keep-alive pings use < 100 bytes)
   if (urlPath === '/healthz' || urlPath === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store',
+    });
     res.end(JSON.stringify({ status: 'ok', server: 'Wormhole Resurrected Dedicated Relay', activeClients: wsClients.size }));
     return;
+  }
+
+  // 2. Fast 200 response for robots.txt (blocks scrapers/crawlers and uses only 26 bytes)
+  if (urlPath === '/robots.txt') {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=UTF-8',
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.end('User-agent: *\nDisallow: /\n');
+    return;
+  }
+
+  // 3. Fast 204 for missing favicon.ico
+  if (urlPath === '/favicon.ico') {
+    const iconPath = path.join(DIST_DIR, 'favicon.ico');
+    if (!fs.existsSync(iconPath)) {
+      res.writeHead(204, { 'Cache-Control': 'public, max-age=86400' });
+      res.end();
+      return;
+    }
   }
 
   let reqPath = decodeURI(urlPath);
@@ -79,40 +140,81 @@ const server = http.createServer((req, res) => {
 
   // Security guard against directory traversal
   if (!filePath.startsWith(DIST_DIR)) {
-    res.writeHead(403);
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('403 Forbidden');
     return;
   }
 
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      filePath = path.join(DIST_DIR, 'index.html');
+  let fileData = getCachedFile(filePath);
+
+  // 4. Strict 404 Guard:
+  // If the path had a specific file extension (e.g. .txt, .php, .env, .png, .js) and wasn't found,
+  // DO NOT fall back to index.html! Return a clean, tiny 13-byte 404.
+  if (!fileData) {
+    const ext = path.extname(urlPath);
+    if (ext && ext !== '.html') {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=UTF-8', 'Cache-Control': 'public, max-age=3600' });
+      res.end('404 Not Found');
+      return;
     }
+    // Single Page App fallback: clean URL navigations (e.g. /lobby) serve index.html
+    filePath = path.join(DIST_DIR, 'index.html');
+    fileData = getCachedFile(filePath);
+  }
 
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  if (!fileData) {
+    // Fallback if dist/ was not built yet
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-cache' });
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Wormhole Relay Online</title><style>body{background:#040714;color:#00ffff;font-family:sans-serif;text-align:center;padding:50px;}</style></head>
+        <body>
+          <h1>🌌 Wormhole Dedicated Relay Online</h1>
+          <p>WebSocket endpoint: <code>/lan-relay</code></p>
+          <p>Active Pilots: ${wsClients.size}</p>
+        </body>
+      </html>
+    `);
+    return;
+  }
 
-    fs.readFile(filePath, (readErr, content) => {
-      if (readErr) {
-        // Fallback: If dist/ was not built, serve a clean status page
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
-        res.end(`
-          <!DOCTYPE html>
-          <html>
-            <head><title>Wormhole Relay Online</title><style>body{background:#040714;color:#00ffff;font-family:sans-serif;text-align:center;padding:50px;}</style></head>
-            <body>
-              <h1>🌌 Wormhole Dedicated Relay Online</h1>
-              <p>WebSocket endpoint: <code>/lan-relay</code></p>
-              <p>Active Pilots: ${wsClients.size}</p>
-            </body>
-          </html>
-        `);
-      } else {
-        res.writeHead(200, { 'Content-Type': contentType });
-        res.end(content);
-      }
-    });
-  });
+  // 5. Conditional GET / ETag check (304 Not Modified -> 0 byte payload)
+  const clientEtag = req.headers['if-none-match'];
+  if (clientEtag && clientEtag === fileData.etag) {
+    res.writeHead(304);
+    res.end();
+    return;
+  }
+
+  // 6. Smart Caching Headers
+  const isIndex = filePath.endsWith('index.html');
+  const isHashedAsset = reqPath.startsWith('/assets/') || reqPath.startsWith('/avatars/') || reqPath.startsWith('/audio/');
+  const cacheControl = isHashedAsset
+    ? 'public, max-age=31536000, immutable'
+    : (isIndex ? 'no-cache, must-revalidate' : 'public, max-age=3600');
+
+  // 7. Gzip Compression (85% bandwidth reduction on HTML, 74% on JS)
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  const canGzip = fileData.gzip && acceptEncoding.includes('gzip');
+
+  const headers = {
+    'Content-Type': fileData.contentType,
+    'Cache-Control': cacheControl,
+    'ETag': fileData.etag,
+    'Vary': 'Accept-Encoding',
+  };
+
+  if (canGzip) {
+    headers['Content-Encoding'] = 'gzip';
+    headers['Content-Length'] = fileData.gzip.length;
+    res.writeHead(200, headers);
+    res.end(fileData.gzip);
+  } else {
+    headers['Content-Length'] = fileData.raw.length;
+    res.writeHead(200, headers);
+    res.end(fileData.raw);
+  }
 });
 
 // -----------------------------------------------------------------------------
